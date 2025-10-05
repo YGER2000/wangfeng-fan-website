@@ -1,0 +1,116 @@
+{
+  "currentTour": {
+    "tourName": "汪峰2024-2025全国巡回演唱会",
+    "englishName": "Wang Feng 2024-2025 National Tour",
+    "tourDescription": "汪峰最新全国巡演，演唱经典歌曲和新作品",
+    "startDate": "2024-06-01",
+    "endDate": "2025-12-31",
+    "totalShows": 28,
+    "totalCities": 20
+  },
+  "upcomingShows": [
+    {
+      "date": "2024-10-15",
+      "city": "北京",
+      "venue": "首都体育馆",
+      "venueCapacity": 18000,
+      "status": "已售罄",
+      "ticketPrices": {
+        "vip": 1280,
+        "premium": 880, 
+        "standard": 480,
+        "economy": 280
+      },
+      "specialNotes": "加场演出"
+    },
+    {
+      "date": "2024-10-22",
+      "city": "上海",
+      "venue": "上海体育场", 
+      "venueCapacity": 72000,
+      "status": "在售",
+      "ticketPrices": {
+        "vip": 1580,
+        "premium": 1080,
+        "standard": 680,
+        "economy": 380
+      },
+      "specialNotes": "体育场演出"
+    },
+    {
+      "date": "2024-11-05",
+      "city": "广州",
+      "venue": "广州体育馆",
+      "venueCapacity": 12000,
+      "status": "预售",
+      "ticketPrices": {
+        "vip": 1180,
+        "premium": 780,
+        "standard": 480,
+        "economy": 280
+      },
+      "specialNotes": "南方巡演首站"
+    },
+    {
+      "date": "2024-11-12", 
+      "city": "深圳",
+      "venue": "深圳湾体育中心",
+      "venueCapacity": 15000,
+      "status": "即将开售",
+      "ticketPrices": {
+        "vip": 1280,
+        "premium": 880,
+        "standard": 580, 
+        "economy": 380
+      },
+      "specialNotes": ""
+    },
+    {
+      "date": "2024-11-19",
+      "city": "成都",
+      "venue": "成都露天音乐公园",
+      "venueCapacity": 25000,
+      "status": "即将开售",
+      "ticketPrices": {
+        "vip": 1380,
+        "premium": 980,
+        "standard": 680,
+        "economy": 380
+      },
+      "specialNotes": "户外音乐节形式"
+    }
+  ],
+  "pastTours": [
+    {
+      "tourName": "存在巡回演唱会",
+      "year": "2011-2012",
+      "totalShows": 15,
+      "totalAttendance": 300000,
+      "description": "《存在》专辑推广巡演"
+    },
+    {
+      "tourName": "河流全国巡演",
+      "year": "2014-2015", 
+      "totalShows": 20,
+      "totalAttendance": 400000,
+      "description": "《河流》专辑全国巡演"
+    },
+    {
+      "tourName": "无处安放巡回演唱会",
+      "year": "2018-2019",
+      "totalShows": 25,
+      "totalAttendance": 500000,
+      "description": "《无处安放》专辑巡回演出"
+    }
+  ],
+  "specialEvents": [
+    {
+      "eventName": "汪峰30周年音乐庆典",
+      "date": "2024-12-31",
+      "city": "北京",
+      "venue": "鸟巢体育场",
+      "description": "庆祝汪峰音乐生涯30周年特别演出",
+      "ticketStatus": "即将发售"
+    }
+  ]
+}

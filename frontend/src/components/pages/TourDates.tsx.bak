@@ -1,0 +1,242 @@
+import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { cn, withBasePath } from '@/lib/utils';
+
+interface Concert {
+  id: number;
+  date: string;
+  city: string;
+  venue: string;
+  theme: string;
+  isFuture?: boolean; // 可选字段，将根据时间自动计算
+}
+
+const TourDates = () => {
+  const [concerts, setConcerts] = useState<Concert[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // 获取北京时间并判断演出状态
+  const getBeiJingTime = () => {
+    const now = new Date();
+    // 将UTC时间转换为北京时间 (UTC+8)
+    const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+    return beijingTime;
+  };
+
+  const isConcertUpcoming = (concertDate: string) => {
+    const beijingNow = getBeiJingTime();
+    
+    // 统一日期格式处理，支持 2025-12-6 和 2025-12-06 格式
+    let normalizedDate = concertDate;
+    if (concertDate.split('-').length === 3) {
+      const [year, month, day] = concertDate.split('-');
+      normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    }
+    
+    const concertDateTime = new Date(normalizedDate + 'T23:59:59');
+    // 演出日期的次日00:00才算结束
+    const concertEndDate = new Date(concertDateTime);
+    concertEndDate.setDate(concertEndDate.getDate() + 1);
+    concertEndDate.setHours(0, 0, 0, 0);
+    
+    console.log(`演出: ${concertDate}, 北京时间: ${beijingNow.toLocaleString('zh-CN')}, 结束时间: ${concertEndDate.toLocaleString('zh-CN')}, 即将举行: ${beijingNow < concertEndDate}`);
+    
+    return beijingNow < concertEndDate;
+  };
+
+  useEffect(() => {
+    const loadConcerts = async () => {
+      try {
+        const response = await fetch(withBasePath('data/concerts_timeline.json'));
+        const data = await response.json();
+        
+        // 为每个演出自动计算状态
+        const concertsWithStatus = data.concerts.map((concert: Concert) => ({
+          ...concert,
+          isFuture: isConcertUpcoming(concert.date)
+        }));
+        
+        setConcerts(concertsWithStatus);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading concerts:', error);
+        setLoading(false);
+      }
+    };
+
+    loadConcerts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white py-20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wangfeng-purple mx-auto mb-4"></div>
+          <p className="text-lg">加载演出信息中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white py-20">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider text-white mb-4">
+            巡演 <span className="text-wangfeng-purple animate-pulse-glow">日程</span>
+          </h1>
+          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
+            摇滚传奇演唱会时光轴
+          </h2>
+        </motion.div>
+
+        {/* Statistics */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="max-w-4xl mx-auto mb-16"
+        >
+          <div className="bg-secondary-dark rounded-xl border border-wangfeng-purple/30 shadow-glow p-8">
+            <h3 className="text-2xl font-bold text-wangfeng-purple mb-6 text-center">演出统计</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+              <div>
+                <div className="text-3xl font-bold text-white">
+                  {concerts.length > 0 ? Math.max(...concerts.map(c => c.id)) : 0}
+                </div>
+                <div className="text-gray-400">总演出场次</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-wangfeng-purple">
+                  {concerts.filter(c => c.isFuture).length}
+                </div>
+                <div className="text-gray-400">即将举行</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-gray-300">
+                  {concerts.length > 0 ? Math.max(...concerts.map(c => c.id)) - concerts.filter(c => c.isFuture).length : 0}
+                </div>
+                <div className="text-gray-400">已完成</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        <div className="max-w-6xl mx-auto relative">
+          {/* Timeline Line */}
+          <div className="absolute left-1/2 transform -translate-x-px h-full w-0.5 bg-wangfeng-purple"></div>
+          
+          {/* Concert Items */}
+          <div className="space-y-12">
+            {concerts.map((concert, index) => {
+              const isLeft = index % 2 === 0;
+              const timelineNumber = concert.id;
+
+              const card = (
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  className={cn(
+                    'p-6 rounded-xl border shadow-lg transition-all duration-300',
+                    concert.isFuture
+                      ? 'bg-wangfeng-purple/20 border-wangfeng-purple/50 shadow-wangfeng-purple/25'
+                      : 'bg-gray-900/80 border-gray-700 shadow-gray-900/50'
+                  )}
+                >
+                  <div className="flex items-center mb-3">
+                    <div
+                      className={cn(
+                        'px-3 py-1 rounded-full text-sm font-bold',
+                        concert.isFuture
+                          ? 'bg-wangfeng-purple text-white'
+                          : 'bg-gray-700 text-gray-300'
+                      )}
+                    >
+                      {new Date(concert.date).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      })}
+                    </div>
+                    {concert.isFuture && (
+                      <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                        即将举行
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-wangfeng-purple mb-2 animate-pulse-glow">
+                    {concert.city}
+                  </h3>
+
+                  {concert.venue && (
+                    <p className="text-gray-300 text-sm mb-3">
+                      📍 {concert.venue}
+                    </p>
+                  )}
+
+                  <p className="text-white font-medium">
+                    {concert.theme}
+                  </p>
+
+                  {concert.isFuture && (
+                    <div className="mt-4">
+                      <button className="bg-wangfeng-purple hover:bg-wangfeng-purple/80 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                        获取门票信息
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+
+              return (
+                <motion.div
+                  key={concert.id}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-100px' }}
+                  transition={{ duration: 0.6, delay: 0.1 }}
+                  className="relative"
+                >
+                  <div className="flex items-center justify-center gap-8">
+                    {/* Left side content or empty space */}
+                    <div className="flex-1 flex justify-end">
+                      {isLeft && (
+                        <div className="w-full max-w-md">
+                          {card}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Timeline Dot - Always in center */}
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-wangfeng-purple rounded-full border-4 border-black shadow-lg flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">{timelineNumber}</span>
+                      </div>
+                    </div>
+
+                    {/* Right side content or empty space */}
+                    <div className="flex-1 flex justify-start">
+                      {!isLeft && (
+                        <div className="w-full max-w-md">
+                          {card}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TourDates;

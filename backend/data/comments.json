@@ -1,0 +1,24 @@
+[
+  {
+    "_id": "2769aeda-6ada-4693-88eb-c4696df7ddc3",
+    "post_id": "test-blog-1",
+    "user_id": "35976f11-4c8d-45b1-88f2-20434ce41599",
+    "username": "admin",
+    "user_full_name": "忧郁的眼睛o",
+    "content": "这是第一条评论！汪峰的音乐真的很棒！",
+    "created_at": "2025-09-29T05:20:31.738963",
+    "updated_at": "2025-09-29T05:20:31.738967",
+    "is_deleted": false
+  },
+  {
+    "_id": "42c80fd6-935e-43aa-b40a-c86853a1b617",
+    "post_id": "2020-03-15-关于音乐与生活的思考",
+    "user_id": "35976f11-4c8d-45b1-88f2-20434ce41599",
+    "username": "admin",
+    "user_full_name": "忧郁的眼睛o",
+    "content": "6",
+    "created_at": "2025-09-29T05:57:12.438510",
+    "updated_at": "2025-09-29T05:57:12.438517",
+    "is_deleted": false
+  }
+]

@@ -1,0 +1,28 @@
+[
+  {
+    "id": 99,
+    "category": "演唱会",
+    "date": "2025-12-27",
+    "city": "长沙",
+    "venue": "TBA",
+    "theme": "汪峰“相信未来”巡回演唱会西安站",
+    "description": "小道消息",
+    "image": "uploads/schedules/20251003075852_8ed10af1031d4f1cb20b4c724eb2dcc6.jpg",
+    "source": "custom",
+    "created_at": "2025-10-03T07:58:52.017910",
+    "updated_at": "2025-10-03T07:58:52.017910"
+  },
+  {
+    "id": 100,
+    "category": "音乐节",
+    "date": "2025-12-18",
+    "city": "大连",
+    "venue": "草地",
+    "theme": "汪峰大连音乐节",
+    "description": null,
+    "image": null,
+    "source": "custom",
+    "created_at": "2025-10-03T08:00:25.717735",
+    "updated_at": "2025-10-03T08:00:25.717735"
+  }
+]

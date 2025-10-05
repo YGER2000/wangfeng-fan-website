@@ -1,0 +1,106 @@
+{
+  "albums": [
+    {
+      "title": "爱是一颗幸福的子弹", 
+      "englishTitle": "Love Is a Happy Bullet",
+      "releaseDate": "2000-01-01",
+      "coverImage": "images/album_covers/专辑封面-2002-爱是一颗幸福的子弹.JPG",
+      "trackCount": 10,
+      "genre": ["摇滚", "流行"],
+      "description": "汪峰首张个人专辑，确立了他的音乐风格",
+      "highlights": ["爱是一颗幸福的子弹", "花房姑娘"],
+      "chartPosition": {
+        "china": 5,
+        "taiwan": 8
+      },
+      "sales": "50万张",
+      "certification": "金唱片"
+    },
+    {
+      "title": "怒放的生命",
+      "englishTitle": "Blooming Life", 
+      "releaseDate": "2005-08-01",
+      "coverImage": "images/album_covers/专辑封面-2005-怒放的生命.JPG",
+      "trackCount": 11,
+      "genre": ["摇滚", "流行摇滚"],
+      "description": "汪峰最具代表性的专辑之一，包含经典歌曲《怒放的生命》",
+      "highlights": ["怒放的生命", "飞得更高", "存在"],
+      "chartPosition": {
+        "china": 1,
+        "taiwan": 3
+      },
+      "sales": "100万张",
+      "certification": "双白金"
+    },
+    {
+      "title": "河流",
+      "englishTitle": "River",
+      "releaseDate": "2014-11-28", 
+      "coverImage": "images/album_covers/专辑封面-2015-河流.JPG",
+      "trackCount": 10,
+      "genre": ["摇滚", "民谣"],
+      "description": "更加成熟的音乐作品，展现了汪峰的音乐深度",
+      "highlights": ["河流", "一起摇摆", "当我想你的时候"],
+      "chartPosition": {
+        "china": 2,
+        "taiwan": 4
+      },
+      "sales": "80万张", 
+      "certification": "白金"
+    },
+    {
+      "title": "生来彷徨",
+      "englishTitle": "Born to Be Lost",
+      "releaseDate": "2013-04-20",
+      "coverImage": "images/album_covers/专辑封面-2015-生来彷徨.JPG", 
+      "trackCount": 12,
+      "genre": ["摇滚", "电子", "实验"],
+      "description": "汪峰音乐风格的新探索，融合了更多现代元素",
+      "highlights": ["生来彷徨", "勇敢的心", "光明"],
+      "chartPosition": {
+        "china": 3,
+        "taiwan": 6
+      },
+      "sales": "60万张",
+      "certification": "金唱片"
+    },
+    {
+      "title": "信仰在空中飘扬",
+      "englishTitle": "Faith Flying in the Air",
+      "releaseDate": "2009-11-01",
+      "coverImage": "images/album_covers/专辑封面-2009-信仰在空中飘扬.JPG", 
+      "trackCount": 12,
+      "genre": ["摇滚", "流行摇滚"],
+      "description": "包含经典歌曲《北京北京》的重要专辑",
+      "highlights": ["北京北京", "春天里", "信仰"],
+      "chartPosition": {
+        "china": 1,
+        "taiwan": 2
+      },
+      "sales": "120万张",
+      "certification": "双白金"
+    }
+  ],
+  "singles": [
+    {
+      "title": "北京北京",
+      "releaseDate": "2009-05-01",
+      "album": "信仰在空中飘扬",
+      "description": "汪峰最著名的代表作之一"
+    },
+    {
+      "title": "怒放的生命", 
+      "releaseDate": "2005-08-01",
+      "album": "怒放的生命",
+      "description": "激励人心的经典摇滚作品"
+    }
+  ],
+  "collaborations": [
+    {
+      "title": "光明",
+      "collaborator": "谭维维",
+      "releaseDate": "2020-06-01", 
+      "description": "与谭维维合作的励志歌曲"
+    }
+  ]
+}

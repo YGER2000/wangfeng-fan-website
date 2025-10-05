@@ -1,0 +1,47 @@
+/* Wang Feng Fan Website Styles */
+
+.wang-feng-hero {
+  background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #8B5CF6 100%);
+}
+
+.wang-feng-card {
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.wang-feng-card:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3);
+}
+
+/* Purple glowing effects */
+.purple-glow {
+  text-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
+}
+
+.purple-border-glow {
+  box-shadow: 0 0 15px 5px rgba(139, 92, 246, 0.4);
+}
+
+/* Custom animations */
+@keyframes pulse-purple {
+  0%, 100% {
+    box-shadow: 0 0 15px 5px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px 10px rgba(139, 92, 246, 0.5);
+  }
+}
+
+.animate-pulse-purple {
+  animation: pulse-purple 3s infinite;
+}
+
+/* Fan website specific styles */
+.fan-comment {
+  background: rgba(0, 0, 0, 0.8);
+  border: 2px solid #8B5CF6;
+  color: #8B5CF6;
+}

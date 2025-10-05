@@ -1,0 +1,159 @@
+{
+  "categories": {
+    "album_covers": {
+      "title": "专辑封面",
+      "description": "汪峰历年专辑封面集锦",
+      "images": [
+        {
+          "filename": "02_asykxfdzd_cover.JPG",
+          "title": "爱是一颗幸福的子弹",
+          "year": 2000,
+          "description": "汪峰首张个人专辑封面",
+          "altText": "汪峰专辑《爱是一颗幸福的子弹》封面"
+        },
+        {
+          "filename": "05_nfdsm_cover.JPG", 
+          "title": "怒放的生命",
+          "year": 2005,
+          "description": "汪峰代表作《怒放的生命》专辑封面",
+          "altText": "汪峰专辑《怒放的生命》封面，经典摇滚设计"
+        },
+        {
+          "filename": "09_xyzkzpy_cover.JPG",
+          "title": "信仰在空中飘扬", 
+          "year": 2009,
+          "description": "《信仰在空中飘扬》专辑封面，包含《北京北京》",
+          "altText": "汪峰专辑《信仰在空中飘扬》封面"
+        },
+        {
+          "filename": "15_hl_cover.JPG",
+          "title": "河流",
+          "year": 2015, 
+          "description": "《河流》专辑封面，展现深刻的音乐内涵",
+          "altText": "汪峰专辑《河流》封面"
+        }
+      ]
+    },
+    "recent_photos": {
+      "title": "近期照片",
+      "description": "汪峰2024年最新照片",
+      "images": [
+        {
+          "filename": "recent_portrait_2024.jpg",
+          "title": "2024年最新个人写真",
+          "year": 2024,
+          "description": "汪峰2024年最新个人写真照片",
+          "altText": "汪峰2024年个人写真，成熟稳重的形象"
+        },
+        {
+          "filename": "studio_recording.jpg",
+          "title": "录音室工作照",
+          "year": 2024,
+          "description": "汪峰在录音室创作新歌的工作照",
+          "altText": "汪峰在录音室工作，专注创作音乐"
+        },
+        {
+          "filename": "new_song_recording.jpg",
+          "title": "新歌录制现场",
+          "year": 2024,
+          "description": "汪峰录制新歌的现场照片",
+          "altText": "汪峰录制新歌现场，展现专业的音乐制作过程"
+        }
+      ]
+    },
+    "iconic_moments": {
+      "title": "经典瞬间", 
+      "description": "汪峰音乐生涯中的经典瞬间",
+      "images": [
+        {
+          "filename": "voice_of_china_mentor.JPG",
+          "title": "中国好声音导师",
+          "year": 2012,
+          "description": "汪峰担任《中国好声音》导师的经典瞬间",
+          "altText": "汪峰作为中国好声音导师，指导学员的经典场面"
+        },
+        {
+          "filename": "rock_legend_moment.jpg", 
+          "title": "摇滚传奇时刻",
+          "year": 2011,
+          "description": "汪峰在台上演唱《存在》的经典瞬间",
+          "altText": "汪峰在舞台上激情演唱，展现摇滚精神"
+        },
+        {
+          "filename": "beijing_love_story.jpg",
+          "title": "北京北京演出",
+          "year": 2009,
+          "description": "汪峰演唱《北京北京》的标志性演出",
+          "altText": "汪峰深情演唱《北京北京》的舞台瞬间"
+        }
+      ]
+    },
+    "concerts": {
+      "title": "演唱会",
+      "description": "汪峰历年演唱会精彩瞬间",
+      "images": [
+        {
+          "filename": "beijing_concert_2024.jpg",
+          "title": "2024北京演唱会",
+          "year": 2024,
+          "description": "汪峰2024年北京演唱会现场",
+          "altText": "汪峰2024年北京演唱会，现场观众热情高涨"
+        },
+        {
+          "filename": "stadium_concert.jpg",
+          "title": "体育场演出",
+          "year": 2023,
+          "description": "汪峰在大型体育场的演出现场", 
+          "altText": "汪峰在体育场进行大型演出，现场壮观"
+        },
+        {
+          "filename": "live_performance_solo.jpg",
+          "title": "独唱表演",
+          "year": 2022,
+          "description": "汪峰独唱表演的精彩瞬间",
+          "altText": "汪峰独唱表演，展现深厚的音乐功底"
+        }
+      ]
+    },
+    "awards_photos": {
+      "title": "获奖照片",
+      "description": "汪峰获得各项音乐奖项的珍贵照片", 
+      "images": [
+        {
+          "filename": "music_awards_ceremony.jpg",
+          "title": "音乐颁奖典礼",
+          "year": 2012,
+          "description": "汪峰在音乐风云榜颁奖典礼上获奖",
+          "altText": "汪峰在音乐颁奖典礼上手持奖杯"
+        },
+        {
+          "filename": "rock_award_winner.jpg",
+          "title": "摇滚奖项获得者",
+          "year": 2011,
+          "description": "汪峰获得最佳摇滚艺人奖项",
+          "altText": "汪峰获得摇滚音乐奖项，展示奖杯"
+        }
+      ]
+    },
+    "personal_life": {
+      "title": "个人生活",
+      "description": "汪峰日常生活和幕后照片",
+      "images": [
+        {
+          "filename": "behind_scenes.JPG",
+          "title": "幕后花絮",
+          "year": 2024,
+          "description": "汪峰工作幕后的轻松时刻",
+          "altText": "汪峰在工作间隙的轻松瞬间"
+        },
+        {
+          "filename": "fan_meeting.jpg", 
+          "title": "粉丝见面会",
+          "year": 2024,
+          "description": "汪峰与粉丝亲切互动的温馨时刻",
+          "altText": "汪峰与粉丝合影，展现亲和力"
+        }
+      ]
+    }
+  }
+}

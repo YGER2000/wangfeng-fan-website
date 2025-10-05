@@ -1,0 +1,2731 @@
+{
+  "albums": [
+    {
+      "id": "bjj43",
+      "name": "鲍家街43号",
+      "coverImage": "images/album_covers/专辑封面-1997-鲍家街43号.JPG",
+      "year": "1997",
+      "type": "album",
+      "songs": [
+        {
+          "id": "bjj43-1",
+          "title": "我真的需要你",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/1.我真的需要你.mp3",
+          "duration": 241
+        },
+        {
+          "id": "bjj43-2",
+          "title": "小鸟",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/2.小鸟.mp3",
+          "duration": 299
+        },
+        {
+          "id": "bjj43-3",
+          "title": "李建国",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/3.李建国.mp3",
+          "duration": 291
+        },
+        {
+          "id": "bjj43-4",
+          "title": "我们该做什么",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/4.我们该做什么.mp3",
+          "duration": 184
+        },
+        {
+          "id": "bjj43-5",
+          "title": "夜里",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/5.夜里.mp3",
+          "duration": 594
+        },
+        {
+          "id": "bjj43-6",
+          "title": "没有人要我",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/6.没有人要我.mp3",
+          "duration": 312
+        },
+        {
+          "id": "bjj43-7",
+          "title": "追梦",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/7.追梦.mp3",
+          "duration": 281
+        },
+        {
+          "id": "bjj43-8",
+          "title": "点亮火焰",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/8.点亮火焰.mp3",
+          "duration": 416
+        },
+        {
+          "id": "bjj43-9",
+          "title": "我希望",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/9.我希望.mp3",
+          "duration": 237
+        },
+        {
+          "id": "bjj43-10",
+          "title": "晚安，北京",
+          "album": "鲍家街43号",
+          "filePath": "/music/album/1997-鲍家街43号/10.晚安，北京.mp3",
+          "duration": 450
+        }
+      ]
+    },
+    {
+      "id": "fbll",
+      "name": "风暴来临",
+      "coverImage": "images/album_covers/专辑封面-1998-风暴来临.JPG",
+      "year": "1998",
+      "type": "album",
+      "songs": [
+        {
+          "id": "fbll-1",
+          "title": "游戏",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/1.游戏.mp3",
+          "duration": 284
+        },
+        {
+          "id": "fbll-2",
+          "title": "我应该真实的生活还是去幻想",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/2.我应该真实的生活还是去幻想.mp3",
+          "duration": 253
+        },
+        {
+          "id": "fbll-3",
+          "title": "错误",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/3.错误.mp3",
+          "duration": 327
+        },
+        {
+          "id": "fbll-4",
+          "title": "瓦解",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/4.瓦解.mp3",
+          "duration": 318
+        },
+        {
+          "id": "fbll-5",
+          "title": "风暴来临",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/5.风暴来临.mp3",
+          "duration": 315
+        },
+        {
+          "id": "fbll-6",
+          "title": "街道",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/6.街道.mp3",
+          "duration": 348
+        },
+        {
+          "id": "fbll-7",
+          "title": "我会在这儿等你",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/7.我会在这儿等你.mp3",
+          "duration": 337
+        },
+        {
+          "id": "fbll-8",
+          "title": "失败者",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/8.失败者.mp3",
+          "duration": 251
+        },
+        {
+          "id": "fbll-9",
+          "title": "你有没有听见我在哭泣",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/9.你有没有听见我在哭泣.mp3",
+          "duration": 295
+        },
+        {
+          "id": "fbll-10",
+          "title": "O女士",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/10.O女士.mp3",
+          "duration": 322
+        },
+        {
+          "id": "fbll-11",
+          "title": "明天",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/11.明天.mp3",
+          "duration": 208
+        },
+        {
+          "id": "fbll-12",
+          "title": "离开我",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/12.离开我.mp3",
+          "duration": 315
+        },
+        {
+          "id": "fbll-13",
+          "title": "忧郁的眼睛",
+          "album": "风暴来临",
+          "filePath": "/music/album/1998-风暴来临/13.忧郁的眼睛.mp3",
+          "duration": 518
+        }
+      ]
+    },
+    {
+      "id": "hh",
+      "name": "花火",
+      "coverImage": "images/album_covers/专辑封面-2000-花火.JPG",
+      "year": "2000",
+      "type": "album",
+      "songs": [
+        {
+          "id": "hh-1",
+          "title": "早安，女士",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/1.早安，女士.mp3",
+          "duration": 300
+        },
+        {
+          "id": "hh-2",
+          "title": "花火",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/2.花火.mp3",
+          "duration": 382
+        },
+        {
+          "id": "hh-3",
+          "title": "迷鹿",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/3.迷鹿.mp3",
+          "duration": 393
+        },
+        {
+          "id": "hh-4",
+          "title": "东北偏北",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/4.东北偏北.mp3",
+          "duration": 316
+        },
+        {
+          "id": "hh-5",
+          "title": "美丽世界的孤儿",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/5.美丽世界的孤儿.mp3",
+          "duration": 339
+        },
+        {
+          "id": "hh-6",
+          "title": "我爱你，生活",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/6.我爱你，生活.mp3",
+          "duration": 303
+        },
+        {
+          "id": "hh-7",
+          "title": "一切都会流走",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/7.一切都会流走.mp3",
+          "duration": 197
+        },
+        {
+          "id": "hh-8",
+          "title": "青春",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/8.青春.mp3",
+          "duration": 256
+        },
+        {
+          "id": "hh-9",
+          "title": "爱的隧道",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/9.爱的隧道.mp3",
+          "duration": 380
+        },
+        {
+          "id": "hh-10",
+          "title": "丧失",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/10.丧失.mp3",
+          "duration": 239
+        },
+        {
+          "id": "hh-11",
+          "title": "妈妈",
+          "album": "花火",
+          "filePath": "/music/album/2000-花火/11.妈妈.mp3",
+          "duration": 377
+        }
+      ]
+    },
+    {
+      "id": "asykxfdzd",
+      "name": "爱是一颗幸福的子弹",
+      "coverImage": "images/album_covers/专辑封面-2002-爱是一颗幸福的子弹.JPG",
+      "year": "2002",
+      "type": "album",
+      "songs": [
+        {
+          "id": "asykxfdzd-1",
+          "title": "在雨中",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/1.在雨中.mp3",
+          "duration": 299
+        },
+        {
+          "id": "asykxfdzd-2",
+          "title": "我的爱",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/2.我的爱.mp3",
+          "duration": 407
+        },
+        {
+          "id": "asykxfdzd-3",
+          "title": "窗台",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/3.窗台.mp3",
+          "duration": 280
+        },
+        {
+          "id": "asykxfdzd-4",
+          "title": "生来孤独",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/4.生来孤独.mp3",
+          "duration": 331
+        },
+        {
+          "id": "asykxfdzd-5",
+          "title": "英雄",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/5.英雄.mp3",
+          "duration": 336
+        },
+        {
+          "id": "asykxfdzd-6",
+          "title": "爱是一颗幸福的子弹",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/6.爱是一颗幸福的子弹.mp3",
+          "duration": 387
+        },
+        {
+          "id": "asykxfdzd-7",
+          "title": "最后一次我见到你",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/7.最后一次我见到你.mp3",
+          "duration": 228
+        },
+        {
+          "id": "asykxfdzd-8",
+          "title": "啦啦啦",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/8.啦啦啦.mp3",
+          "duration": 245
+        },
+        {
+          "id": "asykxfdzd-9",
+          "title": "你",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/9.你.mp3",
+          "duration": 215
+        },
+        {
+          "id": "asykxfdzd-10",
+          "title": "去无方向",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/10.去无方向.mp3",
+          "duration": 279
+        },
+        {
+          "id": "asykxfdzd-11",
+          "title": "再见二十世纪",
+          "album": "爱是一颗幸福的子弹",
+          "filePath": "/music/album/2002-爱是一颗幸福的子弹/11.再见二十世纪.mp3",
+          "duration": 459
+        }
+      ]
+    },
+    {
+      "id": "xzk",
+      "name": "笑着哭",
+      "coverImage": "images/album_covers/专辑封面-2004-笑着哭.JPG",
+      "year": "2004",
+      "type": "album",
+      "songs": [
+        {
+          "id": "xzk-1",
+          "title": "彼岸",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/1.彼岸.mp3",
+          "duration": 236
+        },
+        {
+          "id": "xzk-2",
+          "title": "飞得更高",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/2.飞得更高.mp3",
+          "duration": 397
+        },
+        {
+          "id": "xzk-3",
+          "title": "笑着哭",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/3.笑着哭.mp3",
+          "duration": 290
+        },
+        {
+          "id": "xzk-4",
+          "title": "硬币",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/4.硬币.mp3",
+          "duration": 231
+        },
+        {
+          "id": "xzk-5",
+          "title": "生命中的一天",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/5.生命中的一天.mp3",
+          "duration": 273
+        },
+        {
+          "id": "xzk-6",
+          "title": "绽放",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/6.绽放.mp3",
+          "duration": 316
+        },
+        {
+          "id": "xzk-7",
+          "title": "门开了",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/7.门开了.mp3",
+          "duration": 234
+        },
+        {
+          "id": "xzk-8",
+          "title": "尘土",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/8.尘土.mp3",
+          "duration": 241
+        },
+        {
+          "id": "xzk-9",
+          "title": "我在长大",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/9.我在长大.mp3",
+          "duration": 250
+        },
+        {
+          "id": "xzk-10",
+          "title": "十二月的泪",
+          "album": "笑着哭",
+          "filePath": "/music/album/2004-笑着哭/10.十二月的泪.mp3",
+          "duration": 243
+        }
+      ]
+    },
+    {
+      "id": "nfdsm",
+      "name": "怒放的生命",
+      "coverImage": "images/album_covers/专辑封面-2005-怒放的生命.JPG",
+      "year": "2005",
+      "type": "album",
+      "songs": [
+        {
+          "id": "nfdsm-1",
+          "title": "为了让生活继续",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/1.为了让生活继续.mp3",
+          "duration": 277
+        },
+        {
+          "id": "nfdsm-2",
+          "title": "怒放的生命",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/2.怒放的生命.mp3",
+          "duration": 275
+        },
+        {
+          "id": "nfdsm-3",
+          "title": "恒星",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/3.恒星.mp3",
+          "duration": 281
+        },
+        {
+          "id": "nfdsm-4",
+          "title": "长安街上",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/4.长安街上.mp3",
+          "duration": 244
+        },
+        {
+          "id": "nfdsm-5",
+          "title": "像个孩子",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/5.像个孩子.mp3",
+          "duration": 281
+        },
+        {
+          "id": "nfdsm-6",
+          "title": "雪钟花",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/6.雪钟花.mp3",
+          "duration": 303
+        },
+        {
+          "id": "nfdsm-7",
+          "title": "旅途",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/7.旅途.mp3",
+          "duration": 244
+        },
+        {
+          "id": "nfdsm-8",
+          "title": "碎梦",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/8.碎梦.mp3",
+          "duration": 275
+        },
+        {
+          "id": "nfdsm-9",
+          "title": "时光倒流",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/9.时光倒流.mp3",
+          "duration": 329
+        },
+        {
+          "id": "nfdsm-10",
+          "title": "我们的梦",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/10.我们的梦.mp3",
+          "duration": 303
+        },
+        {
+          "id": "nfdsm-11",
+          "title": "我爱你 中国",
+          "album": "怒放的生命",
+          "filePath": "/music/album/2005-怒放的生命/11.我爱你 中国.mp3",
+          "duration": 376
+        }
+      ]
+    },
+    {
+      "id": "ygdx",
+      "name": "勇敢的心",
+      "coverImage": "images/album_covers/专辑封面-2007-勇敢的心.JPG",
+      "year": "2007",
+      "type": "album",
+      "songs": [
+        {
+          "id": "ygdx-1",
+          "title": "哭泣的拳头",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/1.哭泣的拳头.mp3",
+          "duration": 147
+        },
+        {
+          "id": "ygdx-2",
+          "title": "勇敢的心",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/2.勇敢的心.mp3",
+          "duration": 302
+        },
+        {
+          "id": "ygdx-3",
+          "title": "眩晕",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/3.眩晕.mp3",
+          "duration": 203
+        },
+        {
+          "id": "ygdx-4",
+          "title": "觉醒",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/4.觉醒.mp3",
+          "duration": 329
+        },
+        {
+          "id": "ygdx-5",
+          "title": "无名之辈",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/5.无名之辈.mp3",
+          "duration": 220
+        },
+        {
+          "id": "ygdx-6",
+          "title": "挥挥手",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/6.挥挥手.mp3",
+          "duration": 317
+        },
+        {
+          "id": "ygdx-7",
+          "title": "我的路",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/7.我的路.mp3",
+          "duration": 261
+        },
+        {
+          "id": "ygdx-8",
+          "title": "边走边唱",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/8.边走边唱.mp3",
+          "duration": 236
+        },
+        {
+          "id": "ygdx-9",
+          "title": "空的发狂",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/9.空的发狂.mp3",
+          "duration": 215
+        },
+        {
+          "id": "ygdx-10",
+          "title": "我如此爱你",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/10.我如此爱你.mp3",
+          "duration": 255
+        },
+        {
+          "id": "ygdx-11",
+          "title": "北京北京",
+          "album": "勇敢的心",
+          "filePath": "/music/album/2007-勇敢的心/11.北京北京.mp3",
+          "duration": 358
+        }
+      ]
+    },
+    {
+      "id": "xyzkzpy",
+      "name": "信仰在空中飘扬",
+      "coverImage": "images/album_covers/专辑封面-2009-信仰在空中飘扬.JPG",
+      "year": "2009",
+      "type": "album",
+      "songs": [
+        {
+          "id": "xyzkzpy-1",
+          "title": "名利场",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/1.名利场.mp3",
+          "duration": 166
+        },
+        {
+          "id": "xyzkzpy-2",
+          "title": "春天里",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/2.春天里.mp3",
+          "duration": 280
+        },
+        {
+          "id": "xyzkzpy-3",
+          "title": "光明",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/3.光明.mp3",
+          "duration": 324
+        },
+        {
+          "id": "xyzkzpy-4",
+          "title": "当我想你的时候",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/4.当我想你的时候.mp3",
+          "duration": 263
+        },
+        {
+          "id": "xyzkzpy-5",
+          "title": "空空如也",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/5.空空如也.mp3",
+          "duration": 262
+        },
+        {
+          "id": "xyzkzpy-6",
+          "title": "有意思吗",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/6.有意思吗.mp3",
+          "duration": 255
+        },
+        {
+          "id": "xyzkzpy-7",
+          "title": "蹩脚的爱情",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/7.蹩脚的爱情.mp3",
+          "duration": 247
+        },
+        {
+          "id": "xyzkzpy-8",
+          "title": "母亲",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/8.母亲.mp3",
+          "duration": 227
+        },
+        {
+          "id": "xyzkzpy-9",
+          "title": "破碎的歌谣",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/9.破碎的歌谣.mp3",
+          "duration": 229
+        },
+        {
+          "id": "xyzkzpy-10",
+          "title": "如果风不再吹",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/10.如果风不再吹.mp3",
+          "duration": 285
+        },
+        {
+          "id": "xyzkzpy-11",
+          "title": "你是我心爱的姑娘",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/11.你是我心爱的姑娘.mp3",
+          "duration": 299
+        },
+        {
+          "id": "xyzkzpy-12",
+          "title": "无主之城",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/12.无主之城.mp3",
+          "duration": 291
+        },
+        {
+          "id": "xyzkzpy-13",
+          "title": "信仰在空中飘扬",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/13.信仰在空中飘扬.mp3",
+          "duration": 438
+        },
+        {
+          "id": "xyzkzpy-14",
+          "title": "再见 青春",
+          "album": "信仰在空中飘扬",
+          "filePath": "/music/album/2009-信仰在空中飘扬/14.再见 青春.mp3",
+          "duration": 426
+        }
+      ]
+    },
+    {
+      "id": "swsq",
+      "name": "生无所求",
+      "coverImage": "images/album_covers/专辑封面-2011-生无所求.JPG",
+      "year": "2011",
+      "type": "album",
+      "songs": [
+        {
+          "id": "swsq-1",
+          "title": "上千个黎明",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/1.上千个黎明.mp3",
+          "duration": 202
+        },
+        {
+          "id": "swsq-2",
+          "title": "存在",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/2.存在.mp3",
+          "duration": 284
+        },
+        {
+          "id": "swsq-3",
+          "title": "多么完美的生活",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/3.多么完美的生活.mp3",
+          "duration": 231
+        },
+        {
+          "id": "swsq-4",
+          "title": "向阳花",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/4.向阳花.mp3",
+          "duration": 331
+        },
+        {
+          "id": "swsq-5",
+          "title": "来不及了",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/5.来不及了.mp3",
+          "duration": 252
+        },
+        {
+          "id": "swsq-6",
+          "title": "不能停止的哭泣",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/6.不能停止的哭泣.mp3",
+          "duration": 294
+        },
+        {
+          "id": "swsq-7",
+          "title": "等待",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/7.等待.mp3",
+          "duration": 268
+        },
+        {
+          "id": "swsq-8",
+          "title": "爱你的方式",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/8.爱你的方式.mp3",
+          "duration": 255
+        },
+        {
+          "id": "swsq-9",
+          "title": "改变",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/9.改变.mp3",
+          "duration": 257
+        },
+        {
+          "id": "swsq-10",
+          "title": "恩赐之地",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/10.恩赐之地.mp3",
+          "duration": 279
+        },
+        {
+          "id": "swsq-11",
+          "title": "一百万吨的信念",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/11.一百万吨的信念.mp3",
+          "duration": 347
+        },
+        {
+          "id": "swsq-12",
+          "title": "不经意间",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/12.不经意间.mp3",
+          "duration": 309
+        },
+        {
+          "id": "swsq-13",
+          "title": "再见蒲公英",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/13.再见蒲公英.mp3",
+          "duration": 273
+        },
+        {
+          "id": "swsq-14",
+          "title": "让我们在一起",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/14.让我们在一起.mp3",
+          "duration": 297
+        },
+        {
+          "id": "swsq-15",
+          "title": "大桥上",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/15.大桥上.mp3",
+          "duration": 300
+        },
+        {
+          "id": "swsq-16",
+          "title": "流浪",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/16.流浪.mp3",
+          "duration": 255
+        },
+        {
+          "id": "swsq-17",
+          "title": "爸爸",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/17.爸爸.mp3",
+          "duration": 275
+        },
+        {
+          "id": "swsq-18",
+          "title": "你不知道",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/18.你不知道.mp3",
+          "duration": 256
+        },
+        {
+          "id": "swsq-19",
+          "title": "宝贝 没什么",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/19.宝贝 没什么.mp3",
+          "duration": 267
+        },
+        {
+          "id": "swsq-20",
+          "title": "地心",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/20.地心.mp3",
+          "duration": 348
+        },
+        {
+          "id": "swsq-21",
+          "title": "抵押灵魂",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/21.抵押灵魂.mp3",
+          "duration": 256
+        },
+        {
+          "id": "swsq-22",
+          "title": "我们的爱情",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/22.我们的爱情.mp3",
+          "duration": 276
+        },
+        {
+          "id": "swsq-23",
+          "title": "有些事我们永远无法左右",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/23.有些事我们永远无法左右.mp3",
+          "duration": 468
+        },
+        {
+          "id": "swsq-24",
+          "title": "一瞬间",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/24.一瞬间.mp3",
+          "duration": 304
+        },
+        {
+          "id": "swsq-25",
+          "title": "不能接受的事实",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/25.不能接受的事实.mp3",
+          "duration": 243
+        },
+        {
+          "id": "swsq-26",
+          "title": "雨天的回忆",
+          "album": "生无所求",
+          "filePath": "/music/album/2011-生无所求/26.雨天的回忆.mp3",
+          "duration": 377
+        }
+      ]
+    },
+    {
+      "id": "slph",
+      "name": "生来彷徨",
+      "coverImage": "images/album_covers/专辑封面-2015-生来彷徨.JPG",
+      "year": "2013",
+      "type": "album",
+      "songs": [
+        {
+          "id": "slph-1",
+          "title": "一起摇摆",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/1.一起摇摆.mp3",
+          "duration": 265
+        },
+        {
+          "id": "slph-2",
+          "title": "生来彷徨",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/2.生来彷徨.mp3",
+          "duration": 271
+        },
+        {
+          "id": "slph-3",
+          "title": "不羁的生命",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/3.不羁的生命.mp3",
+          "duration": 358
+        },
+        {
+          "id": "slph-4",
+          "title": "想念真好",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/4.想念真好.mp3",
+          "duration": 199
+        },
+        {
+          "id": "slph-5",
+          "title": "贫瘠之歌",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/5.贫瘠之歌.mp3",
+          "duration": 227
+        },
+        {
+          "id": "slph-6",
+          "title": "高地",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/6.高地.mp3",
+          "duration": 242
+        },
+        {
+          "id": "slph-7",
+          "title": "寂寞列车",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/7.寂寞列车.mp3",
+          "duration": 347
+        },
+        {
+          "id": "slph-8",
+          "title": "薄雾",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/8.薄雾.mp3",
+          "duration": 331
+        },
+        {
+          "id": "slph-9",
+          "title": "请把我在路上叫醒",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/9.请把我在路上叫醒.mp3",
+          "duration": 346
+        },
+        {
+          "id": "slph-10",
+          "title": "城市之光",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/10.城市之光.mp3",
+          "duration": 403
+        },
+        {
+          "id": "slph-11",
+          "title": "有什么意义",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/11.有什么意义.mp3",
+          "duration": 169
+        },
+        {
+          "id": "slph-12",
+          "title": "谎言之躯",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/12.谎言之躯.mp3",
+          "duration": 265
+        },
+        {
+          "id": "slph-13",
+          "title": "加德满都的风铃",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/13.加德满都的风铃.mp3",
+          "duration": 233
+        },
+        {
+          "id": "slph-14",
+          "title": "边界",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/14.边界.mp3",
+          "duration": 230
+        },
+        {
+          "id": "slph-15",
+          "title": "春芽",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/15.春芽.mp3",
+          "duration": 239
+        },
+        {
+          "id": "slph-16",
+          "title": "这样的孤单",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/16.这样的孤单.mp3",
+          "duration": 137
+        },
+        {
+          "id": "slph-17",
+          "title": "这感觉怎么样",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/17.这感觉怎么样.mp3",
+          "duration": 238
+        },
+        {
+          "id": "slph-18",
+          "title": "泡沫人生的迷惑",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/18.泡沫人生的迷惑.mp3",
+          "duration": 188
+        },
+        {
+          "id": "slph-19",
+          "title": "无家可归的人",
+          "album": "生来彷徨",
+          "filePath": "/music/album/2013-生来彷徨/19.无家可归的人.mp3",
+          "duration": 281
+        }
+      ]
+    },
+    {
+      "id": "hl",
+      "name": "河流",
+      "coverImage": "images/album_covers/专辑封面-2015-河流.JPG",
+      "year": "2015",
+      "type": "album",
+      "songs": [
+        {
+          "id": "hl-1",
+          "title": "满",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/1.满.flac",
+          "duration": 211
+        },
+        {
+          "id": "hl-2",
+          "title": "流年啊 你奈我何",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/2.流年啊 你奈我何.flac",
+          "duration": 298
+        },
+        {
+          "id": "hl-3",
+          "title": "河流",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/3.河流.flac",
+          "duration": 243
+        },
+        {
+          "id": "hl-4",
+          "title": "无处安放",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/4.无处安放.flac",
+          "duration": 273
+        },
+        {
+          "id": "hl-5",
+          "title": "你走你的路",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/5.你走你的路.flac",
+          "duration": 316
+        },
+        {
+          "id": "hl-6",
+          "title": "谢谢",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/6.谢谢.flac",
+          "duration": 291
+        },
+        {
+          "id": "hl-7",
+          "title": "为什么不再快乐点",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/7.为什么不再快乐点.flac",
+          "duration": 180
+        },
+        {
+          "id": "hl-8",
+          "title": "现在或永不",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/8.现在或永不.flac",
+          "duration": 189
+        },
+        {
+          "id": "hl-9",
+          "title": "闪亮的日子",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/9.闪亮的日子.flac",
+          "duration": 199
+        },
+        {
+          "id": "hl-10",
+          "title": "我爱你",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/10.我爱你.flac",
+          "duration": 236
+        },
+        {
+          "id": "hl-11",
+          "title": "不合时宜",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/11.不合时宜.flac",
+          "duration": 194
+        },
+        {
+          "id": "hl-12",
+          "title": "誓言",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/12.誓言.flac",
+          "duration": 230
+        },
+        {
+          "id": "hl-13",
+          "title": "亲爱的 今夜你在哪里",
+          "album": "河流",
+          "filePath": "/music/album/2015-河流/13.亲爱的 今夜你在哪里.flac",
+          "duration": 266
+        }
+      ]
+    },
+    {
+      "id": "gll29",
+      "name": "果岭里29号",
+      "coverImage": "images/album_covers/专辑封面-2017-果岭里29号.JPG",
+      "year": "2017",
+      "type": "album",
+      "songs": [
+        {
+          "id": "gll29-1",
+          "title": "时代的标记",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/1.时代的标记.flac",
+          "duration": 211
+        },
+        {
+          "id": "gll29-2",
+          "title": "寂静的午后",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/2.寂静的午后.flac",
+          "duration": 371
+        },
+        {
+          "id": "gll29-3",
+          "title": "没时间干",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/3.没时间干.flac",
+          "duration": 404
+        },
+        {
+          "id": "gll29-4",
+          "title": "在与不在",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/4.在与不在.flac",
+          "duration": 306
+        },
+        {
+          "id": "gll29-5",
+          "title": "简单的歌",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/5.简单的歌.flac",
+          "duration": 419
+        },
+        {
+          "id": "gll29-6",
+          "title": "来自外行星的电子",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/6.来自外行星的电子.flac",
+          "duration": 388
+        },
+        {
+          "id": "gll29-7",
+          "title": "你觉得这一切会发生吗",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/7.你觉得这一切会发生吗.flac",
+          "duration": 259
+        },
+        {
+          "id": "gll29-8",
+          "title": "好姑娘",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/8.好姑娘.flac",
+          "duration": 279
+        },
+        {
+          "id": "gll29-9",
+          "title": "尘埃",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/9.尘埃.flac",
+          "duration": 121
+        },
+        {
+          "id": "gll29-10",
+          "title": "尊严不重要",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/10.尊严不重要.flac",
+          "duration": 255
+        },
+        {
+          "id": "gll29-11",
+          "title": "紫罗兰发带",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/11.紫罗兰发带.flac",
+          "duration": 350
+        },
+        {
+          "id": "gll29-12",
+          "title": "那年我五岁",
+          "album": "果岭里29号",
+          "filePath": "/music/album/2017-果岭里29号/12.那年我五岁.flac",
+          "duration": 646
+        }
+      ]
+    },
+    {
+      "id": "2020",
+      "name": "2020",
+      "coverImage": "images/album_covers/专辑封面-2020-2020.JPG",
+      "year": "2020",
+      "type": "album",
+      "songs": [
+        {
+          "id": "2020-1",
+          "title": "二手灵魂",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/1.二手灵魂.flac",
+          "duration": 240
+        },
+        {
+          "id": "2020-2",
+          "title": "没有什么事那么糟糕",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/2.没有什么事那么糟糕.flac",
+          "duration": 274
+        },
+        {
+          "id": "2020-3",
+          "title": "灿烂的你",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/3.灿烂的你.mp3",
+          "duration": 303
+        },
+        {
+          "id": "2020-4",
+          "title": "脏歌",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/4.脏歌.mp3",
+          "duration": 283
+        },
+        {
+          "id": "2020-5",
+          "title": "坏掉",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/5.坏掉.flac",
+          "duration": 262
+        },
+        {
+          "id": "2020-6",
+          "title": "往昔的野草",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/6.往昔的野草.flac",
+          "duration": 278
+        },
+        {
+          "id": "2020-7",
+          "title": "易忘之茧",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/7.易忘之茧.flac",
+          "duration": 253
+        },
+        {
+          "id": "2020-8",
+          "title": "从感冒片到钞票",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/8.从感冒片到钞票.flac",
+          "duration": 208
+        },
+        {
+          "id": "2020-9",
+          "title": "我心依狂",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/9.我心依狂.flac",
+          "duration": 225
+        },
+        {
+          "id": "2020-10",
+          "title": "寂寞时你再一次来到我的心灵",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/10.寂寞时你再一次来到我的心灵.flac",
+          "duration": 240
+        },
+        {
+          "id": "2020-11",
+          "title": "没那么容易",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/11.没那么容易.flac",
+          "duration": 243
+        },
+        {
+          "id": "2020-12",
+          "title": "就这样",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/12.就这样.flac",
+          "duration": 212
+        },
+        {
+          "id": "2020-13",
+          "title": "两只鸟一列火车和雨的交响曲",
+          "album": "2020",
+          "filePath": "/music/album/2020-2020/13.两只鸟一列火车和雨的交响曲.mp3",
+          "duration": 301
+        }
+      ]
+    },
+    {
+      "id": "yswyxwssw",
+      "name": "也许我可以无视死亡",
+      "coverImage": "images/album_covers/专辑封面-2022-也许我可以无视死亡.JPG",
+      "year": "2022",
+      "type": "album",
+      "songs": [
+        {
+          "id": "yswyxwssw-1",
+          "title": "如刀",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/1.如刀.flac",
+          "duration": 204
+        },
+        {
+          "id": "yswyxwssw-2",
+          "title": "卑微灵魂的低语",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/2.卑微灵魂的低语.flac",
+          "duration": 267
+        },
+        {
+          "id": "yswyxwssw-3",
+          "title": "也许我可以无视死亡",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/3.也许我可以无视死亡.flac",
+          "duration": 353
+        },
+        {
+          "id": "yswyxwssw-4",
+          "title": "飞鸟",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/4.飞鸟.flac",
+          "duration": 231
+        },
+        {
+          "id": "yswyxwssw-5",
+          "title": "我不相信",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/5.我不相信.flac",
+          "duration": 262
+        },
+        {
+          "id": "yswyxwssw-6",
+          "title": "孤独无法治愈",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/6.孤独无法治愈.flac",
+          "duration": 319
+        },
+        {
+          "id": "yswyxwssw-7",
+          "title": "随便吧",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/7.随便吧.flac",
+          "duration": 205
+        },
+        {
+          "id": "yswyxwssw-8",
+          "title": "如果你还相信",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/8.如果你还相信.flac",
+          "duration": 246
+        },
+        {
+          "id": "yswyxwssw-9",
+          "title": "西班牙箱琴",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/9.西班牙箱琴.flac",
+          "duration": 278
+        },
+        {
+          "id": "yswyxwssw-10",
+          "title": "逃跑",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/10.逃跑.flac",
+          "duration": 162
+        },
+        {
+          "id": "yswyxwssw-11",
+          "title": "不知道为什么的歌",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/11.不知道为什么的歌.flac",
+          "duration": 273
+        },
+        {
+          "id": "yswyxwssw-12",
+          "title": "每个人都在失去",
+          "album": "也许我可以无视死亡",
+          "filePath": "/music/album/2022-也许我可以无视死亡/12.每个人都在失去.flac",
+          "duration": 279
+        }
+      ]
+    },
+    {
+      "id": "rh",
+      "name": "人海",
+      "coverImage": "images/album_covers/专辑封面-2025-人海.JPG",
+      "year": "2025",
+      "type": "album",
+      "songs": [
+        {
+          "id": "rh-1",
+          "title": "我真的需要吗",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/01.我真的需要吗.flac",
+          "duration": 188
+        },
+        {
+          "id": "rh-2",
+          "title": "一代人",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/02.一代人.flac",
+          "duration": 252
+        },
+        {
+          "id": "rh-3",
+          "title": "人海",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/03.人海.flac",
+          "duration": 249
+        },
+        {
+          "id": "rh-4",
+          "title": "小美",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/04.小美.flac",
+          "duration": 204
+        },
+        {
+          "id": "rh-5",
+          "title": "永不流泪的眼睛",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/05.永不流泪的眼睛.flac",
+          "duration": 212
+        },
+        {
+          "id": "rh-6",
+          "title": "四千公里",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/06.四千公里.flac",
+          "duration": 255
+        },
+        {
+          "id": "rh-7",
+          "title": "我多想变得幸福",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/07.我多想变得幸福.flac",
+          "duration": 255
+        },
+        {
+          "id": "rh-8",
+          "title": "海拉尔的风",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/08.海拉尔的风.flac",
+          "duration": 200
+        },
+        {
+          "id": "rh-9",
+          "title": "盛开",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/09.盛开.flac",
+          "duration": 194
+        },
+        {
+          "id": "rh-10",
+          "title": "回家",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/10.回家.flac",
+          "duration": 272
+        },
+        {
+          "id": "rh-11",
+          "title": "没有你的夜晚",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/11.没有你的夜晚.flac",
+          "duration": 228
+        },
+        {
+          "id": "rh-12",
+          "title": "我就这样爱着你",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/12.我就这样爱着你.flac",
+          "duration": 208
+        },
+        {
+          "id": "rh-13",
+          "title": "命运的小把戏",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/13.命运的小把戏.flac",
+          "duration": 314
+        },
+        {
+          "id": "rh-14",
+          "title": "救赎的钟声",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/14.救赎的钟声.flac",
+          "duration": 218
+        },
+        {
+          "id": "rh-15",
+          "title": "孤独而已",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/15.孤独而已.flac",
+          "duration": 238
+        },
+        {
+          "id": "rh-16",
+          "title": "迷惘",
+          "album": "人海",
+          "filePath": "/music/album/2025-人海/16.迷惘.flac",
+          "duration": 276
+        }
+      ]
+    },
+    {
+      "id": "live-2005",
+      "name": "Live in Beijing 飞得更高",
+      "coverImage": "images/album_covers/live封面-2004-Live in Beijing 飞得更高.JPG",
+      "year": "2005",
+      "type": "live",
+      "songs": [
+        {
+          "id": "live-2005-1",
+          "title": "我真的需要",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/1.我真的需要.flac",
+          "duration": 217
+        },
+        {
+          "id": "live-2005-2",
+          "title": "尘土",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/2.尘土.flac",
+          "duration": 320
+        },
+        {
+          "id": "live-2005-3",
+          "title": "生命中的一天",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/3.生命中的一天.flac",
+          "duration": 286
+        },
+        {
+          "id": "live-2005-4",
+          "title": "小鸟",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/4.小鸟.flac",
+          "duration": 310
+        },
+        {
+          "id": "live-2005-5",
+          "title": "错误",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/5.错误.flac",
+          "duration": 272
+        },
+        {
+          "id": "live-2005-6",
+          "title": "十二月的泪",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/6.十二月的泪.flac",
+          "duration": 444
+        },
+        {
+          "id": "live-2005-7",
+          "title": "硬币",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/7.硬币.flac",
+          "duration": 268
+        },
+        {
+          "id": "live-2005-8",
+          "title": "花火",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/8.花火.flac",
+          "duration": 357
+        },
+        {
+          "id": "live-2005-9",
+          "title": "青春",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/9.青春.flac",
+          "duration": 297
+        },
+        {
+          "id": "live-2005-10",
+          "title": "飞得更高",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/10.飞得更高.flac",
+          "duration": 453
+        },
+        {
+          "id": "live-2005-11",
+          "title": "彼岸",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/11.彼岸.flac",
+          "duration": 298
+        },
+        {
+          "id": "live-2005-12",
+          "title": "美丽世界的孤儿",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/12.美丽世界的孤儿.flac",
+          "duration": 342
+        },
+        {
+          "id": "live-2005-13",
+          "title": "笑着哭",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/13.笑着哭.flac",
+          "duration": 278
+        },
+        {
+          "id": "live-2005-14",
+          "title": "妈妈",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/14.妈妈.flac",
+          "duration": 432
+        },
+        {
+          "id": "live-2005-15",
+          "title": "门开了",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/15.门开了.flac",
+          "duration": 288
+        },
+        {
+          "id": "live-2005-16",
+          "title": "迷鹿",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/17.迷鹿.flac",
+          "duration": 367
+        },
+        {
+          "id": "live-2005-17",
+          "title": "在雨中",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/18.在雨中.flac",
+          "duration": 347
+        },
+        {
+          "id": "live-2005-18",
+          "title": "晚安北京",
+          "album": "Live in Beijing 飞得更高",
+          "filePath": "/music/live/2005-Live in Beijing 飞得更高/19.晚安北京.flac",
+          "duration": 528
+        }
+      ]
+    },
+    {
+      "id": "live-2010",
+      "name": "信仰北京演唱会",
+      "coverImage": "images/album_covers/live封面-2010-信仰北京演唱会.JPG",
+      "year": "2010",
+      "type": "live",
+      "songs": [
+        {
+          "id": "live-2010-1",
+          "title": "勇敢的心",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/1.勇敢的心.mp3",
+          "duration": 260
+        },
+        {
+          "id": "live-2010-2",
+          "title": "哭泣的拳头",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/2.哭泣的拳头.mp3",
+          "duration": 134
+        },
+        {
+          "id": "live-2010-3",
+          "title": "边走边唱",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/3.边走边唱.mp3",
+          "duration": 236
+        },
+        {
+          "id": "live-2010-4",
+          "title": "挥挥手",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/4.挥挥手.mp3",
+          "duration": 301
+        },
+        {
+          "id": "live-2010-5",
+          "title": "北京北京",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/5.北京北京.mp3",
+          "duration": 442
+        },
+        {
+          "id": "live-2010-6",
+          "title": "有意思吗",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/6.有意思吗.mp3",
+          "duration": 258
+        },
+        {
+          "id": "live-2010-7",
+          "title": "蹩脚的爱情",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/7.蹩脚的爱情.mp3",
+          "duration": 247
+        },
+        {
+          "id": "live-2010-8",
+          "title": "我如此爱你",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/8.我如此爱你.mp3",
+          "duration": 267
+        },
+        {
+          "id": "live-2010-9",
+          "title": "名利场",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/9.名利场.mp3",
+          "duration": 166
+        },
+        {
+          "id": "live-2010-10",
+          "title": "光明",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/10.光明.mp3",
+          "duration": 418
+        },
+        {
+          "id": "live-2010-11",
+          "title": "你是我心爱的姑娘",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/11.你是我心爱的姑娘.mp3",
+          "duration": 303
+        },
+        {
+          "id": "live-2010-12",
+          "title": "当我想你的时候",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/12.当我想你的时候.mp3",
+          "duration": 305
+        },
+        {
+          "id": "live-2010-13",
+          "title": "春天里",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/13.春天里.mp3",
+          "duration": 311
+        },
+        {
+          "id": "live-2010-14",
+          "title": "怒放的生命",
+          "album": "信仰北京演唱会",
+          "filePath": "/music/live/2010-信仰北京演唱会/14.怒放的生命.mp3",
+          "duration": 277
+        }
+      ]
+    },
+    {
+      "id": "live-2011",
+      "name": "生无所求演唱会",
+      "coverImage": "images/album_covers/live封面-2011-生无所求演唱会.JPG",
+      "year": "2011",
+      "type": "live",
+      "songs": [
+        {
+          "id": "live-2011-1",
+          "title": "上千个黎明 + 哭泣的拳头 + 我真的需要",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/1.上千个黎明 + 哭泣的拳头 + 我真的需要.flac",
+          "duration": 507
+        },
+        {
+          "id": "live-2011-2",
+          "title": "怒放的生命",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/2.怒放的生命.flac",
+          "duration": 284
+        },
+        {
+          "id": "live-2011-3",
+          "title": "向阳花",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/3.向阳花.flac",
+          "duration": 376
+        },
+        {
+          "id": "live-2011-4",
+          "title": "挥挥手",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/4.挥挥手.flac",
+          "duration": 301
+        },
+        {
+          "id": "live-2011-5",
+          "title": "让我们在一起",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/5.让我们在一起.flac",
+          "duration": 294
+        },
+        {
+          "id": "live-2011-6",
+          "title": "在雨中",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/6.在雨中.flac",
+          "duration": 304
+        },
+        {
+          "id": "live-2011-7",
+          "title": "美丽世界的孤儿",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/7.美丽世界的孤儿.flac",
+          "duration": 518
+        },
+        {
+          "id": "live-2011-8",
+          "title": "不能停止的哭泣",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/8.不能停止的哭泣.flac",
+          "duration": 319
+        },
+        {
+          "id": "live-2011-9",
+          "title": "小鸟",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/9.小鸟.flac",
+          "duration": 361
+        },
+        {
+          "id": "live-2011-10",
+          "title": "北京北京",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/10.北京北京.flac",
+          "duration": 442
+        },
+        {
+          "id": "live-2011-11",
+          "title": "勇敢的心 + 有意思吗",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/11.勇敢的心 + 有意思吗.flac",
+          "duration": 520
+        },
+        {
+          "id": "live-2011-12",
+          "title": "硬币",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/12.硬币.flac",
+          "duration": 194
+        },
+        {
+          "id": "live-2011-13",
+          "title": "回忆之前忘记之后",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/13.回忆之前忘记之后.flac",
+          "duration": 253
+        },
+        {
+          "id": "live-2011-14",
+          "title": "我如此爱你",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/14.我如此爱你.flac",
+          "duration": 183
+        },
+        {
+          "id": "live-2011-15",
+          "title": "爸爸",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/15.爸爸.flac",
+          "duration": 337
+        },
+        {
+          "id": "live-2011-16",
+          "title": "花火",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/16.花火.flac",
+          "duration": 424
+        },
+        {
+          "id": "live-2011-17",
+          "title": "存在",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/17.存在.flac",
+          "duration": 294
+        },
+        {
+          "id": "live-2011-18",
+          "title": "大桥上",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/18.大桥上.flac",
+          "duration": 310
+        },
+        {
+          "id": "live-2011-19",
+          "title": "当我想你的时候",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/19.当我想你的时候.flac",
+          "duration": 307
+        },
+        {
+          "id": "live-2011-20",
+          "title": "春天里",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/20.春天里.flac",
+          "duration": 325
+        },
+        {
+          "id": "live-2011-21",
+          "title": "光明",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/21.光明.flac",
+          "duration": 414
+        },
+        {
+          "id": "live-2011-22",
+          "title": "飞得更高",
+          "album": "生无所求演唱会",
+          "filePath": "/music/live/2011-生无所求演唱会/22.飞得更高.flac",
+          "duration": 489
+        }
+      ]
+    },
+    {
+      "id": "live-2013",
+      "name": "存在超级巡回上海演唱会",
+      "coverImage": "images/album_covers/live封面-2013-存在超级巡回上海演唱会.JPG",
+      "year": "2013",
+      "type": "live",
+      "songs": [
+        {
+          "id": "live-2013-1",
+          "title": "上千个黎明",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/1.上千个黎明.flac",
+          "duration": 219
+        },
+        {
+          "id": "live-2013-2",
+          "title": "我真的需要",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/2.我真的需要.flac",
+          "duration": 160
+        },
+        {
+          "id": "live-2013-3",
+          "title": "怒放的生命",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/3.怒放的生命.flac",
+          "duration": 277
+        },
+        {
+          "id": "live-2013-4",
+          "title": "像个孩子",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/4.像个孩子.flac",
+          "duration": 298
+        },
+        {
+          "id": "live-2013-5",
+          "title": "一百万吨的信念",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/5.一百万吨的信念.flac",
+          "duration": 355
+        },
+        {
+          "id": "live-2013-6",
+          "title": "让我们在一起",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/6.让我们在一起.flac",
+          "duration": 391
+        },
+        {
+          "id": "live-2013-7",
+          "title": "窗台",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/7.窗台.flac",
+          "duration": 280
+        },
+        {
+          "id": "live-2013-8",
+          "title": "在雨中",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/8.在雨中.flac",
+          "duration": 333
+        },
+        {
+          "id": "live-2013-9",
+          "title": "不能停止的哭泣",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/9.不能停止的哭泣.flac",
+          "duration": 303
+        },
+        {
+          "id": "live-2013-10",
+          "title": "美丽世界的孤儿",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/10.美丽世界的孤儿.flac",
+          "duration": 576
+        },
+        {
+          "id": "live-2013-11",
+          "title": "小鸟",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/11.小鸟.flac",
+          "duration": 384
+        },
+        {
+          "id": "live-2013-12",
+          "title": "飞得更高",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/12.飞得更高.flac",
+          "duration": 370
+        },
+        {
+          "id": "live-2013-13",
+          "title": "北京北京",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/13.北京北京.flac",
+          "duration": 442
+        },
+        {
+          "id": "live-2013-14",
+          "title": "勇敢的心",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/14.勇敢的心.flac",
+          "duration": 237
+        },
+        {
+          "id": "live-2013-15",
+          "title": "旅途",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/15.旅途.flac",
+          "duration": 241
+        },
+        {
+          "id": "live-2013-16",
+          "title": "向阳花",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/16.向阳花.flac",
+          "duration": 208
+        },
+        {
+          "id": "live-2013-17",
+          "title": "硬币",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/17.硬币.flac",
+          "duration": 183
+        },
+        {
+          "id": "live-2013-18",
+          "title": "爱你的方式",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/18.爱你的方式.flac",
+          "duration": 210
+        },
+        {
+          "id": "live-2013-19",
+          "title": "我如此爱你",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/19.我如此爱你.flac",
+          "duration": 267
+        },
+        {
+          "id": "live-2013-20",
+          "title": "爸爸",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/20.爸爸.flac",
+          "duration": 383
+        },
+        {
+          "id": "live-2013-21",
+          "title": "花火",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/21.花火.flac",
+          "duration": 366
+        },
+        {
+          "id": "live-2013-22",
+          "title": "一起摇摆",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/22.一起摇摆.flac",
+          "duration": 253
+        },
+        {
+          "id": "live-2013-23",
+          "title": "存在",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/23.存在.flac",
+          "duration": 258
+        },
+        {
+          "id": "live-2013-24",
+          "title": "当我想你的时候",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/24.当我想你的时候.flac",
+          "duration": 378
+        },
+        {
+          "id": "live-2013-25",
+          "title": "春天里",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/25.春天里.flac",
+          "duration": 311
+        },
+        {
+          "id": "live-2013-26",
+          "title": "我爱你中国",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/26.我爱你中国.flac",
+          "duration": 349
+        },
+        {
+          "id": "live-2013-27",
+          "title": "光明",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/27.光明.flac",
+          "duration": 418
+        },
+        {
+          "id": "live-2013-28",
+          "title": "晚安北京",
+          "album": "存在超级巡回上海演唱会",
+          "filePath": "/music/live/2013-存在超级巡回上海演唱会/28.晚安北京.flac",
+          "duration": 690
+        }
+      ]
+    },
+    {
+      "id": "remaster-2017",
+      "name": "新编",
+      "coverImage": "images/album_covers/新编封面-2017-新编.JPG",
+      "year": "2017",
+      "type": "remaster",
+      "songs": [
+        {
+          "id": "remaster-2017-1",
+          "title": "爸爸 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/1.爸爸 (新编版).flac",
+          "duration": 287
+        },
+        {
+          "id": "remaster-2017-2",
+          "title": "城市之光 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/2.城市之光 (新编版).flac",
+          "duration": 395
+        },
+        {
+          "id": "remaster-2017-3",
+          "title": "恒星 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/3.恒星 (新编版).flac",
+          "duration": 243
+        },
+        {
+          "id": "remaster-2017-4",
+          "title": "贫瘠之歌 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/4.贫瘠之歌 (新编版).flac",
+          "duration": 248
+        },
+        {
+          "id": "remaster-2017-5",
+          "title": "我爱你中国 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/5.我爱你中国 (新编版).flac",
+          "duration": 335
+        },
+        {
+          "id": "remaster-2017-6",
+          "title": "我们的梦 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/6.我们的梦 (新编版).flac",
+          "duration": 307
+        },
+        {
+          "id": "remaster-2017-7",
+          "title": "信仰在空中飘扬 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/7.信仰在空中飘扬 (新编版).flac",
+          "duration": 387
+        },
+        {
+          "id": "remaster-2017-8",
+          "title": "爱你的方式 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/8.爱你的方式 (新编版).flac",
+          "duration": 229
+        },
+        {
+          "id": "remaster-2017-9",
+          "title": "北京北京 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/9.北京北京 (新编版).flac",
+          "duration": 387
+        },
+        {
+          "id": "remaster-2017-10",
+          "title": "当我想你的时候 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/10.当我想你的时候 (新编版).flac",
+          "duration": 301
+        },
+        {
+          "id": "remaster-2017-11",
+          "title": "挥挥手 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/11.挥挥手 (新编版).flac",
+          "duration": 312
+        },
+        {
+          "id": "remaster-2017-12",
+          "title": "旅途 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/12.旅途 (新编版).flac",
+          "duration": 250
+        },
+        {
+          "id": "remaster-2017-13",
+          "title": "母亲 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/13.母亲 (新编版).flac",
+          "duration": 247
+        },
+        {
+          "id": "remaster-2017-14",
+          "title": "你是我心爱的姑娘 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/14.你是我心爱的姑娘 (新编版).flac",
+          "duration": 294
+        },
+        {
+          "id": "remaster-2017-15",
+          "title": "怒放的生命 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/15.怒放的生命 (新编版).flac",
+          "duration": 298
+        },
+        {
+          "id": "remaster-2017-16",
+          "title": "让我们在一起 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/16.让我们在一起 (新编版).flac",
+          "duration": 291
+        },
+        {
+          "id": "remaster-2017-17",
+          "title": "上千个黎明 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/17.上千个黎明 (新编版).flac",
+          "duration": 207
+        },
+        {
+          "id": "remaster-2017-18",
+          "title": "我的路 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/18.我的路 (新编版).flac",
+          "duration": 282
+        },
+        {
+          "id": "remaster-2017-19",
+          "title": "像个孩子 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/19.像个孩子 (新编版).flac",
+          "duration": 266
+        },
+        {
+          "id": "remaster-2017-20",
+          "title": "向阳花 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/20.向阳花 (新编版).flac",
+          "duration": 317
+        },
+        {
+          "id": "remaster-2017-21",
+          "title": "一起摇摆 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/21.一起摇摆 (新编版).flac",
+          "duration": 254
+        },
+        {
+          "id": "remaster-2017-22",
+          "title": "勇敢的心 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/22.勇敢的心 (新编版).flac",
+          "duration": 278
+        },
+        {
+          "id": "remaster-2017-23",
+          "title": "地心 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/23.地心 (新编版).flac",
+          "duration": 338
+        },
+        {
+          "id": "remaster-2017-24",
+          "title": "寂寞列车 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/24.寂寞列车 (新编版).flac",
+          "duration": 332
+        },
+        {
+          "id": "remaster-2017-25",
+          "title": "觉醒 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/25.觉醒 (新编版).flac",
+          "duration": 323
+        },
+        {
+          "id": "remaster-2017-26",
+          "title": "如果风不再吹 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/26.如果风不再吹 (新编版).flac",
+          "duration": 312
+        },
+        {
+          "id": "remaster-2017-27",
+          "title": "时光倒流 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/27.时光倒流 (新编版).flac",
+          "duration": 266
+        },
+        {
+          "id": "remaster-2017-28",
+          "title": "像梦一样自由 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/28.像梦一样自由 (新编版).flac",
+          "duration": 219
+        },
+        {
+          "id": "remaster-2017-29",
+          "title": "想念真好 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/29.想念真好 (新编版).flac",
+          "duration": 217
+        },
+        {
+          "id": "remaster-2017-30",
+          "title": "再见青春 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/30.再见青春 (新编版).flac",
+          "duration": 333
+        },
+        {
+          "id": "remaster-2017-31",
+          "title": "彼岸 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/31.彼岸 (新编版).flac",
+          "duration": 266
+        },
+        {
+          "id": "remaster-2017-32",
+          "title": "不羁的生命 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/32.不羁的生命 (新编版).flac",
+          "duration": 292
+        },
+        {
+          "id": "remaster-2017-33",
+          "title": "大桥上 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/33.大桥上 (新编版).flac",
+          "duration": 290
+        },
+        {
+          "id": "remaster-2017-34",
+          "title": "飞得更高 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/34.飞得更高 (新编版).flac",
+          "duration": 316
+        },
+        {
+          "id": "remaster-2017-35",
+          "title": "加德满都的风铃 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/35.加德满都的风铃 (新编版).flac",
+          "duration": 237
+        },
+        {
+          "id": "remaster-2017-36",
+          "title": "生来彷徨 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/36.生来彷徨 (新编版).flac",
+          "duration": 274
+        },
+        {
+          "id": "remaster-2017-37",
+          "title": "硬币 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/37.硬币 (新编版).flac",
+          "duration": 229
+        },
+        {
+          "id": "remaster-2017-38",
+          "title": "在雨中 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/38.在雨中 (新编版).flac",
+          "duration": 320
+        },
+        {
+          "id": "remaster-2017-39",
+          "title": "爱是一颗幸福的子弹 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/39.爱是一颗幸福的子弹 (新编版).flac",
+          "duration": 297
+        },
+        {
+          "id": "remaster-2017-40",
+          "title": "春天里 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/40.春天里 (新编版).flac",
+          "duration": 276
+        },
+        {
+          "id": "remaster-2017-41",
+          "title": "存在 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/41.存在 (新编版).flac",
+          "duration": 276
+        },
+        {
+          "id": "remaster-2017-42",
+          "title": "等待 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/42.等待 (新编版).flac",
+          "duration": 245
+        },
+        {
+          "id": "remaster-2017-43",
+          "title": "花火 (新编版)",
+          "album": "新编",
+          "filePath": "/music/remaster/2017-新编/43.花火 (新编版).flac",
+          "duration": 338
+        }
+      ]
+    },
+    {
+      "id": "other-2001",
+      "name": "十七岁的单车",
+      "coverImage": "images/album_covers/其他封面-2001-十七岁的单车.JPG",
+      "year": "2001",
+      "type": "other",
+      "songs": [
+        {
+          "id": "other-2001-1",
+          "title": "Main Melody",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/1.Main Melody.mp3",
+          "duration": 135
+        },
+        {
+          "id": "other-2001-2",
+          "title": "Speed",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/2.Speed.mp3",
+          "duration": 51
+        },
+        {
+          "id": "other-2001-3",
+          "title": "Riding Bike",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/3.Riding Bike.mp3",
+          "duration": 67
+        },
+        {
+          "id": "other-2001-4",
+          "title": "On The Duty",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/4.On The Duty.mp3",
+          "duration": 66
+        },
+        {
+          "id": "other-2001-5",
+          "title": "Look For",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/5.Look For.mp3",
+          "duration": 88
+        },
+        {
+          "id": "other-2001-6",
+          "title": "Meet You First Time",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/6.Meet You First Time.mp3",
+          "duration": 121
+        },
+        {
+          "id": "other-2001-7",
+          "title": "Happy",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/7.Happy.mp3",
+          "duration": 70
+        },
+        {
+          "id": "other-2001-8",
+          "title": "Love",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/8.Love.mp3",
+          "duration": 53
+        },
+        {
+          "id": "other-2001-9",
+          "title": "Run into You",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/9.Run into You.mp3",
+          "duration": 78
+        },
+        {
+          "id": "other-2001-10",
+          "title": "Take Turns",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/10.Take Turns.mp3",
+          "duration": 64
+        },
+        {
+          "id": "other-2001-11",
+          "title": "Trace",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/11.Trace.mp3",
+          "duration": 210
+        },
+        {
+          "id": "other-2001-12",
+          "title": "Run and Hit",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/12.Run and Hit.mp3",
+          "duration": 189
+        },
+        {
+          "id": "other-2001-13",
+          "title": "Walking on the Road",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/13.Walking on the Road.mp3",
+          "duration": 122
+        },
+        {
+          "id": "other-2001-14",
+          "title": "Ending Credit",
+          "album": "十七岁的单车",
+          "filePath": "/music/others/2001-十七岁的单车/14.Ending Credit.mp3",
+          "duration": 197
+        }
+      ]
+    },
+    {
+      "id": "other-2018",
+      "name": "歌手第二季",
+      "coverImage": "images/album_covers/其他封面-2018-歌手第二季.JPG",
+      "year": "2018",
+      "type": "other",
+      "songs": [
+        {
+          "id": "other-2018-1",
+          "title": "无处安放",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/1.无处安放.flac",
+          "duration": 305
+        },
+        {
+          "id": "other-2018-2",
+          "title": "普通Disco",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/2.普通Disco.flac",
+          "duration": 246
+        },
+        {
+          "id": "other-2018-3",
+          "title": "下坠",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/3.下坠.flac",
+          "duration": 340
+        },
+        {
+          "id": "other-2018-4",
+          "title": "儿时",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/4.儿时.flac",
+          "duration": 344
+        },
+        {
+          "id": "other-2018-5",
+          "title": "Mr.Man",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/5.Mr.Man.flac",
+          "duration": 382
+        },
+        {
+          "id": "other-2018-6",
+          "title": "所有人都在玩手机 + 夜猫",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/6.所有人都在玩手机 + 夜猫.flac",
+          "duration": 284
+        },
+        {
+          "id": "other-2018-7",
+          "title": "的青春",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/7.的青春.flac",
+          "duration": 348
+        },
+        {
+          "id": "other-2018-8",
+          "title": "等待",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/9.等待.flac",
+          "duration": 339
+        },
+        {
+          "id": "other-2018-9",
+          "title": "忘了我",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/10.忘了我.flac",
+          "duration": 339
+        },
+        {
+          "id": "other-2018-10",
+          "title": "空空如也",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/11.空空如也.flac",
+          "duration": 297
+        },
+        {
+          "id": "other-2018-11",
+          "title": "Hey Jude",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/12..Hey Jude.flac",
+          "duration": 355
+        },
+        {
+          "id": "other-2018-12",
+          "title": "出走",
+          "album": "歌手第二季",
+          "filePath": "/music/others/2018-歌手第二季/13.出走.flac",
+          "duration": 294
+        }
+      ]
+    },
+    {
+      "id": "singles",
+      "name": "单曲集",
+      "coverImage": "images/album_covers/其他封面-单曲.JPG",
+      "year": "2015-2020",
+      "type": "other",
+      "songs": [
+        {
+          "id": "singles-1",
+          "title": "Song Of Redemption",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/Song Of Redemption.flac",
+          "duration": 342
+        },
+        {
+          "id": "singles-2",
+          "title": "幻醒",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/幻醒.flac",
+          "duration": 214
+        },
+        {
+          "id": "singles-3",
+          "title": "梦想的光芒",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/梦想的光芒.flac",
+          "duration": 253
+        },
+        {
+          "id": "singles-4",
+          "title": "像梦一样自由",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/像梦一样自由.ogg",
+          "duration": 2
+        },
+        {
+          "id": "singles-5",
+          "title": "直到永远",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/直到永远.flac",
+          "duration": 327
+        },
+        {
+          "id": "singles-6",
+          "title": "忠诚",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/忠诚.flac",
+          "duration": 206
+        },
+        {
+          "id": "singles-7",
+          "title": "重叠",
+          "album": "单曲集",
+          "filePath": "/music/others/singles/重叠.flac",
+          "duration": 266
+        }
+      ]
+    }
+  ]
+}
