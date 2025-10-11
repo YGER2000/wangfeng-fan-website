@@ -1,5 +1,7 @@
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import { cn, withBasePath } from '@/lib/utils';
 import {
   scheduleAPI,
@@ -51,6 +53,7 @@ const TourDates = () => {
   const [schedule, setSchedule] = useState<Array<ScheduleItemResponse & { isFuture?: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<'全部' | ScheduleCategory>('全部');
+  const [selectedSchedule, setSelectedSchedule] = useState<(ScheduleItemResponse & { isFuture?: boolean }) | null>(null);
 
   useEffect(() => {
     const loadConcerts = async () => {
@@ -188,15 +191,15 @@ const TourDates = () => {
           <div className="space-y-12">
             {filteredSchedule.map((item, index) => {
               const isLeft = index % 2 === 0;
-              const timelineNumber = item.id;
-              const posterSrc = withBasePath(item.image ?? 'images/concerts/xiangxinweilai_poster.jpg');
-              const isConcert = item.category === '演唱会';
+              // 使用压缩图显示在列表中，如果没有压缩图则使用原图
+              const posterSrc = withBasePath(item.image_thumb ?? item.image ?? 'images/concerts/xiangxinweilai_poster.jpg');
 
               const card = (
                 <motion.div
                   whileHover={{ scale: 1.02 }}
+                  onClick={() => setSelectedSchedule(item)}
                   className={cn(
-                    'p-6 rounded-xl border shadow-lg transition-all duration-300',
+                    'p-6 rounded-xl border shadow-lg transition-all duration-300 cursor-pointer',
                     item.isFuture
                       ? 'bg-wangfeng-purple/20 border-wangfeng-purple/50 shadow-wangfeng-purple/25'
                       : 'theme-bg-card theme-border-primary shadow-gray-900/50'
@@ -223,8 +226,17 @@ const TourDates = () => {
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 space-y-3">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    <div className="md:w-32 lg:w-36 flex-shrink-0 mx-auto md:mx-0">
+                      <div className="relative rounded-lg overflow-hidden border border-wangfeng-purple/40 shadow-lg aspect-[2/3]">
+                        <img
+                          src={posterSrc}
+                          alt={`${item.theme} 海报`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-2">
                       <h3 className="text-2xl font-bold text-wangfeng-purple animate-pulse-glow">
                         {item.city}
                       </h3>
@@ -233,26 +245,17 @@ const TourDates = () => {
                           📍 {item.venue}
                         </p>
                       )}
-                      <p className="theme-text-primary font-medium leading-relaxed">
+                      <p className="theme-text-primary font-medium leading-relaxed line-clamp-2">
                         {item.theme}
                       </p>
                       {item.description && (
-                        <p className="theme-text-secondary text-sm leading-relaxed">
+                        <p className="theme-text-secondary text-sm leading-relaxed line-clamp-2">
                           {item.description}
                         </p>
                       )}
                       <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-wangfeng-purple/80">
                         <span className="h-2 w-2 rounded-full bg-wangfeng-purple"></span>
                         <span>{item.category}</span>
-                      </div>
-                    </div>
-                    <div className="md:w-36 lg:w-40 flex-shrink-0 mx-auto md:mx-0">
-                      <div className="relative rounded-lg overflow-hidden border border-wangfeng-purple/40 shadow-lg aspect-[3/5]">
-                        <img
-                          src={posterSrc}
-                          alt={`${item.theme} 海报`}
-                          className="w-full h-full object-cover"
-                        />
                       </div>
                     </div>
                   </div>
@@ -273,7 +276,7 @@ const TourDates = () => {
                     {/* Left side content or empty space */}
                     <div className="flex-1 flex justify-end">
                       {isLeft && (
-                        <div className="w-full max-w-md">
+                        <div className="w-full max-w-xl">
                           {card}
                         </div>
                       )}
@@ -282,20 +285,14 @@ const TourDates = () => {
                     {/* Timeline Dot - Always in center */}
                     <div className="flex-shrink-0">
                       <div className="w-12 h-12 flex items-center justify-center">
-                        {isConcert ? (
-                          <div className="w-12 h-12 bg-wangfeng-purple rounded-full border-4 theme-border-primary shadow-lg flex items-center justify-center">
-                            <span className="theme-text-primary font-bold text-sm">{timelineNumber}</span>
-                          </div>
-                        ) : (
-                          <div className="w-3 h-3 rounded-full bg-wangfeng-purple border-4 theme-border-primary shadow-lg"></div>
-                        )}
+                        <div className="w-3 h-3 rounded-full bg-wangfeng-purple border-4 theme-border-primary shadow-lg"></div>
                       </div>
                     </div>
 
                     {/* Right side content or empty space */}
                     <div className="flex-1 flex justify-start">
                       {!isLeft && (
-                        <div className="w-full max-w-md">
+                        <div className="w-full max-w-xl">
                           {card}
                         </div>
                       )}
@@ -307,6 +304,112 @@ const TourDates = () => {
           </div>
 
         </div>
+
+        {/* 详情弹窗 */}
+        {selectedSchedule && typeof document !== 'undefined' && createPortal(
+          <AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+              onClick={() => setSelectedSchedule(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="relative max-w-4xl w-full max-h-[90vh] overflow-y-auto rounded-2xl border border-wangfeng-purple/40 shadow-strong-glow theme-bg-card p-8"
+              >
+                {/* 关闭按钮 */}
+                <button
+                  onClick={() => setSelectedSchedule(null)}
+                  className="absolute right-4 top-4 p-2 rounded-lg transition-colors hover:bg-white/10"
+                >
+                  <X className="h-6 w-6 theme-text-primary" />
+                </button>
+
+                {/* 标题和状态 */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h2 className="text-4xl font-bebas tracking-wider text-wangfeng-purple">
+                      {selectedSchedule.city}
+                    </h2>
+                    {selectedSchedule.isFuture && (
+                      <span className="px-3 py-1 bg-green-500 text-white text-sm rounded-full animate-pulse-glow">
+                        即将举行
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm theme-text-muted">
+                    {new Date(selectedSchedule.date).toLocaleDateString('zh-CN', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {/* 左侧：海报（原图） */}
+                  <div className="flex flex-col gap-4">
+                    <div className="relative rounded-xl overflow-hidden border border-wangfeng-purple/40 shadow-lg">
+                      <img
+                        src={withBasePath(selectedSchedule.image ?? 'images/concerts/xiangxinweilai_poster.jpg')}
+                        alt={`${selectedSchedule.theme} 海报`}
+                        className="w-full h-auto object-cover"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-wangfeng-purple/80">
+                      <span className="h-2 w-2 rounded-full bg-wangfeng-purple"></span>
+                      <span>{selectedSchedule.category}</span>
+                    </div>
+                  </div>
+
+                  {/* 右侧：详细信息 */}
+                  <div className="flex flex-col gap-6">
+                    <div>
+                      <h3 className="text-sm font-bold text-wangfeng-purple mb-2">行程主题</h3>
+                      <p className="theme-text-primary text-lg leading-relaxed">
+                        {selectedSchedule.theme}
+                      </p>
+                    </div>
+
+                    {selectedSchedule.venue && (
+                      <div>
+                        <h3 className="text-sm font-bold text-wangfeng-purple mb-2">场馆地点</h3>
+                        <p className="theme-text-primary flex items-start gap-2">
+                          <span className="text-wangfeng-purple">📍</span>
+                          <span>{selectedSchedule.venue}</span>
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedSchedule.description && (
+                      <div>
+                        <h3 className="text-sm font-bold text-wangfeng-purple mb-2">补充说明</h3>
+                        <p className="theme-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
+                          {selectedSchedule.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-auto pt-6 border-t theme-border-primary">
+                      <button
+                        onClick={() => setSelectedSchedule(null)}
+                        className="w-full px-6 py-3 bg-wangfeng-purple text-white rounded-lg font-semibold hover:bg-wangfeng-purple/80 transition-colors"
+                      >
+                        关闭
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>,
+          document.body
+        )}
       </div>
     </div>
   );

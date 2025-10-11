@@ -9,3 +9,7 @@ node_modules
 /backend/venv/
 /backend/__pycache__/
 *.pyc
+.backend.pid
+.frontend.pid
+backend/.env
+backend/.env

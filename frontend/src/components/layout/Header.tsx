@@ -28,6 +28,8 @@ const Header = () => {
   const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const { theme, toggleTheme } = useTheme();
   const isLightMode = theme === 'white';
+  const isStaff = currentRole === 'admin' || currentRole === 'super_admin';
+  const isSuperAdmin = currentRole === 'super_admin';
 
   const navigation = [
     { name: '首页', path: '/' },
@@ -74,6 +76,12 @@ const Header = () => {
     navigate('/publish-schedule');
   };
 
+  const handleGoToAdmin = (path: string) => {
+    setIsActionMenuOpen(false);
+    setIsMenuOpen(false);
+    navigate(path);
+  };
+
   useEffect(() => {
     if (!isActionMenuOpen) return;
 
@@ -104,20 +112,23 @@ const Header = () => {
     },
     {
       key: 'review',
-      label: '审核',
+      label: '审核中心',
       icon: ClipboardCheck,
-      disabled: true,
+      onSelect: isStaff ? () => handleGoToAdmin('/admin/review') : undefined,
+      disabled: !isStaff,
     },
     {
       key: 'admin',
-      label: '管理',
+      label: isSuperAdmin ? '后台管理' : '运营后台',
       icon: Settings,
-      disabled: true,
+      onSelect: isStaff ? () => handleGoToAdmin('/admin') : undefined,
+      disabled: !isStaff,
     },
     {
       key: 'profile',
-      label: '个人资料',
-      disabled: true,
+      label: '个人中心',
+      icon: User,
+      onSelect: () => handleGoToAdmin('/profile'),
     },
     {
       key: 'logout',

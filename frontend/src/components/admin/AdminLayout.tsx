@@ -3,11 +3,9 @@ import {
   LayoutDashboard,
   FileText,
   CalendarDays,
-  MessageSquare,
   Users,
   ShieldCheck,
   LogOut,
-  Settings,
   Bell,
   RefreshCcw,
   Search,
@@ -21,10 +19,8 @@ const navItems = [
   { label: '概览', to: '/admin', icon: LayoutDashboard },
   { label: '文章审核', to: '/admin/review', icon: FileText },
   { label: '行程管理', to: '/admin/schedules', icon: CalendarDays },
-  { label: '评论管理', to: '/admin/comments', icon: MessageSquare },
   { label: '用户与角色', to: '/admin/users', icon: Users },
   { label: '审计日志', to: '/admin/audit', icon: ShieldCheck },
-  { label: '系统设置', to: '/admin/settings', icon: Settings },
 ];
 
 const AdminLayout = () => {

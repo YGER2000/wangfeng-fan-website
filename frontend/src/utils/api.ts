@@ -41,6 +41,7 @@ export interface ScheduleItemResponse {
   category: ScheduleCategory;
   description?: string | null;
   image?: string | null;
+  image_thumb?: string | null;
   source: 'legacy' | 'custom';
   created_at?: string;
   updated_at?: string;

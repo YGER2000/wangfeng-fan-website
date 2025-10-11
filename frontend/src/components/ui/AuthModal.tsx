@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Eye, EyeOff, User, Mail, Lock } from 'lucide-react';
+import { X, Eye, EyeOff, User, Mail, Lock, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthModalProps {
@@ -20,10 +20,61 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     username: '',
     email: '',
     password: '',
-    fullName: '',
+    verificationCode: '',
   });
 
-  const { login, register } = useAuth();
+  const [codeSent, setCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const [sendingCode, setSendingCode] = useState(false);
+
+  const { login, registerWithEmail } = useAuth();
+
+  const sendVerificationCode = async () => {
+    if (!formData.email) {
+      setError('请先输入邮箱地址');
+      return;
+    }
+
+    setSendingCode(true);
+    setError('');
+
+    try {
+      const response = await fetch('http://localhost:1994/api/verification/send-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          type: 'register',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || '发送验证码失败');
+      }
+
+      setCodeSent(true);
+      setCountdown(60);
+
+      // 倒计时
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+    } catch (err: any) {
+      setError(err.message || '发送验证码失败');
+    } finally {
+      setSendingCode(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,10 +85,18 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       if (mode === 'login') {
         await login(formData.username, formData.password);
       } else {
-        await register(formData.username, formData.email, formData.password, formData.fullName);
+        // 使用邮箱验证码注册
+        await registerWithEmail(
+          formData.email,
+          formData.verificationCode,
+          formData.username,
+          formData.password
+        );
       }
       onClose();
-      setFormData({ username: '', email: '', password: '', fullName: '' });
+      setFormData({ username: '', email: '', password: '', verificationCode: '' });
+      setCodeSent(false);
+      setCountdown(0);
     } catch (err: any) {
       setError(err.message || '操作失败');
     } finally {
@@ -53,7 +112,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const switchMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
     setError('');
-    setFormData({ username: '', email: '', password: '', fullName: '' });
+    setFormData({ username: '', email: '', password: '', verificationCode: '' });
+    setCodeSent(false);
+    setCountdown(0);
   };
 
   return (
@@ -109,26 +170,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           )}
 
           {/* 表单 */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 用户名 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                用户名
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => handleInputChange('username', e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-wangfeng-purple focus:outline-none transition-colors"
-                  placeholder="请输入用户名"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* 邮箱（仅注册时显示） */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* 邮箱（注册时优先显示） */}
             {mode === 'register' && (
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -148,24 +191,63 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
             )}
 
-            {/* 真实姓名（仅注册时显示，可选） */}
+            {/* 验证码（仅注册时显示） */}
             {mode === 'register' && (
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  真实姓名 <span className="text-gray-500">(可选)</span>
+                  邮箱验证码
                 </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => handleInputChange('fullName', e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-wangfeng-purple focus:outline-none transition-colors"
-                    placeholder="请输入真实姓名"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                      type="text"
+                      value={formData.verificationCode}
+                      onChange={(e) => handleInputChange('verificationCode', e.target.value)}
+                      className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-wangfeng-purple focus:outline-none transition-colors"
+                      placeholder="请输入验证码"
+                      required
+                      maxLength={6}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={sendVerificationCode}
+                    disabled={sendingCode || countdown > 0 || !formData.email}
+                    className="px-4 py-3 bg-wangfeng-purple hover:bg-wangfeng-purple/80 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-2"
+                  >
+                    {sendingCode ? (
+                      '发送中...'
+                    ) : countdown > 0 ? (
+                      `${countdown}s`
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        {codeSent ? '重新发送' : '发送验证码'}
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
+
+            {/* 用户名 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                {mode === 'register' ? '昵称' : '用户名'}
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  value={formData.username}
+                  onChange={(e) => handleInputChange('username', e.target.value)}
+                  className="w-full bg-gray-800 border border-gray-600 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-400 focus:border-wangfeng-purple focus:outline-none transition-colors"
+                  placeholder={mode === 'register' ? '请输入昵称' : '请输入用户名'}
+                  required
+                />
+              </div>
+            </div>
 
             {/* 密码 */}
             <div>

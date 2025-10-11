@@ -31,9 +31,9 @@ const Footer = () => {
               isLightMode ? 'text-gray-700' : 'text-white'
             )}
           >
-            <span className="text-wangfeng-purple font-bold">"</span>
+            <span className="text-wangfeng-purple font-bold mr-1">“</span>
             真正重要的自由，是可以在必须说不的时候可以说是，可以在所有人都说是的时候说不
-            <span className="text-wangfeng-purple font-bold">"</span>
+            <span className="text-wangfeng-purple font-bold ml-1 align-middle">”</span>
           </p>
           <p
             className={cn(

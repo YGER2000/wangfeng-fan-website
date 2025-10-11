@@ -31,6 +31,17 @@ import ArticleDetailPage from './components/pages/ArticleDetailPage';
 import CommentDemo from './components/pages/CommentDemo';
 import WriteArticle from './components/pages/WriteArticle';
 import PublishSchedule from './components/pages/PublishSchedule';
+import Profile from './components/pages/Profile';
+
+// Admin area
+import ProtectedRoute from './components/admin/ProtectedRoute';
+import AdminLayout from './components/admin/AdminLayout';
+import DashboardOverview from './components/admin/pages/DashboardOverview';
+import ReviewCenter from './components/admin/pages/ReviewCenter';
+import ScheduleManager from './components/admin/pages/ScheduleManager';
+import UserManagement from './components/admin/pages/UserManagement';
+import SystemLogs from './components/admin/pages/SystemLogs';
+import PlaceholderPage from './components/admin/pages/PlaceholderPage';
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -72,6 +83,32 @@ const AppContent = () => {
           <Route path="/comment-demo" element={<CommentDemo />} />
           <Route path="/write-article" element={<WriteArticle />} />
           <Route path="/publish-schedule" element={<PublishSchedule />} />
+          <Route path="/profile" element={<Profile />} />
+
+          {/* Admin Routes */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<DashboardOverview />} />
+            <Route path="review" element={<ReviewCenter />} />
+            <Route path="schedules" element={<ScheduleManager />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="audit" element={<SystemLogs />} />
+            <Route
+              path="*"
+              element={
+                <PlaceholderPage
+                  title="模块开发中"
+                  description="该后台模块正在完善，将很快与大家见面。"
+                />
+              }
+            />
+          </Route>
         </Routes>
       </main>
       <Footer />

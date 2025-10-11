@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import {
   FileText,
   CalendarCheck2,
@@ -9,106 +10,182 @@ import {
   ShieldAlert,
   CheckCircle2,
   TrendingUp,
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { adminService } from '@/services/admin';
+import type { DashboardStats, AdminLogResponse } from '@/services/admin';
 
 const DashboardOverview = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
 
-  const stats = [
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [recentLogs, setRecentLogs] = useState<AdminLogResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 获取统计数据
+        const statsData = await adminService.getDashboardStats();
+        setStats(statsData);
+
+        // 获取最近的操作日志
+        const logsData = await adminService.getRecentLogs(5);
+        setRecentLogs(logsData);
+      } catch (err: any) {
+        console.error('加载仪表盘数据失败:', err);
+        setError(err.message || '加载数据失败，请稍后重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wangfeng-purple mx-auto"></div>
+          <p className="mt-4 text-gray-500">加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={cn(
+        "rounded-2xl border p-6",
+        isLight ? "bg-red-50 border-red-200 text-red-800" : "bg-red-900/20 border-red-500/30 text-red-200"
+      )}>
+        <div className="flex items-center gap-3">
+          <AlertCircle className="h-5 w-5" />
+          <div>
+            <h3 className="font-semibold">加载失败</h3>
+            <p className="text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return null;
+  }
+
+  const statsCards = [
     {
       label: '待审核文章',
-      value: 12,
-      trend: '+3',
+      value: stats.pending_articles,
+      trend: `今日 +${stats.today_new_articles}`,
       description: '最近 24 小时新增',
       icon: FileText,
     },
     {
-      label: '待审核行程',
-      value: 4,
-      trend: '+1',
-      description: '含 2 个高优',
-      icon: CalendarCheck2,
-    },
-    {
-      label: '评论举报',
-      value: 6,
-      trend: '-2',
-      description: '本周较上周',
-      icon: MessageSquareWarning,
-    },
-    {
-      label: '活跃作者',
-      value: 18,
-      trend: '+5',
-      description: '过去 7 日发布内容',
+      label: '总用户数',
+      value: stats.total_users,
+      trend: `本周 +${stats.week_new_users}`,
+      description: '活跃用户统计',
       icon: UsersRound,
     },
-  ];
-
-  const reviewQueue = [
     {
-      id: 'POST-1208',
-      title: '新专辑发行背后的故事',
-      author: 'Rocky',
-      submitAt: '2024-12-05 21:36',
-      priority: '高',
+      label: '文章总数',
+      value: stats.total_articles,
+      trend: `本月 +${stats.month_new_articles}`,
+      description: '平台内容积累',
+      icon: FileText,
     },
     {
-      id: 'POST-1209',
-      title: '巡演幕后花絮合集',
-      author: '行者无疆',
-      submitAt: '2024-12-05 20:18',
-      priority: '中',
-    },
-    {
-      id: 'TOUR-099',
-      title: '2025 北京演唱会排期更新',
-      author: '舞台统筹组',
-      submitAt: '2024-12-05 19:02',
-      priority: '高',
+      label: '评论总数',
+      value: stats.total_comments,
+      trend: `今日 +${stats.today_new_comments}`,
+      description: '用户互动数据',
+      icon: MessageSquareWarning,
     },
   ];
 
-  const activity = [
-    {
-      id: '1',
-      actor: '管理员 · Lynn',
-      action: '通过文章',
-      target: '《汪峰经典歌曲赏析》',
-      time: '10 分钟前',
-      icon: CheckCircle2,
-    },
-    {
-      id: '2',
-      actor: '系统',
-      action: '检测到异常登录',
-      target: 'IP · 上海',
-      time: '43 分钟前',
-      icon: ShieldAlert,
-    },
-    {
-      id: '3',
-      actor: '管理员 · Jet',
-      action: '驳回行程',
-      target: '《巡演站点调整》',
-      time: '1 小时前',
-      icon: Edit3,
-    },
-  ];
+  const getActionIcon = (action: string) => {
+    if (action.includes('approve') || action.includes('通过')) return CheckCircle2;
+    if (action.includes('reject') || action.includes('驳回')) return Edit3;
+    if (action.includes('ban') || action.includes('封禁')) return ShieldAlert;
+    return Edit3;
+  };
+
+  const formatActionText = (action: string) => {
+    const actionMap: Record<string, string> = {
+      'approve': '通过审核',
+      'reject': '驳回内容',
+      'ban': '封禁用户',
+      'unban': '解封用户',
+      'create': '创建',
+      'update': '更新',
+      'delete': '删除',
+      'role_change': '修改角色',
+    };
+    return actionMap[action] || action;
+  };
+
+  const formatResourceType = (type: string) => {
+    const typeMap: Record<string, string> = {
+      'article': '文章',
+      'user': '用户',
+      'comment': '评论',
+      'schedule': '行程',
+      'system': '系统',
+    };
+    return typeMap[type] || type;
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return '刚刚';
+    if (diffMins < 60) return `${diffMins} 分钟前`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} 小时前`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} 天前`;
+  };
 
   const quickActions = [
-    { label: '快速审核高优稿件', description: '跳转至高优先级队列', icon: Clock },
-    { label: '新建行程模板', description: '批量导入演出排期', icon: CalendarCheck2 },
-    { label: '查看敏感词命中', description: '联动评论风控中心', icon: ShieldAlert },
+    {
+      label: '快速审核待审文章',
+      description: '跳转至内容审核中心',
+      icon: Clock,
+      href: '/admin/review'
+    },
+    {
+      label: '用户权限管理',
+      description: '管理用户角色和状态',
+      icon: UsersRound,
+      href: '/admin/users'
+    },
+    {
+      label: '查看系统日志',
+      description: '审计操作记录',
+      icon: ShieldAlert,
+      href: '/admin/audit'
+    },
   ];
 
   return (
     <div className="space-y-6">
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => {
+        {statsCards.map((stat) => {
           const Icon = stat.icon;
           return (
             <div
@@ -153,57 +230,41 @@ const DashboardOverview = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-wangfeng-purple">待处理队列</h2>
-              <p className="text-xs text-gray-500">优先处理高优先级的审核请求</p>
+              <h2 className="text-lg font-semibold text-wangfeng-purple">系统概览</h2>
+              <p className="text-xs text-gray-500">关键数据统计</p>
             </div>
-            <button
-              type="button"
-              className={cn(
-                'flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium',
-                isLight
-                  ? 'border-wangfeng-purple/30 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
-                  : 'border-wangfeng-purple/40 text-wangfeng-light hover:bg-wangfeng-purple/20'
-              )}
-            >
-              查看全部
-              <ExternalLink className="h-3.5 w-3.5" />
-            </button>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {reviewQueue.map((item) => (
-              <div
-                key={item.id}
-                className={cn(
-                  'flex flex-col gap-3 rounded-xl border border-wangfeng-purple/30 p-4 transition-all duration-300 hover:border-wangfeng-purple/60 hover:shadow-strong-glow sm:flex-row sm:items-center sm:justify-between',
-                  isLight ? 'bg-white/70' : 'bg-black/60'
-                )}
-              >
-                <div>
-                  <p className="text-xs text-gray-500">{item.id}</p>
-                  <h3 className="mt-1 text-sm font-semibold text-wangfeng-purple">{item.title}</h3>
-                  <p className="text-xs text-gray-400">提交人：{item.author}</p>
-                </div>
-                <div className="flex w-full items-end justify-between gap-3 text-xs sm:w-auto sm:flex-col sm:items-end">
-                  <span className="rounded-full bg-wangfeng-purple/10 px-3 py-1 text-wangfeng-purple/90">
-                    优先级·{item.priority}
-                  </span>
-                  <span className="text-gray-500">{item.submitAt}</span>
-                  <button
-                    type="button"
-                    className={cn(
-                      'flex items-center gap-2 rounded-lg px-3 py-1 font-medium transition-colors',
-                      isLight
-                        ? 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                        : 'bg-wangfeng-purple/20 text-wangfeng-light hover:bg-wangfeng-purple/30'
-                    )}
-                  >
-                    进入审核
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className={cn(
+              'rounded-xl border border-wangfeng-purple/30 p-4',
+              isLight ? 'bg-white/70' : 'bg-black/60'
+            )}>
+              <p className="text-xs text-gray-500">本周新增</p>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-wangfeng-purple">{stats.week_new_users}</span>
+                <span className="text-xs text-gray-500">用户</span>
               </div>
-            ))}
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-wangfeng-purple">{stats.week_new_articles}</span>
+                <span className="text-xs text-gray-500">文章</span>
+              </div>
+            </div>
+
+            <div className={cn(
+              'rounded-xl border border-wangfeng-purple/30 p-4',
+              isLight ? 'bg-white/70' : 'bg-black/60'
+            )}>
+              <p className="text-xs text-gray-500">本月新增</p>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-wangfeng-purple">{stats.month_new_users}</span>
+                <span className="text-xs text-gray-500">用户</span>
+              </div>
+              <div className="mt-1 flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-wangfeng-purple">{stats.month_new_articles}</span>
+                <span className="text-xs text-gray-500">文章</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -216,26 +277,36 @@ const DashboardOverview = () => {
           >
             <h2 className="text-lg font-semibold text-wangfeng-purple">最新动态</h2>
             <ul className="mt-4 space-y-4">
-              {activity.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.id} className="flex items-start gap-3">
-                    <div
-                      className={cn(
-                        'flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 text-wangfeng-purple',
-                        isLight ? 'bg-white/70' : 'bg-black/60'
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-wangfeng-purple/90">{item.actor}</p>
-                      <p className="text-xs text-gray-400">{item.action} · {item.target}</p>
-                      <p className="text-[11px] text-gray-500">{item.time}</p>
-                    </div>
-                  </li>
-                );
-              })}
+              {recentLogs.length === 0 ? (
+                <li className="text-sm text-gray-500 text-center py-4">暂无操作记录</li>
+              ) : (
+                recentLogs.map((item) => {
+                  const Icon = getActionIcon(item.action);
+                  return (
+                    <li key={item.id} className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 text-wangfeng-purple',
+                          isLight ? 'bg-white/70' : 'bg-black/60'
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-wangfeng-purple/90 truncate">
+                          {item.operator_username}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {formatActionText(item.action)} · {formatResourceType(item.resource_type)}
+                        </p>
+                        <p className="text-[11px] text-gray-500">
+                          {formatTimeAgo(item.created_at)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })
+              )}
             </ul>
           </div>
 
@@ -253,9 +324,10 @@ const DashboardOverview = () => {
                   <li
                     key={action.label}
                     className={cn(
-                      'flex items-center justify-between gap-4 rounded-xl border border-wangfeng-purple/30 px-4 py-3 transition-all duration-200 hover:border-wangfeng-purple/60',
-                      isLight ? 'bg-white/70' : 'bg-black/60'
+                      'flex items-center justify-between gap-4 rounded-xl border border-wangfeng-purple/30 px-4 py-3 transition-all duration-200 hover:border-wangfeng-purple/60 cursor-pointer',
+                      isLight ? 'bg-white/70 hover:bg-white/90' : 'bg-black/60 hover:bg-black/70'
                     )}
+                    onClick={() => window.location.hash = action.href}
                   >
                     <div className="flex items-center gap-3">
                       <Icon className="h-4 w-4 text-wangfeng-purple" />

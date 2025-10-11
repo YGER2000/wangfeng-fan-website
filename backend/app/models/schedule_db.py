@@ -15,8 +15,14 @@ class Schedule(Base):
     venue = Column(String(200), nullable=True, comment='具体场馆/地点')
     theme = Column(String(200), nullable=False, comment='行程主题/详情')
     description = Column(Text, nullable=True, comment='补充说明')
-    image = Column(String(500), nullable=True, comment='海报图片路径')
+    image = Column(String(500), nullable=True, comment='海报图片路径（原图）')
+    image_thumb = Column(String(500), nullable=True, comment='海报缩略图路径（压缩图）')
     source = Column(String(20), default='custom', nullable=False, comment='数据来源：legacy/custom')
+
+    # 审核状态字段
+    review_status = Column(String(20), default='pending', nullable=False, index=True, comment='审核状态: pending/approved')
+    is_published = Column(Integer, default=0, nullable=False, comment='是否已发布: 0未发布/1已发布')
+
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment='创建时间')
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment='更新时间')
 
@@ -34,7 +40,10 @@ class Schedule(Base):
             'theme': self.theme,
             'description': self.description,
             'image': self.image,
+            'image_thumb': self.image_thumb,
             'source': self.source,
+            'review_status': self.review_status,
+            'is_published': self.is_published,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }

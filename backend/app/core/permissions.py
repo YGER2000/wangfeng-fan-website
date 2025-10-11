@@ -47,7 +47,9 @@ def require_admin(current_user: User = Depends(get_current_active_user)) -> User
 
 def require_super_admin(current_user: User = Depends(get_current_active_user)) -> User:
     """要求超级管理员权限"""
-    if current_user.role != UserRole.SUPER_ADMIN:
+    # 支持字符串和枚举类型的比较
+    user_role = current_user.role if isinstance(current_user.role, str) else current_user.role.value
+    if user_role != UserRole.SUPER_ADMIN.value and user_role != UserRole.SUPER_ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="权限不足：需要超级管理员权限"

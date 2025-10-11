@@ -23,10 +23,9 @@ def register(
     try:
         user = user_service.create_user(user_data)
         return UserResponse(
-            id=str(user.id),
+            id=user.id,
             username=user.username,
             email=user.email,
-            full_name=user.full_name,
             role=user.role,
             role_name=UserRole.get_chinese_name(user.role),
             is_active=user.is_active
@@ -60,7 +59,7 @@ def login(
         )
 
     # 更新最后登录时间
-    user_service.update_user_last_login(str(user.id))
+    user_service.update_user_last_login(user.id)
 
     # 创建访问令牌
     access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
@@ -104,10 +103,9 @@ def login_for_access_token(
 def read_users_me(current_user: User = Depends(get_current_active_user)):
     """获取当前用户信息"""
     return UserResponse(
-        id=str(current_user.id),
+        id=current_user.id,
         username=current_user.username,
         email=current_user.email,
-        full_name=current_user.full_name,
         role=current_user.role,
         role_name=UserRole.get_chinese_name(current_user.role),
         is_active=current_user.is_active
@@ -122,8 +120,7 @@ def init_super_admin(user_service: UserServiceMySQL = Depends(get_user_service))
         super_admin = user_service.create_super_admin(
             username="root",
             email="root@wangfeng.fan",
-            password="123456",
-            full_name="超级管理员"
+            password="123456"
         )
 
         if super_admin is None:
@@ -133,10 +130,9 @@ def init_super_admin(user_service: UserServiceMySQL = Depends(get_user_service))
             )
 
         return UserResponse(
-            id=str(super_admin.id),
+            id=super_admin.id,
             username=super_admin.username,
             email=super_admin.email,
-            full_name=super_admin.full_name,
             role=super_admin.role,
             role_name=UserRole.get_chinese_name(super_admin.role),
             is_active=super_admin.is_active

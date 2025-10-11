@@ -9,11 +9,19 @@ class Settings(BaseSettings):
     database_host: str = "localhost"
     database_port: str = "3306"
     database_name: str = "wangfeng_fan_website"
-    
+
     # JWT 配置
     secret_key: str = "your-secret-key-here-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
+
+    # 阿里云邮件服务配置
+    smtp_host: str = "smtpdm.aliyun.com"  # 阿里云DirectMail SMTP服务器
+    smtp_port: int = 25  # 端口: 25, 80, 或 465(SSL)
+    smtp_username: str = ""  # SMTP用户名
+    smtp_password: str = ""  # SMTP密码
+    sender_email: str = ""  # 发件人邮箱
+    sender_name: str = "感受峰 感受存在"  # 发件人名称
 
     class Config:
         env_file = ".env"

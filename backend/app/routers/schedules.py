@@ -13,7 +13,16 @@ router = APIRouter(prefix="/api/schedules", tags=["行程"])
 def list_schedules(
     schedule_service: ScheduleServiceMySQL = Depends(get_schedule_service)
 ):
-    return schedule_service.get_all_entries()
+    """获取所有已发布的行程（前台展示）"""
+    from ..models.schedule_db import Schedule
+    from sqlalchemy.orm import Session
+
+    # 只返回已发布的行程
+    schedules = schedule_service.db.query(Schedule).filter(
+        Schedule.is_published == 1
+    ).order_by(Schedule.date.desc()).all()
+
+    return [schedule.to_dict() for schedule in schedules]
 
 
 @router.post("", response_model=ScheduleResponse)
@@ -39,6 +48,7 @@ async def create_schedule(
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
+    # 用户提交时不保存文件，仅暂存数据
     created = schedule_service.create_entry(
         category=payload.category.value,
         date=payload.date,
@@ -47,5 +57,6 @@ async def create_schedule(
         theme=payload.theme,
         description=payload.description,
         image_file=image,
+        save_file=False,  # 不立即保存文件
     )
     return created

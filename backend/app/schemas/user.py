@@ -5,10 +5,9 @@ from ..models.roles import UserRole
 
 class UserCreate(BaseModel):
     """用户注册模式"""
-    username: str = Field(..., min_length=1, max_length=50, description="用户名，支持中文，1-50个字符")
+    username: str = Field(..., min_length=1, max_length=50, description="昵称，支持中文，1-50个字符")
     email: EmailStr = Field(..., description="邮箱地址")
     password: str = Field(..., min_length=6, max_length=100, description="密码，至少6个字符")
-    full_name: Optional[str] = Field(None, max_length=100, description="全名（可选）")
     role: Optional[UserRole] = Field(default=UserRole.USER, description="用户角色（管理员注册时可指定）")
 
 
@@ -20,10 +19,9 @@ class UserLogin(BaseModel):
 
 class UserResponse(BaseModel):
     """用户响应模式"""
-    id: str
+    id: int
     username: str
     email: str
-    full_name: Optional[str] = None
     role: UserRole
     role_name: str = Field(description="角色中文名称")
     is_active: bool

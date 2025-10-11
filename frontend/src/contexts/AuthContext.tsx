@@ -3,10 +3,9 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 export type UserRole = 'guest' | 'user' | 'admin' | 'super_admin';
 
 export interface User {
-  id: string;
+  id: number;
   username: string;
   email: string;
-  full_name?: string;
   role: UserRole;
   role_name: string;
   is_active: boolean;
@@ -31,7 +30,8 @@ export interface AuthContextType {
   token: string | null;
   currentRole: UserRole;
   login: (username: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string, fullName?: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
+  registerWithEmail: (email: string, code: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   hasPermission: (requiredRole: UserRole) => boolean;
@@ -52,10 +52,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // 从 localStorage 恢复认证状态
-    const savedToken = localStorage.getItem('token');
+    const savedToken =
+      localStorage.getItem('access_token') || localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
 
     if (savedToken && savedUser) {
+      if (!localStorage.getItem('access_token')) {
+        localStorage.setItem('access_token', savedToken);
+      }
       setToken(savedToken);
       setUser(JSON.parse(savedUser));
     }
@@ -96,7 +100,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setToken(authToken);
       setUser(userData);
-      localStorage.setItem('token', authToken);
+      localStorage.setItem('access_token', authToken);
+      localStorage.setItem('token', authToken); // 保留旧键以兼容历史代码
       localStorage.setItem('user', JSON.stringify(userData));
     } catch (error) {
       console.error('登录失败:', error);
@@ -104,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, email: string, password: string, fullName?: string) => {
+  const register = async (username: string, email: string, password: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: 'POST',
@@ -115,7 +120,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           username,
           email,
           password,
-          full_name: fullName || null,
         }),
       });
 
@@ -132,9 +136,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const registerWithEmail = async (email: string, code: string, username: string, password: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/verification/register-with-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          code,
+          username,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || '注册失败');
+      }
+
+      // 注册成功后自动登录
+      await login(username, password);
+    } catch (error) {
+      console.error('邮箱注册失败:', error);
+      throw error;
+    }
+  };
+
   const logout = () => {
     setUser(null);
     setToken(null);
+    localStorage.removeItem('access_token');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
@@ -172,6 +205,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentRole,
       login,
       register,
+      registerWithEmail,
       logout,
       isLoading,
       hasPermission: hasPermissionCheck,
