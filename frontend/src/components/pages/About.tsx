@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, GraduationCap, Music, Award, BookOpen, Heart } from 'lucide-react';
+import AboutAwards from './AboutAwards';
 
 interface ArtistBio {
   basicInfo: {
@@ -461,6 +462,26 @@ const About = () => {
                 </motion.div>
               ))}
             </div>
+          </motion.div>
+
+          {/* 完整获奖记录 */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.9 }}
+            className="bg-secondary-dark rounded-xl border border-wangfeng-purple/30 shadow-glow p-8 mb-12"
+          >
+            <h3 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
+              <Award className="w-8 h-8 text-wangfeng-purple" />
+              完整获奖记录
+            </h3>
+            
+            <p className="text-gray-300 mb-6">
+              从1997年至今，汪峰在音乐生涯中获得了众多奖项与荣誉认可，以下是详细的获奖记录：
+            </p>
+
+            {/* 使用完整的获奖记录组件 */}
+            <AboutAwards />
           </motion.div>
 
           {/* 社会影响 */}

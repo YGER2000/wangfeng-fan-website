@@ -15,35 +15,6 @@ const Footer = () => {
       )}
     >
       <div className="container mx-auto px-4">
-        {/* Fan Quote Banner */}
-        <div
-          className={cn(
-            'mb-12 py-6 px-4 rounded-xl border border-wangfeng-purple shadow-glow relative overflow-hidden transition-colors duration-300',
-            isLightMode ? 'bg-white' : 'bg-secondary-dark'
-          )}
-        >
-          <div className="absolute top-0 right-0 w-40 h-40 bg-wangfeng-purple/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-wangfeng-purple/10 rounded-full blur-3xl -ml-20 -mb-20"></div>
-          
-          <p
-            className={cn(
-              'font-serif italic text-lg md:text-2xl text-center relative z-10 transition-colors duration-300',
-              isLightMode ? 'text-gray-700' : 'text-white'
-            )}
-          >
-            <span className="text-wangfeng-purple font-bold mr-1">“</span>
-            真正重要的自由，是可以在必须说不的时候可以说是，可以在所有人都说是的时候说不
-            <span className="text-wangfeng-purple font-bold ml-1 align-middle">”</span>
-          </p>
-          <p
-            className={cn(
-              'text-center text-sm mt-2 font-bebas tracking-wider transition-colors duration-300',
-              isLightMode ? 'text-purple-500' : 'text-purple-300'
-            )}
-          >
-            - 汪峰
-          </p>
-        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-1 lg:col-span-1">
@@ -80,17 +51,17 @@ const Footer = () => {
               <li><Link to="/about" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
                 <span className="text-wangfeng-purple mr-2">•</span> 关于汪峰
               </Link></li>
-              <li><Link to="/discography" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 音乐作品 <span className="ml-2 text-xs bg-wangfeng-purple text-white px-1 rounded" style={{ animation: 'none' }}>新!</span>
-              </Link></li>
               <li><Link to="/tour-dates" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
                 <span className="text-wangfeng-purple mr-2">•</span> 摇滚传奇巡演
               </Link></li>
+              <li><Link to="/discography" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 音乐作品 <span className="ml-2 text-xs bg-wangfeng-purple text-white px-1 rounded" style={{ animation: 'none' }}>新!</span>
+              </Link></li>
+              <li><Link to="/video-archive" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 视频存档
+              </Link></li>
               <li><Link to="/gallery" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
                 <span className="text-wangfeng-purple mr-2">•</span> 图库
-              </Link></li>
-              <li><Link to="/awards" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 奖项与成就
               </Link></li>
             </ul>
           </div>
@@ -98,20 +69,20 @@ const Footer = () => {
           <div className="col-span-1">
             <h3 className="text-lg font-bold mb-4 uppercase tracking-wider text-wangfeng-purple border-b border-wangfeng-purple/30 pb-2">汪峰世界</h3>
             <ul className="space-y-3">
-              <li><Link to="/news" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 新闻资讯
+              <li><Link to="/shu-ju-ke-pu" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 资料科普
               </Link></li>
-              <li><Link to="/acting-career" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 影视生涯
+              <li><Link to="/feng-yan-feng-yu" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 峰言峰语
               </Link></li>
-              <li><Link to="/quotes" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 经典语录
+              <li><Link to="/feng-mi-liao-feng" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 峰迷荟萃
+              </Link></li>
+              <li><Link to="/about-site" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
+                <span className="text-wangfeng-purple mr-2">•</span> 关于本站
               </Link></li>
               <li><a href="https://www.wangfeng.com" target="_blank" rel="noopener noreferrer" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
                 <span className="text-wangfeng-purple mr-2">•</span> 官方网站
-              </a></li>
-              <li><a href="https://shop.wangfeng.com" target="_blank" rel="noopener noreferrer" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 周边商品
               </a></li>
             </ul>
           </div>

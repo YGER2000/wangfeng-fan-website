@@ -18,14 +18,14 @@ import About from './components/pages/About';
 import Discography from './components/pages/Discography';
 import TourDates from './components/pages/TourDates';
 import Gallery from './components/pages/Gallery';
-import Awards from './components/pages/Awards';
-import News from './components/pages/News';
 import ActingCareer from './components/pages/ActingCareer';
-import Contact from './components/pages/Contact';
 import Quotes from './components/pages/Quotes';
 import FengYanFengYu from './components/pages/FengYanFengYuNew';
 import FengMiLiaoFeng from './components/pages/FengMiLiaoFengNew';
 import ShuJuKePu from './components/pages/ShuJuKePuNew';
+import VideoArchive from './components/pages/VideoArchive';
+import VideoDetail from './components/pages/VideoDetail';
+import AboutSite from './components/pages/AboutSite';
 import ArticleDetail from './components/pages/ArticleDetail';
 import ArticleDetailPage from './components/pages/ArticleDetailPage';
 import WriteArticle from './components/pages/WriteArticle';
@@ -40,6 +40,7 @@ import ReviewCenter from './components/admin/pages/ReviewCenter';
 import ScheduleManager from './components/admin/pages/ScheduleManager';
 import UserManagement from './components/admin/pages/UserManagement';
 import SystemLogs from './components/admin/pages/SystemLogs';
+import VideoManagement from './components/admin/pages/VideoManagement';
 import PlaceholderPage from './components/admin/pages/PlaceholderPage';
 
 const AppContent = () => {
@@ -66,20 +67,17 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/discography" element={<Discography />} />
           <Route path="/tour-dates" element={<TourDates />} />
+          <Route path="/discography" element={<Discography />} />
+          <Route path="/video-archive" element={<VideoArchive />} />
           <Route path="/gallery" element={<Gallery />} />
-          <Route path="/awards" element={<Awards />} />
-          <Route path="/news" element={<News />} />
+          <Route path="/shu-ju-ke-pu" element={<ShuJuKePu />} />
+          <Route path="/feng-yan-feng-yu" element={<FengYanFengYu />} />
+          <Route path="/feng-mi-liao-feng" element={<FengMiLiaoFeng />} />
+          <Route path="/about-site" element={<AboutSite />} />
           <Route path="/acting-career" element={<ActingCareer />} />
-          <Route path="/contact" element={<Contact />} />
           <Route path="/quotes" element={<Quotes />} />
-          <Route path="/峰言峰语" element={<FengYanFengYu />} />
-          <Route path="/峰迷荟萃" element={<FengMiLiaoFeng />} />
-          <Route path="/资料科普" element={<ShuJuKePu />} />
-          <Route path="/feng-yan-feng-yu" element={<Navigate to="/峰言峰语" replace />} />
-          <Route path="/feng-mi-liao-feng" element={<Navigate to="/峰迷荟萃" replace />} />
-          <Route path="/shu-ju-ke-pu" element={<Navigate to="/资料科普" replace />} />
+          <Route path="/video/:id" element={<VideoDetail />} />
           <Route path="/article/:slug" element={<ArticleDetailPage />} />
           <Route path="/article-old/:slug" element={<ArticleDetail />} />
           <Route path="/write-article" element={<WriteArticle />} />
@@ -98,6 +96,7 @@ const AppContent = () => {
             <Route index element={<DashboardOverview />} />
             <Route path="review" element={<ReviewCenter />} />
             <Route path="schedules" element={<ScheduleManager />} />
+            <Route path="videos" element={<VideoManagement />} />
             <Route path="users" element={<UserManagement />} />
             <Route path="audit" element={<SystemLogs />} />
             <Route

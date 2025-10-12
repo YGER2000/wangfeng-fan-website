@@ -9,13 +9,10 @@ import {
   Select,
   Button,
   Badge,
-  Alert,
-  Tabs
+  Alert
 } from 'flowbite-react';
 import {
   HiSave,
-  HiEye,
-  HiPencil,
   HiCalendar,
   HiUser,
   HiTag,
@@ -24,8 +21,7 @@ import {
   HiX,
   HiPlus,
   HiInformationCircle,
-  HiCode,
-  HiViewGridAdd
+  HiCode
 } from 'react-icons/hi';
 import { Article } from '@/utils/contentManager';
 import { ARTICLE_CATEGORIES, getSecondaryCategories, getPrimaryCategories } from '@/config/categories';
@@ -169,7 +165,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview }: ArticleEditorProps
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-8 space-y-4"
         >
           <div className="text-center mb-6">
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-wangfeng-purple via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
@@ -179,34 +175,17 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview }: ArticleEditorProps
               创作属于你的精彩内容
             </p>
           </div>
+          {availablePrimaryCategories.length === 0 && (
+            <Alert color="failure" icon={HiInformationCircle}>
+              <span className="font-medium">权限不足！</span> 您没有权限发布文章。请联系管理员。
+            </Alert>
+          )}
 
-          {/* 工具栏 */}
-          <Card theme={flowbiteTheme.card}>
-            <div className="flex flex-wrap items-center justify-end gap-4">
-              <Button
-                color="primary"
-                theme={flowbiteTheme.button}
-                onClick={handleSave}
-                disabled={isSaving}
-                size="md"
-              >
-                <HiSave className="mr-2 h-5 w-5" />
-                {isSaving ? '保存中...' : '保存文章'}
-              </Button>
-            </div>
-
-            {availablePrimaryCategories.length === 0 && (
-              <Alert color="failure" icon={HiInformationCircle} className="mt-4">
-                <span className="font-medium">权限不足！</span> 您没有权限发布文章。请联系管理员。
-              </Alert>
-            )}
-
-            {currentRole === 'user' && availablePrimaryCategories.length > 0 && (
-              <Alert color="info" icon={HiInformationCircle} className="mt-4">
-                <span className="font-medium">提示：</span> 普通用户只能发布"峰迷荟萃"分类的文章
-              </Alert>
-            )}
-          </Card>
+          {currentRole === 'user' && availablePrimaryCategories.length > 0 && (
+            <Alert color="info" icon={HiInformationCircle}>
+              <span className="font-medium">提示：</span> 普通用户只能发布"峰迷荟萃"分类的文章
+            </Alert>
+          )}
         </motion.div>
 
         {/* 主要内容区域 */}
@@ -395,15 +374,27 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview }: ArticleEditorProps
             className="lg:col-span-8"
           >
             <Card theme={flowbiteTheme.card}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <HiCode className="h-6 w-6 text-wangfeng-purple" />
-                  <span className="text-red-500">*</span>
-                  文章内容
-                </h3>
-                <Badge color="info" size="sm">
-                  所见即所得，像 Word 一样简单
-                </Badge>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <HiCode className="h-6 w-6 text-wangfeng-purple" />
+                    <span className="text-red-500">*</span>
+                    文章内容
+                  </h3>
+                  <Badge color="info" size="sm">
+                    所见即所得，像 Word 一样简单
+                  </Badge>
+                </div>
+                <Button
+                  color="primary"
+                  theme={flowbiteTheme.button}
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  size="md"
+                >
+                  <HiSave className="mr-2 h-5 w-5" />
+                  {isSaving ? '保存中...' : '保存文章'}
+                </Button>
               </div>
 
               <div className="rich-text-editor-container rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">

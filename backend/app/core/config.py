@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     database_url: Optional[str] = None  # 完整数据库 URL（可选）
 
     # JWT 配置
-    secret_key: str = "your-secret-key-here-change-in-production"
+    secret_key: str = "super-secret-key-for-wangfeng-fan-website"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 

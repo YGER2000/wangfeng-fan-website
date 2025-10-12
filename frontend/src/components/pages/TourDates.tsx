@@ -14,9 +14,12 @@ type ScheduleCategory = ApiScheduleCategory;
 const categories: Array<'全部' | ScheduleCategory> = [
   '全部',
   '演唱会',
+  'livehouse',
   '音乐节',
-  '商演',
-  '综艺活动',
+  '商演拼盘',
+  '综艺晚会',
+  '直播',
+  '商业活动',
   '其他',
 ];
 
@@ -130,26 +133,26 @@ const TourDates = () => {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="max-w-4xl mx-auto mb-16"
         >
-          <div className="bg-secondary-dark rounded-xl border border-wangfeng-purple/30 shadow-glow p-8">
-            <h3 className="text-2xl font-bold text-wangfeng-purple mb-6 text-center">行程统计</h3>
+          <div className="bg-black/70 rounded-2xl border border-wangfeng-purple/40 shadow-glow p-8 backdrop-blur-sm">
+            <h3 className="text-3xl font-bold text-wangfeng-purple mb-8 text-center tracking-wider">行程统计</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div>
-                <div className="text-3xl font-bold theme-text-primary">
+              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
+                <div className="text-5xl font-bold text-white mb-3">
                   {schedule.length}
                 </div>
-                <div className="theme-text-muted">总行程数量</div>
+                <div className="text-lg text-wangfeng-purple/80 font-medium">总行程数量</div>
               </div>
-              <div>
-                <div className="text-3xl font-bold text-wangfeng-purple">
+              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
+                <div className="text-5xl font-bold text-wangfeng-purple mb-3 animate-pulse-glow">
                   {schedule.filter((c) => c.isFuture).length}
                 </div>
-                <div className="theme-text-muted">即将举行</div>
+                <div className="text-lg text-wangfeng-purple/80 font-medium">即将举行</div>
               </div>
-              <div>
-                <div className="text-3xl font-bold theme-text-secondary">
+              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
+                <div className="text-5xl font-bold text-gray-300 mb-3">
                   {schedule.length - schedule.filter((c) => c.isFuture).length}
                 </div>
-                <div className="theme-text-muted">已完成行程</div>
+                <div className="text-lg text-wangfeng-purple/80 font-medium">已完成行程</div>
               </div>
             </div>
           </div>
@@ -173,7 +176,7 @@ const TourDates = () => {
                     'px-4 py-2 rounded-full border transition-all duration-300 text-sm md:text-base',
                     isActive
                       ? 'bg-wangfeng-purple text-white border-wangfeng-purple shadow-glow'
-                      : 'theme-bg-card theme-text-primary theme-border-primary hover:border-wangfeng-purple/60'
+                      : 'bg-transparent theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
                   )}
                 >
                   {category}

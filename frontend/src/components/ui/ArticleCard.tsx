@@ -133,16 +133,16 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className="group cursor-pointer"
       onClick={handleClick}
     >
-      <div className="relative overflow-hidden rounded-xl theme-bg-card border theme-border-primary group-hover:border-wangfeng-purple/50 transition-all duration-300 flex flex-col">
+      <div className="relative overflow-hidden rounded-xl theme-bg-card border theme-border-primary group-hover:border-wangfeng-purple/50 transition-all duration-300 w-full">
         {/* 封面区域 - 固定 1:1 正方形 */}
-        <div className="relative aspect-square">
+        <div className="relative aspect-square w-full">
           {hasImage && coverImage ? (
             // 有图片时显示图片
             <img
@@ -155,8 +155,8 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
             />
           ) : (
             // 无图片时显示纯文字渐变背景
-            <div className={`w-full h-full bg-gradient-to-br ${getGradientColors(article.title)} flex items-center justify-center p-6 transition-transform duration-300 group-hover:scale-105`}>
-              <h3 className="text-white text-xl md:text-2xl font-bold text-center leading-tight line-clamp-4">
+            <div className={`w-full h-full bg-gradient-to-br ${getGradientColors(article.title)} flex items-center justify-center p-4 transition-transform duration-300 group-hover:scale-105`}>
+              <h3 className="text-white text-lg font-bold text-center leading-tight line-clamp-3">
                 {article.title}
               </h3>
             </div>
@@ -169,9 +169,9 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
         </div>
 
         {/* 文章信息 - 固定高度和布局 */}
-        <div className="p-4 flex flex-col" style={{ height: '160px' }}>
+        <div className="p-4" style={{ height: '160px' }}>
           {/* 标题 - 单行 */}
-          <h3 className="font-bold theme-text-primary mb-2 truncate group-hover:text-wangfeng-purple transition-colors text-base" style={{ height: '24px', lineHeight: '24px' }}>
+          <h3 className="font-bold theme-text-primary mb-3 truncate group-hover:text-wangfeng-purple transition-colors text-base" style={{ height: '24px', lineHeight: '24px' }}>
             {article.title}
           </h3>
 
@@ -189,7 +189,7 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
           </div>
 
           {/* 作者和日期 - 固定在底部 */}
-          <div className="flex items-center justify-between theme-text-muted text-xs mt-auto" style={{ height: '20px' }}>
+          <div className="flex items-center justify-between theme-text-muted text-xs" style={{ height: '20px', lineHeight: '20px' }}>
             <span className="truncate mr-2">{article.author}</span>
             <span className="whitespace-nowrap">{formatDate(getArticleDate())}</span>
           </div>

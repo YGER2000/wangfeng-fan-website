@@ -30,7 +30,24 @@ export interface Article extends ArticleData {
   category_secondary: string;
 }
 
-export type ScheduleCategory = '演唱会' | '音乐节' | '商演' | '综艺活动' | '其他';
+// 视频相关接口
+export interface VideoData {
+  id?: string;
+  title: string;
+  description?: string;
+  author: string;
+  category: string;
+  bvid: string;
+  publish_date: string;
+}
+
+export interface Video extends VideoData {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ScheduleCategory = '演唱会' | 'livehouse' | '音乐节' | '商演拼盘' | '综艺晚会' | '直播' | '商业活动' | '其他';
 
 export interface ScheduleItemResponse {
   id: number;
@@ -179,6 +196,102 @@ export const articleAPI = {
     
     if (!response.ok) {
       throw new Error('获取文章数量失败');
+    }
+    
+    return response.json();
+  },
+};
+
+// 视频相关 API
+export const videoAPI = {
+  // 获取视频列表
+  getList: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+  }): Promise<Video[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+
+    const response = await fetch(`${API_BASE_URL}/videos/?${searchParams}`);
+    
+    if (!response.ok) {
+      throw new Error('获取视频列表失败');
+    }
+    
+    return response.json();
+  },
+
+  // 根据ID获取视频
+  getById: async (id: string): Promise<Video> => {
+    const response = await fetch(`${API_BASE_URL}/videos/${id}`);
+    
+    if (!response.ok) {
+      throw new Error('获取视频失败');
+    }
+    
+    return response.json();
+  },
+
+  // 创建视频
+  create: async (videoData: VideoData): Promise<Video> => {
+    const response = await fetch(`${API_BASE_URL}/videos/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(videoData),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || '创建视频失败');
+    }
+    
+    return response.json();
+  },
+
+  // 更新视频
+  update: async (id: string, videoData: Partial<VideoData>): Promise<Video> => {
+    const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(videoData),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || '更新视频失败');
+    }
+    
+    return response.json();
+  },
+
+  // 删除视频
+  delete: async (id: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/videos/${id}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || '删除视频失败');
+    }
+  },
+
+  // 获取视频总数
+  getCount: async (category?: string): Promise<{ count: number }> => {
+    const searchParams = new URLSearchParams();
+    if (category) searchParams.append('category', category);
+
+    const response = await fetch(`${API_BASE_URL}/videos/count?${searchParams}`);
+    
+    if (!response.ok) {
+      throw new Error('获取视频数量失败');
     }
     
     return response.json();

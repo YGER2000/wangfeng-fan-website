@@ -66,7 +66,7 @@ const ShuJuKePu = () => {
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               selectedSubcategory === null
                 ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
+                : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
             }`}
           >
             全部
@@ -78,7 +78,7 @@ const ShuJuKePu = () => {
               className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 selectedSubcategory === sub
                   ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
+                  : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
               }`}
             >
               {sub}

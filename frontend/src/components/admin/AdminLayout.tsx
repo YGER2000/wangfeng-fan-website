@@ -9,6 +9,7 @@ import {
   Bell,
   RefreshCcw,
   Search,
+  Video,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -19,6 +20,7 @@ const navItems = [
   { label: '概览', to: '/admin', icon: LayoutDashboard },
   { label: '文章审核', to: '/admin/review', icon: FileText },
   { label: '行程管理', to: '/admin/schedules', icon: CalendarDays },
+  { label: '视频管理', to: '/admin/videos', icon: Video },
   { label: '用户与角色', to: '/admin/users', icon: Users },
   { label: '审计日志', to: '/admin/audit', icon: ShieldCheck },
 ];
@@ -39,9 +41,7 @@ const AdminLayout = () => {
       <div
         className={cn(
           'absolute inset-0 -z-10 opacity-80',
-          isLight
-            ? 'bg-gradient-to-br from-white via-white/90 to-wangfeng-light/20'
-            : 'bg-gradient-to-br from-black via-wangfeng-black to-wangfeng-purple/20'
+          'bg-gradient-to-br from-black via-wangfeng-black to-wangfeng-purple/20'  // 固定为黑色背景，不随主题变化
         )}
       />
 
@@ -49,7 +49,7 @@ const AdminLayout = () => {
         <aside
           className={cn(
             'w-full shrink-0 rounded-2xl border border-wangfeng-purple/40 shadow-glow backdrop-blur-md transition-colors lg:max-w-xs',
-            isLight ? 'bg-white/80 text-gray-800' : 'bg-black/40 text-gray-100'
+            'bg-black/40 text-gray-100'  // 固定为黑色背景，不随主题变化
           )}
         >
           <div className="flex items-center justify-between gap-3 border-b border-wangfeng-purple/30 px-5 py-4">
@@ -60,7 +60,7 @@ const AdminLayout = () => {
             <div
               className={cn(
                 'flex h-10 w-10 items-center justify-center rounded-full border border-wangfeng-purple/60 text-sm font-bold',
-                isLight ? 'bg-white/70 text-wangfeng-purple' : 'bg-black/50 text-wangfeng-light'
+                'bg-black/50 text-wangfeng-light'  // 固定为黑色背景和浅色文字
               )}
             >
               管理
@@ -79,11 +79,7 @@ const AdminLayout = () => {
                     cn(
                       'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300',
                       isActive
-                        ? isLight
-                          ? 'bg-wangfeng-purple text-white shadow-strong-glow'
-                          : 'border border-wangfeng-purple/60 bg-wangfeng-purple/20 text-wangfeng-light'
-                        : isLight
-                        ? 'text-gray-700 hover:bg-wangfeng-purple/10 hover:text-wangfeng-purple'
+                        ? 'border border-wangfeng-purple/60 bg-wangfeng-purple/20 text-wangfeng-light'
                         : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
                     )
                   }
@@ -110,7 +106,7 @@ const AdminLayout = () => {
           <div className="border-t border-wangfeng-purple/30 px-5 py-4 text-xs text-gray-500">
             <p>当前账号：</p>
             <p className="mt-1 font-medium text-wangfeng-purple">
-              {user?.full_name || user?.username || '管理员'}
+              {user?.username || '管理员'}
             </p>
           </div>
 
@@ -119,9 +115,7 @@ const AdminLayout = () => {
             onClick={logout}
             className={cn(
               'mx-4 mb-4 flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
-              isLight
-                ? 'border-wangfeng-purple/40 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
-                : 'border-wangfeng-purple/30 text-wangfeng-light hover:bg-wangfeng-purple/20'
+              'border-wangfeng-purple/30 text-wangfeng-light hover:bg-wangfeng-purple/20'  // 固定为黑色主题样式
             )}
           >
             <LogOut className="h-4 w-4" />
@@ -133,7 +127,7 @@ const AdminLayout = () => {
           <header
             className={cn(
               'flex flex-col gap-4 rounded-2xl border border-wangfeng-purple/30 p-6 shadow-glow backdrop-blur-md lg:flex-row lg:items-center lg:justify-between',
-              isLight ? 'bg-white/80' : 'bg-black/50'
+              'bg-black/50'  // 固定为黑色背景，不随主题变化
             )}
           >
             <div>
@@ -146,9 +140,7 @@ const AdminLayout = () => {
               <div
                 className={cn(
                   'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-inner transition-colors',
-                  isLight
-                    ? 'border-wangfeng-purple/20 bg-white/70 text-gray-700'
-                    : 'border-wangfeng-purple/40 bg-black/60 text-gray-200'
+                  'border-wangfeng-purple/40 bg-black/60 text-gray-200'  // 固定为黑色背景，不随主题变化
                 )}
               >
                 <Search className="h-4 w-4 text-wangfeng-purple" />
@@ -157,7 +149,7 @@ const AdminLayout = () => {
                   placeholder="快速检索内容、用户或操作"
                   className={cn(
                     'w-full bg-transparent text-sm outline-none placeholder:text-gray-400',
-                    isLight ? 'text-gray-700' : 'text-gray-200'
+                    'text-gray-200'  // 固定为白色文字，不随主题变化
                   )}
                 />
               </div>
@@ -166,9 +158,7 @@ const AdminLayout = () => {
                   type="button"
                   className={cn(
                     'flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 transition-colors',
-                    isLight
-                      ? 'bg-white/70 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
-                      : 'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'
+                    'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'  // 固定为黑色背景，不随主题变化
                   )}
                 >
                   <RefreshCcw className="h-4 w-4" />
@@ -177,9 +167,7 @@ const AdminLayout = () => {
                   type="button"
                   className={cn(
                     'relative flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 transition-colors',
-                    isLight
-                      ? 'bg-white/70 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
-                      : 'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'
+                    'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'  // 固定为黑色背景，不随主题变化
                   )}
                 >
                   <Bell className="h-4 w-4" />

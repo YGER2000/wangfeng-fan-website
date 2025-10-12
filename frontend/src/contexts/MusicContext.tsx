@@ -143,7 +143,10 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     
     // 绑定事件监听器
     audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration || 0);
+      // 如果当前歌曲没有预定义的时长，则使用音频文件的时长
+      if (!currentSong?.duration || currentSong.duration <= 0) {
+        setDuration(audio.duration || 0);
+      }
     });
     
     audio.addEventListener('timeupdate', () => {
@@ -183,11 +186,12 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // 计算下一首歌曲
+    // 对于所有其他播放模式（包括repeat-all和random），计算下一首歌曲
     const nextInfo = getNextSong();
     if (nextInfo) {
       playSpecificSong(nextInfo.song, nextInfo.index);
     } else {
+      // 如果没有下一首歌曲（顺序播放模式下播放完最后一首），停止播放
       setIsPlaying(false);
     }
   };
@@ -214,13 +218,18 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
       const playlistIndex = playlist.findIndex(s => s.id === nextSong.id);
       
       return { song: nextSong, index: playlistIndex };
-    } else {
-      // 顺序播放和列表循环模式
-      if (playMode === 'sequential' && currentPlaylistIndex >= playlist.length - 1) {
-        // 顺序播放到最后一首
+    } else if (playMode === 'sequential') {
+      // 顺序播放模式
+      if (currentPlaylistIndex >= playlist.length - 1) {
+        // 顺序播放到最后一首，返回null表示播放结束
         return null;
       }
-
+      // 播放下一首
+      const nextIndex = currentPlaylistIndex + 1;
+      return { song: playlist[nextIndex], index: nextIndex };
+    } else {
+      // 列表循环和单曲循环模式（除了随机播放和顺序播放）
+      // 对于repeat-all，循环播放列表
       const nextIndex = (currentPlaylistIndex + 1) % playlist.length;
       return { song: playlist[nextIndex], index: nextIndex };
     }
@@ -236,6 +245,9 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
 
   // 播放指定歌曲
   const playSpecificSong = async (song: Song, index: number) => {
+    // 设置歌曲时长（优先使用预定义时长）
+    setDuration(song.duration && song.duration > 0 ? song.duration : 0);
+    
     if (!audioRef.current) {
       createAudioInstance();
     }
@@ -319,7 +331,13 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     if (nextInfo) {
       playSpecificSong(nextInfo.song, nextInfo.index);
     } else if (playMode === 'sequential') {
+      // 顺序播放模式下，播放完最后一首后停止
       stopMusic();
+    } else {
+      // 其他模式下（包括列表循环），循环到第一首
+      if (playlist.length > 0) {
+        playSpecificSong(playlist[0], 0);
+      }
     }
   }, [playMode, playlist, currentPlaylistIndex, currentSong, shuffledPlaylist]);
 
@@ -345,11 +363,16 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
 
       prevSong = workingShuffle[prevShuffleIndex];
       prevIndex = playlist.findIndex(s => s.id === prevSong!.id);
-    } else {
-      if (playMode === 'sequential' && currentPlaylistIndex === 0) {
+    } else if (playMode === 'sequential') {
+      // 顺序播放模式
+      if (currentPlaylistIndex === 0) {
+        // 顺序播放模式下，第一首歌曲没有前一首
         return;
       }
-
+      prevIndex = currentPlaylistIndex - 1;
+      prevSong = playlist[prevIndex];
+    } else {
+      // 列表循环和单曲循环模式
       prevIndex = currentPlaylistIndex === 0 ? playlist.length - 1 : currentPlaylistIndex - 1;
       prevSong = playlist[prevIndex];
     }

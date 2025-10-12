@@ -34,16 +34,20 @@ const Header = () => {
   const navigation = [
     { name: '首页', path: '/' },
     { name: '关于汪峰', path: '/about' },
-    { name: '音乐作品', path: '/discography' },
     { name: '行程信息', path: '/tour-dates' },
+    { name: '音乐作品', path: '/discography' },
+    { name: '视频存档', path: '/video-archive' },
     { name: '图片画廊', path: '/gallery' },
-    { name: '峰言峰语', path: '/峰言峰语' },
-    { name: '峰迷荟萃', path: '/峰迷荟萃' },
-    { name: '资料科普', path: '/资料科普' },
-    { name: '获奖记录', path: '/awards' },
-    { name: '最新动态', path: '/news' },
-    { name: '联系我们', path: '/contact' },
+    { name: '资料科普', path: '/shu-ju-ke-pu' },
+    { name: '峰言峰语', path: '/feng-yan-feng-yu' },
+    { name: '峰迷荟萃', path: '/feng-mi-liao-feng' },
+    { name: '关于本站', path: '/about-site' },
   ];
+
+  // 判断当前路径是否匹配导航项
+  const isCurrentPath = (itemPath: string) => {
+    return location.pathname === itemPath;
+  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -141,7 +145,7 @@ const Header = () => {
   return (
     <header className={cn(
       'fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-wangfeng-purple/30',
-      isLightMode ? 'bg-white/90' : 'bg-black/90'
+      'bg-black/90'  // 固定为黑色背景，不随主题变化
     )}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
@@ -162,17 +166,15 @@ const Header = () => {
                   to={item.path}
                   onClick={handleLinkClick}
                   className={cn(
-                    'text-base font-medium transition-all duration-300 relative group',
-                    location.pathname === item.path
+                    'text-base font-medium transition-all duration-300 relative group text-white',  // 固定为白色文字
+                    isCurrentPath(item.path)
                       ? 'text-wangfeng-purple'
-                      : isLightMode
-                      ? 'theme-text-primary hover:text-wangfeng-purple'
-                      : 'text-white hover:text-wangfeng-purple'
+                      : 'hover:text-wangfeng-purple'
                   )}
                 >
                   {item.name}
                   {/* Current page underline */}
-                  {location.pathname === item.path && (
+                  {isCurrentPath(item.path) && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-wangfeng-purple"></span>
                   )}
                   {/* Hover underline animation */}
@@ -189,9 +191,7 @@ const Header = () => {
               onClick={toggleTheme}
               className={cn(
                 'flex items-center justify-center rounded-full border px-3 py-2 transition-colors',
-                isLightMode
-                  ? 'border-wangfeng-purple/40 bg-white/80 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
-                  : 'border-wangfeng-purple/50 bg-black/60 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
+                'border-wangfeng-purple/50 bg-black/60 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'  // 固定为黑色背景和白色文字
               )}
               title={`切换到${isLightMode ? '深色模式' : '浅色模式'}`}
             >
@@ -203,9 +203,7 @@ const Header = () => {
                   onClick={() => setIsActionMenuOpen((prev) => !prev)}
                   className={cn(
                     'flex items-center gap-2 rounded-full border border-wangfeng-purple/50 px-3 py-2 text-sm transition-colors hover:border-wangfeng-purple',
-                    isLightMode
-                      ? 'bg-white/80 text-wangfeng-purple'
-                      : 'bg-black/60 text-white'
+                    'bg-black/60 text-white'  // 固定为黑色背景和白色文字
                   )}
                   aria-haspopup="true"
                   aria-expanded={isActionMenuOpen}
@@ -218,7 +216,7 @@ const Header = () => {
                   <div
                     className={cn(
                       'absolute right-0 mt-2 w-52 rounded-xl border border-wangfeng-purple/30 p-2 shadow-glow backdrop-blur-md',
-                      isLightMode ? 'bg-white/95 text-gray-800' : 'bg-black/90'
+                      'bg-black/90'  // 固定为黑色背景
                     )}
                   >
                     {actionMenuItems.map((item) => {
@@ -237,9 +235,7 @@ const Header = () => {
                             'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                             item.disabled
                               ? 'cursor-not-allowed text-gray-500'
-                              : isLightMode
-                              ? 'theme-text-primary hover:bg-wangfeng-purple/20'
-                              : 'text-white hover:bg-wangfeng-purple/20',
+                              : 'text-white hover:bg-wangfeng-purple/20',  // 固定为白色文字
                             isLogout && !item.disabled && 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
                           )}
                           disabled={item.disabled}
@@ -269,7 +265,7 @@ const Header = () => {
               onClick={toggleMenu}
               className={cn(
                 'transition-colors hover:text-wangfeng-purple',
-                isLightMode ? 'theme-text-primary' : 'text-white'
+                'text-white'  // 固定为白色文字
               )}
             >
               {isMenuOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
@@ -286,9 +282,7 @@ const Header = () => {
                 onClick={toggleTheme}
                 className={cn(
                   'flex items-center justify-center gap-2 rounded-lg px-4 py-2 font-medium transition-colors',
-                  isLightMode
-                    ? 'bg-white text-wangfeng-purple border border-wangfeng-purple/40'
-                    : 'bg-black/60 text-wangfeng-purple border border-wangfeng-purple/40'
+                  'bg-black/60 text-wangfeng-purple border border-wangfeng-purple/40'  // 固定为黑色背景和紫色文字
                 )}
               >
                 {isLightMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -301,11 +295,9 @@ const Header = () => {
                   onClick={handleLinkClick}
                   className={cn(
                     'block text-sm font-medium py-2 transition-colors hover:text-wangfeng-purple',
-                    location.pathname === item.path
+                    isCurrentPath(item.path)
                       ? 'text-wangfeng-purple'
-                      : isLightMode
-                      ? 'theme-text-primary'
-                      : 'text-white'
+                      : 'text-white'  // 固定为白色文字
                   )}
                 >
                   {item.name}
@@ -317,7 +309,7 @@ const Header = () => {
                 {user ? (
                   <div className={cn(
                     'space-y-1 rounded-xl border border-wangfeng-purple/30 p-2',
-                    isLightMode ? 'bg-white/80' : 'bg-black/80'
+                    'bg-black/80'  // 固定为黑色背景
                   )}>
                     {actionMenuItems.map((item) => {
                       const ItemIcon = item.icon;
@@ -335,9 +327,7 @@ const Header = () => {
                             'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
                             item.disabled
                               ? 'cursor-not-allowed text-gray-500'
-                              : isLightMode
-                              ? 'theme-text-primary hover:bg-wangfeng-purple/20'
-                              : 'text-white hover:bg-wangfeng-purple/20',
+                              : 'text-white hover:bg-wangfeng-purple/20',  // 固定为白色文字
                             isLogout && !item.disabled && 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
                           )}
                           disabled={item.disabled}

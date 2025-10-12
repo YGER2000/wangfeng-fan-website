@@ -23,6 +23,7 @@ def create_article(db: Session, article: ArticleCreate) -> Article:
     if not excerpt and article.content:
         excerpt = article.content[:150] + "..." if len(article.content) > 150 else article.content
     
+    # 创建文章实例
     db_article = Article(
         id=article_id,
         slug=slug,
@@ -31,6 +32,8 @@ def create_article(db: Session, article: ArticleCreate) -> Article:
         excerpt=excerpt,
         author=article.author,
         category=article.category,
+        category_primary=article.category_primary,
+        category_secondary=article.category_secondary,
         tags=article.tags,
         meta_description=article.meta_description,
         meta_keywords=article.meta_keywords,

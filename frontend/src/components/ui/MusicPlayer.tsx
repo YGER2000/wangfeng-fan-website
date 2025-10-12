@@ -42,6 +42,11 @@ const MusicPlayer = () => {
     forcePlayNext
   } = useMusicContext();
 
+  // 使用歌曲预定义的时长，如果没有则使用从音频文件获取的时长
+  const displayDuration = currentSong?.duration && currentSong.duration > 0 
+    ? currentSong.duration 
+    : duration;
+
   // 暴露调试函数到全局
   React.useEffect(() => {
     // @ts-ignore
@@ -78,7 +83,7 @@ const MusicPlayer = () => {
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
-    const newTime = (clickX / rect.width) * duration;
+    const newTime = (clickX / rect.width) * displayDuration;
     seekTo(newTime);
   };
 
@@ -206,7 +211,7 @@ const MusicPlayer = () => {
                 <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
                   <span>{formatTime(currentTime)}</span>
                   <span className="flex-1"></span>
-                  <span>{formatTime(duration)}</span>
+                  <span>{formatTime(displayDuration)}</span>
                 </div>
                 <div
                   className="w-full h-1 bg-gray-600 rounded cursor-pointer"
@@ -214,7 +219,7 @@ const MusicPlayer = () => {
                 >
                   <div
                     className="h-full bg-wangfeng-purple rounded"
-                    style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                    style={{ width: `${displayDuration > 0 ? (currentTime / displayDuration) * 100 : 0}%` }}
                   />
                 </div>
               </div>

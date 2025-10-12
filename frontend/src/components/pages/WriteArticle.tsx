@@ -18,8 +18,8 @@ const WriteArticle = () => {
         excerpt: article.excerpt,
         author: article.author,
         category: article.category,
-        category_primary: article.category_primary || '峰言峰语',
-        category_secondary: article.category_secondary || '汪峰博客',
+        category_primary: article.category_primary,
+        category_secondary: article.category_secondary,
         tags: article.tags || [],
       };
 

@@ -717,7 +717,7 @@ const AwardsHighlights = () => {
         
         <div className="text-center mt-14">
           <Link 
-            to="/awards"
+            to="/about"
             className="px-8 py-4  text-wangfeng-purple border-2 border-wangfeng-purple font-bold text-lg uppercase tracking-wider rounded-full inline-flex items-center gap-3 hover:bg-wangfeng-purple hover:theme-text-primary transition-all shadow-glow"
           >
             查看所有奖杯！

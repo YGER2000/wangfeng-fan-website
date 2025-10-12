@@ -66,7 +66,7 @@ const FengYanFengYu = () => {
             className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               selectedSubcategory === null
                 ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
+                : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
             }`}
           >
             全部
@@ -97,7 +97,7 @@ const FengYanFengYu = () => {
             <p className="text-xl">暂无文章</p>
           </div>
         ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-auto">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {articles.map((article, index) => (
               <ArticleCard
                 key={article.id}

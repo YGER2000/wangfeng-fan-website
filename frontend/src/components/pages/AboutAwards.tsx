@@ -10,7 +10,7 @@ interface AwardRecord {
   category: string;
 }
 
-const Awards = () => {
+const AboutAwards = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('全部');
 
   // 获奖记录数据
@@ -101,176 +101,156 @@ const Awards = () => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white py-20">
-      <div className="container mx-auto px-4">
-        {/* 头部标题 */}
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            奖项 <span className="text-wangfeng-purple animate-pulse-glow">成就</span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
-            汪峰的荣誉殿堂
-          </h2>
-          <p className="theme-text-secondary text-lg max-w-2xl mx-auto">
-            从1997年至今，记录汪峰音乐生涯中获得的各类奖项与荣誉认可
-          </p>
-        </motion.div>
-
-        {/* 统计数据卡片 */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="theme-bg-card rounded-xl border theme-border-primary shadow-glow p-8 mb-12"
-        >
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.total}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">总记录</div>
-              <div className="theme-text-secondary text-sm">获奖+提名</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-green-400 animate-pulse-glow mb-2">{stats.awards}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">获奖</div>
-              <div className="theme-text-secondary text-sm">成功获得</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-blue-400 animate-pulse-glow mb-2">{stats.nominations}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">提名</div>
-              <div className="theme-text-secondary text-sm">入围认可</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.songAwards}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">歌曲奖</div>
-              <div className="theme-text-secondary text-sm">单曲荣誉</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.personalAwards}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">个人奖</div>
-              <div className="theme-text-secondary text-sm">艺人成就</div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.albumAwards}</div>
-              <div className="font-bold theme-text-primary text-lg mb-1">专辑奖</div>
-              <div className="theme-text-secondary text-sm">专辑荣誉</div>
-            </div>
+    <div className="mt-12">
+      {/* 统计数据卡片 */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="bg-secondary-dark rounded-xl border border-wangfeng-purple/30 shadow-glow p-8 mb-12"
+      >
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 text-center">
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.total}</div>
+            <div className="font-bold text-white text-lg mb-1">总记录</div>
+            <div className="text-gray-400 text-sm">获奖+提名</div>
           </div>
-        </motion.div>
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-green-400 animate-pulse-glow mb-2">{stats.awards}</div>
+            <div className="font-bold text-white text-lg mb-1">获奖</div>
+            <div className="text-gray-400 text-sm">成功获得</div>
+          </div>
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-blue-400 animate-pulse-glow mb-2">{stats.nominations}</div>
+            <div className="font-bold text-white text-lg mb-1">提名</div>
+            <div className="text-gray-400 text-sm">入围认可</div>
+          </div>
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.songAwards}</div>
+            <div className="font-bold text-white text-lg mb-1">歌曲奖</div>
+            <div className="text-gray-400 text-sm">单曲荣誉</div>
+          </div>
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.personalAwards}</div>
+            <div className="font-bold text-white text-lg mb-1">个人奖</div>
+            <div className="text-gray-400 text-sm">艺人成就</div>
+          </div>
+          <div>
+            <div className="text-4xl md:text-5xl font-bebas text-wangfeng-purple animate-pulse-glow mb-2">{stats.albumAwards}</div>
+            <div className="font-bold text-white text-lg mb-1">专辑奖</div>
+            <div className="text-gray-400 text-sm">专辑荣誉</div>
+          </div>
+        </div>
+      </motion.div>
 
-        {/* 分类筛选 */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-wrap justify-center gap-4 mb-12"
-        >
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 ${
-                selectedCategory === category
-                  ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
-              }`}
-            >
-              {getCategoryIcon(category)}
-              {category}
-            </button>
-          ))}
-        </motion.div>
+      {/* 分类筛选 */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="flex flex-wrap justify-center gap-4 mb-12"
+      >
+        {categories.map((category) => (
+          <button
+            key={category}
+            onClick={() => setSelectedCategory(category)}
+            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 flex items-center gap-2 ${
+              selectedCategory === category
+                ? 'bg-wangfeng-purple text-white shadow-glow animate-pulse-glow'
+                : 'bg-transparent border border-gray-600 text-gray-300 hover:border-wangfeng-purple hover:text-wangfeng-purple'
+            }`}
+          >
+            {getCategoryIcon(category)}
+            {category}
+          </button>
+        ))}
+      </motion.div>
 
-        {/* 获奖记录列表 */}
-        <div className="space-y-6">
-          {filteredAwards.map((award, index) => (
-            <motion.div
-              key={`award-${index}`}
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.05 }}
-              className={`theme-bg-card rounded-xl border-2 p-6 shadow-glow transition-all duration-300 hover:scale-105 ${
-                award.result === '获奖' 
-                  ? 'border-green-400/30 hover:border-green-400/50' 
-                  : 'border-blue-400/30 hover:border-blue-400/50'
-              }`}
-            >
-              <div className="flex flex-col md:flex-row md:items-center gap-4">
-                {/* 年份和结果 */}
-                <div className="flex-shrink-0 text-center md:text-left">
-                  <div className={`text-2xl font-bold mb-1 ${
-                    award.result === '获奖' ? 'text-green-400' : 'text-blue-400'
-                  }`}>
-                    {award.year}
-                  </div>
-                  <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
-                    award.result === '获奖' 
-                      ? 'bg-green-400/20 text-green-400' 
-                      : 'bg-blue-400/20 text-blue-400'
-                  }`}>
-                    {award.result === '获奖' ? <Trophy className="w-3 h-3" /> : <Star className="w-3 h-3" />}
-                    {award.result}
-                  </div>
+      {/* 获奖记录列表 */}
+      <div className="space-y-6">
+        {filteredAwards.map((award, index) => (
+          <motion.div
+            key={`award-${index}`}
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: index * 0.05 }}
+            className={`bg-secondary-dark rounded-xl border-2 p-6 shadow-glow transition-all duration-300 hover:scale-105 ${
+              award.result === '获奖' 
+                ? 'border-green-400/30 hover:border-green-400/50' 
+                : 'border-blue-400/30 hover:border-blue-400/50'
+            }`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-4">
+              {/* 年份和结果 */}
+              <div className="flex-shrink-0 text-center md:text-left">
+                <div className={`text-2xl font-bold mb-1 ${
+                  award.result === '获奖' ? 'text-green-400' : 'text-blue-400'
+                }`}>
+                  {award.year}
                 </div>
-
-                {/* 分类图标 */}
-                <div className="flex-shrink-0 text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 bg-wangfeng-purple/20 rounded-full text-wangfeng-purple">
-                    {getCategoryIcon(award.category)}
-                  </div>
-                  <div className="text-xs text-wangfeng-purple font-medium mt-1">
-                    {award.category}
-                  </div>
-                </div>
-
-                {/* 奖项信息 */}
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold theme-text-primary mb-2">{award.award}</h3>
-                  {award.work && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <Music className="w-4 h-4 text-wangfeng-purple" />
-                      <span className="text-wangfeng-purple font-semibold">作品：《{award.work}》</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 theme-text-secondary text-sm">
-                    <Calendar className="w-4 h-4" />
-                    <span>获奖时间：{award.year}</span>
-                  </div>
+                <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold ${
+                  award.result === '获奖' 
+                    ? 'bg-green-400/20 text-green-400' 
+                    : 'bg-blue-400/20 text-blue-400'
+                }`}>
+                  {award.result === '获奖' ? <Trophy className="w-3 h-3" /> : <Star className="w-3 h-3" />}
+                  {award.result}
                 </div>
               </div>
-            </motion.div>
-          ))}
-        </div>
 
-        {/* 底部统计 */}
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-center mt-16"
-        >
-          <div className="theme-bg-card rounded-xl border theme-border-primary shadow-glow p-6 max-w-md mx-auto">
-            <p className="theme-text-secondary mb-2">
-              当前显示 <span className="text-wangfeng-purple font-bold">{filteredAwards.length}</span> 项记录
-            </p>
-            <p className="text-sm theme-text-muted">
-              涵盖 <span className="text-green-400 font-bold">{stats.awards}</span> 个获奖 + 
-              <span className="text-blue-400 font-bold"> {stats.nominations}</span> 个提名
-            </p>
-            <div className="mt-4 pt-4 border-t theme-border-primary">
-              <p className="text-xs text-wangfeng-purple italic">
-                "音乐是我的生命，奖项是对音乐的认可" - 汪峰
-              </p>
+              {/* 分类图标 */}
+              <div className="flex-shrink-0 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-wangfeng-purple/20 rounded-full text-wangfeng-purple">
+                  {getCategoryIcon(award.category)}
+                </div>
+                <div className="text-xs text-wangfeng-purple font-medium mt-1">
+                  {award.category}
+                </div>
+              </div>
+
+              {/* 奖项信息 */}
+              <div className="flex-1">
+                <h3 className="text-xl font-bold text-white mb-2">{award.award}</h3>
+                {award.work && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Music className="w-4 h-4 text-wangfeng-purple" />
+                    <span className="text-wangfeng-purple font-semibold">作品：《{award.work}》</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-gray-400 text-sm">
+                  <Calendar className="w-4 h-4" />
+                  <span>获奖时间：{award.year}</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        ))}
       </div>
+
+      {/* 底部统计 */}
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="text-center mt-16"
+      >
+        <div className="bg-secondary-dark rounded-xl border border-wangfeng-purple/30 shadow-glow p-6 max-w-md mx-auto">
+          <p className="text-gray-300 mb-2">
+            当前显示 <span className="text-wangfeng-purple font-bold">{filteredAwards.length}</span> 项记录
+          </p>
+          <p className="text-sm text-gray-500">
+            涵盖 <span className="text-green-400 font-bold">{stats.awards}</span> 个获奖 + 
+            <span className="text-blue-400 font-bold"> {stats.nominations}</span> 个提名
+          </p>
+          <div className="mt-4 pt-4 border-t border-wangfeng-purple/20">
+            <p className="text-xs text-wangfeng-purple italic">
+              "音乐是我的生命，奖项是对音乐的认可" - 汪峰
+            </p>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 };
 
-export default Awards;
+export default AboutAwards;

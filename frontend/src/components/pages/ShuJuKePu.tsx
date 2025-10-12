@@ -62,7 +62,7 @@ const ShuJuKePu = () => {
 
   return (
     <div className="min-h-screen  text-white py-20">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-2">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ const ShuJuKePu = () => {
               className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 activeCategory === category.key
                   ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
+                  : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
               }`}
             >
               {category.label}
@@ -108,7 +108,7 @@ const ShuJuKePu = () => {
         </motion.div>
 
         {/* 内容区域 */}
-        <div className="max-w-6xl mx-auto">
+        <div className="mx-auto">
           {filteredArticles.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -128,13 +128,9 @@ const ShuJuKePu = () => {
               </p>
             </motion.div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-0.5 justify-center">
               {filteredArticles.map((article, index) => (
-                <ArticleCard
-                  key={article.id}
-                  article={article}
-                  index={index}
-                />
+                <ArticleCard key={article.id} article={article} index={index} />
               ))}
             </div>
           )}

@@ -2,9 +2,8 @@
 > wangfeng-fan-website@0.0.0 dev /Users/yger/WithFaith/wangfeng-fan-website/frontend
 > vite
 
-14:58:24 [vite] (client) Re-optimizing dependencies because lockfile has changed
 
-  VITE v6.3.6  ready in 131 ms
+  VITE v6.3.6  ready in 95 ms
 
   ➜  Local:   http://localhost:1997/
   ➜  Network: http://192.168.68.236:1997/
@@ -15,7 +14,9 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:19:17 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
+23:45:08 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
+23:45:08 [vite] (client) hmr update /src/components/admin/AdminLayout.tsx, /src/index.css
+23:45:08 [vite] (client) hmr update /src/App.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -23,7 +24,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:19:58 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
+23:45:16 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -31,7 +32,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:20:59 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
+23:45:26 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -39,7 +40,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:21:33 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
+23:45:34 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -47,7 +48,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:24:11 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
+23:45:40 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -55,7 +56,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:24:47 [vite] (client) hmr update /src/components/pages/FengYanFengYuNew.tsx, /src/index.css
+23:48:32 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -63,8 +64,7 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:27:20 [vite] (client) hmr update /src/components/pages/FengMiLiaoFengNew.tsx, /src/index.css
-15:27:20 [vite] (client) hmr update /src/components/pages/ShuJuKePuNew.tsx, /src/index.css
+23:56:48 [vite] (client) hmr update /src/components/layout/Footer.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */
@@ -72,200 +72,8 @@
    |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 7  |  
 8  |  @layer base {
-15:40:38 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-15:41:08 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-15:41:43 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-15:42:32 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-15:53:28 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-15:54:32 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:03:51 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:04:45 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:17:49 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:18:53 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:26:44 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:28:03 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:39:08 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:40:33 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:41:54 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-16:59:40 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:05:26 [vite] (client) hmr update /src/components/ui/ArticleCard.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:11:49 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:12:04 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:12:13 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:12:29 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:12:39 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:14:38 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:16:53 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:17:09 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
-[vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
-4  |  
-5  |  /* Highlight.js theme for code syntax highlighting */
-6  |  @import 'highlight.js/styles/github-dark.css';
-   |  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-7  |  
-8  |  @layer base {
-17:20:05 [vite] (client) hmr update /src/components/pages/TourDates.tsx, /src/index.css
+00:04:25 [vite] (client) hmr update /src/components/layout/Footer.tsx, /src/index.css
+00:04:25 [vite] (client) hmr update /src/components/admin/pages/VideoManagement.tsx, /src/index.css
 [vite:css][postcss] @import must precede all other statements (besides @charset or empty @layer)
 4  |  
 5  |  /* Highlight.js theme for code syntax highlighting */

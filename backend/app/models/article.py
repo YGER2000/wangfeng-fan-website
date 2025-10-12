@@ -26,8 +26,8 @@ class Article(Base):
     author_id = Column(String(36), nullable=True, index=True)  # 作者用户ID
 
     # 分类字段：一级分类（主目录）和二级分类（子目录）
-    category_primary = Column(String(50), default="峰言峰语", index=True)  # 一级：峰言峰语/峰迷荟萃/资料科普
-    category_secondary = Column(String(50), default="汪峰博客", index=True)  # 二级：具体子分类
+    category_primary = Column(String(50), index=True)  # 一级：峰言峰语/峰迷荟萃/资料科普
+    category_secondary = Column(String(50), index=True)  # 二级：具体子分类
     category = Column(String(50), default="个人感悟")  # 保留旧字段兼容性
 
     tags = Column(JSON, default=list)
