@@ -4,7 +4,15 @@ import { Article } from '@/utils/contentManager';
 import { ContentLoader } from '@/utils/contentLoader';
 import ArticleCard from '@/components/ui/ArticleCard';
 
-type ContentCategory = 'all' | 'data' | 'fact-check' | 'media' | 'anecdotes';
+type ContentCategory =
+  | 'all'
+  | 'data'
+  | 'fact-check'
+  | 'concert'
+  | 'song'
+  | 'band'
+  | 'anecdotes'
+  | 'media';
 
 const ShuJuKePu = () => {
   const [activeCategory, setActiveCategory] = useState<ContentCategory>('all');
@@ -15,15 +23,18 @@ const ShuJuKePu = () => {
     { key: 'all' as const, label: '全部' },
     { key: 'data' as const, label: '汪峰数据' },
     { key: 'fact-check' as const, label: '辟谣考证' },
-    { key: 'media' as const, label: '媒体报道' },
+    { key: 'concert' as const, label: '演唱会资料' },
+    { key: 'song' as const, label: '歌曲资料' },
+    { key: 'band' as const, label: '乐队资料' },
     { key: 'anecdotes' as const, label: '逸闻趣事' },
+    { key: 'media' as const, label: '媒体报道' },
   ];
 
   useEffect(() => {
     const loadArticles = async () => {
       setLoading(true);
       try {
-        const allArticles = await ContentLoader.loadArticles('shu-ju-ke-pu');
+        const allArticles = await ContentLoader.loadArticles('资料科普');
         setArticles(allArticles);
       } catch (error) {
         console.error('加载文章失败:', error);
@@ -59,13 +70,13 @@ const ShuJuKePu = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider text-white mb-4">
-            数据 <span className="text-wangfeng-purple animate-pulse-glow">科普</span>
+            资料 <span className="text-wangfeng-purple animate-pulse-glow">科普</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
-            事实与真相
+            多维视角
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            用数据说话，以事实为准，汪峰相关的各类统计数据、事实澄清和媒体报道
+            多角度整理汪峰的各类资料，从数据解读到演出档案，全面呈现最真实的汪峰。
           </p>
         </motion.div>
 
@@ -74,7 +85,7 @@ const ShuJuKePu = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
+          className="flex flex-wrap justify-center gap-4 mb-12"
         >
           {categories.map((category, index) => (
             <motion.button
@@ -85,10 +96,10 @@ const ShuJuKePu = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveCategory(category.key)}
-              className={`px-6 py-2 rounded-full font-medium transition-all duration-300 border-2 ${
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 activeCategory === category.key
-                  ? 'bg-wangfeng-purple border-wangfeng-purple text-white shadow-lg shadow-wangfeng-purple/30'
-                  : 'bg-transparent border-gray-600 text-gray-300 hover:border-wangfeng-purple hover:text-wangfeng-purple'
+                  ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
+                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
               }`}
             >
               {category.label}
@@ -113,7 +124,7 @@ const ShuJuKePu = () => {
                 暂无{categories.find(c => c.key === activeCategory)?.label}内容
               </h3>
               <p className="text-gray-500">
-                数据整理中，真相正在路上
+                资料整理中，敬请期待
               </p>
             </motion.div>
           ) : (

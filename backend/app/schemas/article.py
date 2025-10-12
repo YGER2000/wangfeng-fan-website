@@ -42,7 +42,6 @@ class ArticleInDBBase(ArticleBase):
     updated_at: datetime
     published_at: Optional[datetime]
     view_count: int
-    like_count: int
 
     class Config:
         from_attributes = True
@@ -58,6 +57,7 @@ class ArticleSummary(BaseModel):
     id: str
     title: str
     slug: str
+    content: str  # 添加 content 字段用于卡片预览
     excerpt: Optional[str]
     author: str
     category_primary: str
@@ -68,7 +68,6 @@ class ArticleSummary(BaseModel):
     created_at: datetime
     published_at: Optional[datetime]
     view_count: int
-    like_count: int
 
     class Config:
         from_attributes = True

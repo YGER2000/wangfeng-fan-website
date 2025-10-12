@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+import asyncio
 
-from .routers import auth, comments, likes, articles, schedules, admin, verification, profile
+from .routers import auth, articles, schedules, admin, verification, profile, upload
 from .models.article import Base as ArticleBase
 from .models.user_db import Base as UserBase
 from .models.admin_log import Base as AdminLogBase
@@ -23,6 +25,22 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# 增加请求体大小限制为 50MB（支持 Base64 图片）
+@app.middleware("http")
+async def limit_upload_size(request: Request, call_next):
+    # 允许大请求体（50MB）
+    max_size = 50 * 1024 * 1024  # 50 MB
+    content_length = request.headers.get("content-length")
+
+    if content_length and int(content_length) > max_size:
+        return JSONResponse(
+            status_code=413,
+            content={"detail": f"请求体过大，最大允许 {max_size / 1024 / 1024} MB"}
+        )
+
+    response = await call_next(request)
+    return response
+
 # CORS配置
 app.add_middleware(
     CORSMiddleware,
@@ -41,11 +59,10 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(verification.router)  # 验证码路由
 app.include_router(profile.router)  # 个人中心路由
-app.include_router(comments.router)
-app.include_router(likes.router)
 app.include_router(articles.router)
 app.include_router(schedules.router)
 app.include_router(admin.router)  # 管理员路由
+app.include_router(upload.router)  # 文件上传路由
 
 
 @app.get("/")

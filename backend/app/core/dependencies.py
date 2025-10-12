@@ -5,8 +5,6 @@ from sqlalchemy.orm import Session
 
 from .security import verify_token
 from ..services.user_service_mysql import UserServiceMySQL
-from ..services.comment_service import CommentService
-from ..services.like_service import LikeService
 from ..services.schedule_service_mysql import ScheduleServiceMySQL
 from ..models.user_db import User
 from ..database import get_db
@@ -48,16 +46,6 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="用户已被禁用")
     return current_user
-
-
-def get_comment_service() -> CommentService:
-    """获取评论服务"""
-    return CommentService()
-
-
-def get_like_service() -> LikeService:
-    """获取点赞服务"""
-    return LikeService()
 
 
 def get_schedule_service(db: Session = Depends(get_db)) -> ScheduleServiceMySQL:

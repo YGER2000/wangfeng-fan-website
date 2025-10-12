@@ -46,7 +46,6 @@ async def create_article(article: ArticleCreate) -> dict:
         "updated_at": now,
         "published_at": now,
         "view_count": 0,
-        "like_count": 0,
     }
 
     await db.articles.insert_one(article_doc)

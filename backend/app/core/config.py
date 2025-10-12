@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -9,6 +10,7 @@ class Settings(BaseSettings):
     database_host: str = "localhost"
     database_port: str = "3306"
     database_name: str = "wangfeng_fan_website"
+    database_url: Optional[str] = None  # 完整数据库 URL（可选）
 
     # JWT 配置
     secret_key: str = "your-secret-key-here-change-in-production"
@@ -22,6 +24,36 @@ class Settings(BaseSettings):
     smtp_password: str = ""  # SMTP密码
     sender_email: str = ""  # 发件人邮箱
     sender_name: str = "感受峰 感受存在"  # 发件人名称
+
+    # 存储配置
+    storage_type: str = "local"  # 可选: local, minio, r2, oss
+
+    # 阿里云 OSS 配置
+    oss_endpoint: str = ""
+    oss_access_key: str = ""
+    oss_secret_key: str = ""
+    oss_bucket: str = "wangfeng-images"
+    oss_custom_domain: str = ""
+
+    # MinIO 配置
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "minioadmin"
+    minio_secret_key: str = "minioadmin"
+    minio_bucket: str = "wangfeng-images"
+    minio_secure: bool = False
+
+    # Cloudflare R2 配置
+    r2_account_id: str = ""
+    r2_access_key: str = ""
+    r2_secret_key: str = ""
+    r2_bucket: str = "wangfeng-images"
+
+    # 本地存储配置
+    local_storage_path: str = "./uploads"
+
+    # 应用配置
+    debug: bool = False
+    backend_port: int = 1994
 
     class Config:
         env_file = ".env"

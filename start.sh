@@ -19,8 +19,16 @@ check_command() {
 
 echo "📋 检查依赖..."
 check_command pnpm
-check_command python3
-check_command uv
+
+# 初始化 conda
+if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    echo "✅ Conda 已初始化"
+else
+    echo "❌ 错误: Conda 未安装或未找到"
+    echo "请先安装 Miniconda"
+    exit 1
+fi
 
 # 检查 MySQL
 echo ""
@@ -109,19 +117,21 @@ fi
 
 cd backend
 
-# 使用 uv 创建虚拟环境（如果不存在）
-if [ ! -d ".venv" ]; then
-    echo "🐍 使用 uv 创建 Python 虚拟环境..."
-    uv venv
-fi
+# 激活 conda 环境
+echo "🐍 激活 conda 环境 (wangfeng-fan-website)..."
+conda activate wangfeng-fan-website
 
-# 使用 uv 安装依赖
-echo "📦 使用 uv 安装后端依赖..."
-uv pip install -r requirements.txt > /dev/null 2>&1
+# 检查是否需要安装依赖
+if ! python -c "import fastapi" 2>/dev/null; then
+    echo "📦 安装后端依赖..."
+    pip install -r requirements.txt
+else
+    echo "✅ 后端依赖已安装"
+fi
 
 # 启动后端（后台运行）
 echo "🚀 启动后端 API 服务器..."
-source .venv/bin/activate && python run.py > ../logs/backend.log 2>&1 &
+python start.py > ../logs/backend.log 2>&1 &
 BACKEND_PID=$!
 echo "✅ 后端服务已启动 (PID: $BACKEND_PID)"
 echo "   API 地址: http://localhost:1994"

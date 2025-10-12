@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { articleAPI, Article } from '@/utils/api';
-import { Calendar, Eye, User, ChevronRight } from 'lucide-react';
+import ArticleCard from '@/components/ui/ArticleCard';
 
 const ShuJuKePu = () => {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  const subcategories = ['汪峰数据', '辟谣考证', '媒体报道', '逸闻趣事'];
+  const subcategories = ['汪峰数据', '辟谣考证', '演唱会资料', '歌曲资料', '乐队资料', '逸闻趣事', '媒体报道'];
 
   useEffect(() => {
     loadArticles();
@@ -25,7 +24,7 @@ const ShuJuKePu = () => {
 
       // 按分类筛选
       const filtered = data.filter(article =>
-        article.category_primary === '数据科普' &&
+        article.category_primary === '资料科普' &&
         (!selectedSubcategory || article.category_secondary === selectedSubcategory)
       );
 
@@ -48,10 +47,10 @@ const ShuJuKePu = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            数据<span className="text-wangfeng-purple animate-pulse-glow">科普</span>
+            资料<span className="text-wangfeng-purple animate-pulse-glow">科普</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
-            Data & Knowledge
+            Knowledge Repository
           </h2>
         </motion.div>
 
@@ -64,10 +63,10 @@ const ShuJuKePu = () => {
         >
           <button
             onClick={() => setSelectedSubcategory(null)}
-            className={`px-6 py-2 rounded-lg transition-all ${
+            className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
               selectedSubcategory === null
-                ? 'bg-wangfeng-purple text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
+                : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
             }`}
           >
             全部
@@ -76,10 +75,10 @@ const ShuJuKePu = () => {
             <button
               key={sub}
               onClick={() => setSelectedSubcategory(sub)}
-              className={`px-6 py-2 rounded-lg transition-all ${
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 selectedSubcategory === sub
-                  ? 'bg-wangfeng-purple text-white'
-                  : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
+                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
               }`}
             >
               {sub}
@@ -89,63 +88,22 @@ const ShuJuKePu = () => {
 
         {/* 文章列表 */}
         {loading ? (
-          <div className="text-center text-gray-400">加载中...</div>
+          <div className="text-center text-gray-400 py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wangfeng-purple mx-auto mb-4"></div>
+            <p>加载中...</p>
+          </div>
         ) : articles.length === 0 ? (
-          <div className="text-center text-gray-400">暂无文章</div>
+          <div className="text-center text-gray-400 py-20">
+            <p className="text-xl">暂无文章</p>
+          </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {articles.map((article, index) => (
-              <motion.div
+              <ArticleCard
                 key={article.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <Link to={`/article/${article.slug}`}>
-                  <div className="theme-bg-card rounded-xl border theme-border-primary p-6 hover:border-wangfeng-purple transition-all cursor-pointer group h-full flex flex-col">
-                    {/* 分类标签 */}
-                    <div className="flex gap-2 mb-3">
-                      <span className="text-xs px-2 py-1 bg-wangfeng-purple/20 text-wangfeng-purple rounded-full">
-                        {article.category_secondary}
-                      </span>
-                    </div>
-
-                    {/* 标题 */}
-                    <h3 className="text-xl font-bold theme-text-primary mb-3 group-hover:text-wangfeng-purple transition-colors line-clamp-2">
-                      {article.title}
-                    </h3>
-
-                    {/* 摘要 */}
-                    {article.excerpt && (
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-3 flex-1">
-                        {article.excerpt}
-                      </p>
-                    )}
-
-                    {/* 元信息 */}
-                    <div className="flex items-center gap-4 text-xs text-gray-500 pt-4 border-t border-gray-800">
-                      <div className="flex items-center gap-1">
-                        <User className="w-3 h-3" />
-                        <span>{article.author}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{new Date(article.created_at).toLocaleDateString('zh-CN')}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" />
-                        <span>{article.view_count}</span>
-                      </div>
-                    </div>
-
-                    {/* 查看更多 */}
-                    <div className="flex items-center gap-1 text-wangfeng-purple text-sm mt-3 group-hover:gap-2 transition-all">
-                      <span>阅读全文</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+                article={article}
+                index={index}
+              />
             ))}
           </div>
         )}

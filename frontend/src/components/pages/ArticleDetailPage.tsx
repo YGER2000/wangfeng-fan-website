@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Eye, Heart, Tag } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
-import ReactMarkdown from 'react-markdown';
+import 'react-quill/dist/quill.snow.css';
 
 const normalizeArticle = (raw: any): Article => {
   const tags = Array.isArray(raw?.tags)
@@ -72,8 +72,184 @@ const ArticleDetailPage = () => {
   const safeTags = Array.isArray(article.tags) ? article.tags : [];
   const articleContent = typeof article.content === 'string' ? article.content : '';
 
+  // 从 HTML 中提取纯文本用于摘要
+  const getPlainTextFromHtml = (html: string) => {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    return tempDiv.textContent || tempDiv.innerText || '';
+  };
+
+  const excerptText = article.excerpt
+    ? getPlainTextFromHtml(article.excerpt).substring(0, 200)
+    : '';
+
   return (
     <div className="min-h-screen bg-white text-black py-24">
+      <style>{`
+        /* 文章内容样式 */
+        .article-content-wrapper .ql-editor {
+          padding: 0 !important;
+          font-size: 16px !important;
+          line-height: 1.8 !important;
+          color: #374151 !important;
+        }
+
+        /* 标题样式 */
+        .article-content-wrapper .ql-editor h1 {
+          font-size: 2em;
+          font-weight: 700;
+          margin: 1.5em 0 0.75em;
+          color: #8B5CF6;
+          line-height: 1.3;
+        }
+
+        .article-content-wrapper .ql-editor h2 {
+          font-size: 1.5em;
+          font-weight: 600;
+          margin: 1.25em 0 0.6em;
+          color: #7C3AED;
+          line-height: 1.4;
+        }
+
+        .article-content-wrapper .ql-editor h3 {
+          font-size: 1.25em;
+          font-weight: 600;
+          margin: 1em 0 0.5em;
+          color: #1F2937;
+          line-height: 1.5;
+        }
+
+        .article-content-wrapper .ql-editor h4,
+        .article-content-wrapper .ql-editor h5,
+        .article-content-wrapper .ql-editor h6 {
+          font-weight: 600;
+          margin: 1em 0 0.5em;
+          color: #374151;
+        }
+
+        /* 段落样式 */
+        .article-content-wrapper .ql-editor p {
+          margin-bottom: 1em;
+          line-height: 1.8;
+        }
+
+        /* 链接样式 */
+        .article-content-wrapper .ql-editor a {
+          color: #8B5CF6;
+          text-decoration: underline;
+          transition: color 0.2s;
+        }
+
+        .article-content-wrapper .ql-editor a:hover {
+          color: #7C3AED;
+        }
+
+        /* 引用样式 */
+        .article-content-wrapper .ql-editor blockquote {
+          border-left: 4px solid #8B5CF6;
+          padding-left: 16px;
+          margin: 1.5em 0;
+          color: #6B7280;
+          font-style: italic;
+          background: rgba(139, 92, 246, 0.05);
+          padding: 12px 16px;
+          border-radius: 0 8px 8px 0;
+        }
+
+        /* 代码样式 */
+        .article-content-wrapper .ql-editor code {
+          background: rgba(139, 92, 246, 0.1);
+          color: #7C3AED;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 0.9em;
+        }
+
+        .article-content-wrapper .ql-editor pre {
+          background: #1F2937;
+          color: #E5E7EB;
+          padding: 16px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 1.5em 0;
+        }
+
+        .article-content-wrapper .ql-editor pre code {
+          background: transparent;
+          color: inherit;
+          padding: 0;
+        }
+
+        /* 列表样式 */
+        .article-content-wrapper .ql-editor ul,
+        .article-content-wrapper .ql-editor ol {
+          padding-left: 1.5em;
+          margin: 1em 0;
+        }
+
+        .article-content-wrapper .ql-editor li {
+          margin-bottom: 0.5em;
+        }
+
+        /* 图片样式 */
+        .article-content-wrapper .ql-editor img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 8px;
+          margin: 1.5em 0;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 分隔线样式 */
+        .article-content-wrapper .ql-editor hr {
+          border: none;
+          border-top: 2px solid rgba(139, 92, 246, 0.2);
+          margin: 2em 0;
+        }
+
+        /* 表格样式 */
+        .article-content-wrapper .ql-editor table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 1.5em 0;
+        }
+
+        .article-content-wrapper .ql-editor table th,
+        .article-content-wrapper .ql-editor table td {
+          border: 1px solid #E5E7EB;
+          padding: 8px 12px;
+          text-align: left;
+        }
+
+        .article-content-wrapper .ql-editor table th {
+          background: rgba(139, 92, 246, 0.1);
+          font-weight: 600;
+          color: #7C3AED;
+        }
+
+        .article-content-wrapper .ql-editor table tr:nth-child(even) {
+          background: rgba(139, 92, 246, 0.02);
+        }
+
+        /* 文字颜色和样式 */
+        .article-content-wrapper .ql-editor strong {
+          font-weight: 700;
+          color: #111827;
+        }
+
+        .article-content-wrapper .ql-editor em {
+          font-style: italic;
+        }
+
+        .article-content-wrapper .ql-editor u {
+          text-decoration: underline;
+        }
+
+        .article-content-wrapper .ql-editor s {
+          text-decoration: line-through;
+        }
+      `}</style>
       <div className="container mx-auto px-4 max-w-4xl">
         {/* 返回按钮 */}
         <motion.button
@@ -133,9 +309,10 @@ const ArticleDetailPage = () => {
           </div>
 
           {/* 摘要 */}
-          {article.excerpt && (
+          {excerptText && (
             <div className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg border-l-4 border-wangfeng-purple">
-              {article.excerpt}
+              {excerptText}
+              {article.excerpt && getPlainTextFromHtml(article.excerpt).length > 200 ? '...' : ''}
             </div>
           )}
         </motion.div>
@@ -145,36 +322,12 @@ const ArticleDetailPage = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="prose prose-lg max-w-none mb-12 text-gray-800"
+          className="article-content-wrapper mb-12"
         >
-          <div className="markdown-content">
-            <ReactMarkdown
-              components={{
-                // 自定义渲染组件
-                h1: ({ node, ...props }) => <h1 className="text-3xl font-bold mt-8 mb-4 text-wangfeng-purple" {...props} />,
-                h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mt-6 mb-3 text-purple-700" {...props} />,
-                h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mt-4 mb-2 text-gray-800" {...props} />,
-                p: ({ node, ...props }) => <p className="mb-4 leading-relaxed text-gray-700" {...props} />,
-                a: ({ node, ...props }) => <a className="text-wangfeng-purple hover:text-wangfeng-light underline" {...props} />,
-                code: ({ node, inline, ...props }: any) =>
-                  inline ? (
-                    <code className="px-1.5 py-0.5 bg-gray-100 rounded text-sm text-wangfeng-purple" {...props} />
-                  ) : (
-                    <code className="block bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm text-gray-800" {...props} />
-                  ),
-                blockquote: ({ node, ...props }) => (
-                  <blockquote
-                    className="border-l-4 border-wangfeng-purple/60 bg-purple-50/60 px-6 py-4 text-gray-700 italic rounded-r-xl"
-                    {...props}
-                  />
-                ),
-                ul: ({ node, ...props }) => <ul className="list-disc pl-6 text-gray-700 space-y-2" {...props} />,
-                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 text-gray-700 space-y-2" {...props} />,
-              }}
-            >
-              {articleContent}
-            </ReactMarkdown>
-          </div>
+          <div
+            className="ql-editor"
+            dangerouslySetInnerHTML={{ __html: articleContent }}
+          />
         </motion.article>
 
         {/* 标签 */}

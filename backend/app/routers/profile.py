@@ -100,8 +100,6 @@ async def get_my_profile(
         "last_login": current_user.last_login.isoformat() if current_user.last_login else None,
         "stats": {
             "article_count": article_count,
-            "comment_count": 0,  # TODO: 实现评论统计
-            "like_count": 0,  # TODO: 实现点赞统计
         }
     }
 

@@ -10,12 +10,12 @@ export const ARTICLE_CATEGORIES: CategoryConfig[] = [
     secondary: ['汪峰博客', '汪峰语录', '访谈记录']
   },
   {
-    primary: '峰迷聊峰',
+    primary: '峰迷荟萃',
     secondary: ['闲聊汪峰', '歌曲赏析']
   },
   {
-    primary: '数据科普',
-    secondary: ['汪峰数据', '辟谣考证', '媒体报道', '逸闻趣事']
+    primary: '资料科普',
+    secondary: ['汪峰数据', '辟谣考证', '演唱会资料', '歌曲资料', '乐队资料', '逸闻趣事', '媒体报道']
   }
 ];
 

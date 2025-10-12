@@ -63,8 +63,8 @@ def can_publish_category(user: User, category_primary: str) -> bool:
 
     权限规则：
     - 游客：无发布权限
-    - 用户：只能发布 峰迷聊峰
-    - 管理员：可以发布 峰言峰语 和 数据科普
+    - 用户：只能发布 峰迷荟萃
+    - 管理员：可以发布 峰言峰语 和 资料科普
     - 超级管理员：可以发布所有分类，并可以管理、修改、删除任何文章
 
     Args:
@@ -78,12 +78,12 @@ def can_publish_category(user: User, category_primary: str) -> bool:
         return True  # 超级管理员可以发布所有分类
 
     if user.role == UserRole.ADMIN:
-        # 管理员可以发布 峰言峰语 和 数据科普
-        return category_primary in ["峰言峰语", "数据科普"]
+        # 管理员可以发布 峰言峰语 和 资料科普
+        return category_primary in ["峰言峰语", "资料科普"]
 
     if user.role == UserRole.USER:
-        # 普通用户只能发布 峰迷聊峰
-        return category_primary == "峰迷聊峰"
+        # 普通用户只能发布 峰迷荟萃
+        return category_primary == "峰迷荟萃"
 
     return False  # 游客无权限
 

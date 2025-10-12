@@ -1,11 +1,37 @@
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import MDEditor from '@uiw/react-md-editor';
-import { Save, Eye, Edit3, Calendar, User, Tag, FileText, FolderTree } from 'lucide-react';
+import RichTextEditor from './RichTextEditor';
+import {
+  Card,
+  Label,
+  TextInput,
+  Textarea,
+  Select,
+  Button,
+  Badge,
+  Alert,
+  Tabs
+} from 'flowbite-react';
+import {
+  HiSave,
+  HiEye,
+  HiPencil,
+  HiCalendar,
+  HiUser,
+  HiTag,
+  HiDocumentText,
+  HiFolder,
+  HiX,
+  HiPlus,
+  HiInformationCircle,
+  HiCode,
+  HiViewGridAdd
+} from 'react-icons/hi';
 import { Article } from '@/utils/contentManager';
 import { ARTICLE_CATEGORIES, getSecondaryCategories, getPrimaryCategories } from '@/config/categories';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAvailableCategories } from '@/utils/permissions';
+import { flowbiteTheme } from '@/config/flowbite-theme';
 
 interface ArticleEditorProps {
   initialArticle?: Partial<Article>;
@@ -39,7 +65,6 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview }: ArticleEditorProps
   );
   const [availableSecondaries, setAvailableSecondaries] = useState<string[]>([]);
 
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
@@ -137,245 +162,258 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview }: ArticleEditorProps
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-white py-20">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-950 pt-24 pb-8 px-4">
+      <div className="container mx-auto max-w-7xl">
         {/* 头部 */}
         <motion.div
-          initial={{ opacity: 0, y: 50 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.5 }}
+          className="mb-8"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            文章 <span className="text-wangfeng-purple animate-pulse-glow">编辑器</span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
-            创作属于你的精彩内容
-          </h2>
-        </motion.div>
-
-        {/* 工具栏 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap items-center justify-between gap-4 mb-8 p-4 theme-bg-card rounded-xl border theme-border-primary"
-        >
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsPreviewMode(!isPreviewMode)}
-              className="flex items-center gap-2 px-4 py-2 bg-wangfeng-purple hover:bg-wangfeng-purple/80 rounded-lg transition-colors"
-            >
-              {isPreviewMode ? <Edit3 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              {isPreviewMode ? '编辑模式' : '预览模式'}
-            </button>
-
-            <button
-              onClick={handlePreview}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-              预览文章
-            </button>
+          <div className="text-center mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-wangfeng-purple via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+              Markdown 文章编辑器
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
+              创作属于你的精彩内容
+            </p>
           </div>
 
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded-lg transition-colors"
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? '保存中...' : '保存文章'}
-          </button>
+          {/* 工具栏 */}
+          <Card theme={flowbiteTheme.card}>
+            <div className="flex flex-wrap items-center justify-end gap-4">
+              <Button
+                color="primary"
+                theme={flowbiteTheme.button}
+                onClick={handleSave}
+                disabled={isSaving}
+                size="md"
+              >
+                <HiSave className="mr-2 h-5 w-5" />
+                {isSaving ? '保存中...' : '保存文章'}
+              </Button>
+            </div>
+
+            {availablePrimaryCategories.length === 0 && (
+              <Alert color="failure" icon={HiInformationCircle} className="mt-4">
+                <span className="font-medium">权限不足！</span> 您没有权限发布文章。请联系管理员。
+              </Alert>
+            )}
+
+            {currentRole === 'user' && availablePrimaryCategories.length > 0 && (
+              <Alert color="info" icon={HiInformationCircle} className="mt-4">
+                <span className="font-medium">提示：</span> 普通用户只能发布"峰迷荟萃"分类的文章
+              </Alert>
+            )}
+          </Card>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* 文章元信息 */}
+        {/* 主要内容区域 */}
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* 左侧：文章元信息 */}
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="lg:col-span-1 space-y-6"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="lg:col-span-4"
           >
-            <div className="theme-bg-card rounded-xl border theme-border-primary p-6">
-              <h3 className="text-xl font-bold theme-text-primary mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-wangfeng-purple" />
+            <Card theme={flowbiteTheme.card}>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                <HiDocumentText className="h-6 w-6 text-wangfeng-purple" />
                 文章信息
               </h3>
 
-              {/* 标题 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2">
-                  文章标题 *
-                </label>
-                <input
-                  type="text"
-                  value={article.title || ''}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  placeholder="请输入文章标题"
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
-                />
-              </div>
-
-              {/* 作者 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2 flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  作者
-                </label>
-                <input
-                  type="text"
-                  value={article.author || ''}
-                  onChange={(e) => handleInputChange('author', e.target.value)}
-                  placeholder="作者姓名"
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
-                />
-              </div>
-
-              {/* 日期 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  发布日期
-                </label>
-                <input
-                  type="date"
-                  value={article.date || ''}
-                  onChange={(e) => handleInputChange('date', e.target.value)}
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
-                />
-              </div>
-
-              {/* 一级分类 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2 flex items-center gap-2">
-                  <FolderTree className="w-4 h-4" />
-                  一级分类（主目录）*
-                </label>
-                <select
-                  value={categoryPrimary}
-                  onChange={(e) => setCategoryPrimary(e.target.value)}
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
-                >
-                  {availablePrimaryCategories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                {availablePrimaryCategories.length === 0 && (
-                  <p className="text-xs text-red-400 mt-1">
-                    您没有权限发布文章。请联系管理员。
-                  </p>
-                )}
-                {currentRole === 'user' && (
-                  <p className="text-xs text-blue-400 mt-1">
-                    普通用户只能发布"峰迷聊峰"分类的文章
-                  </p>
-                )}
-                {currentRole === 'admin' && (
-                  <p className="text-xs text-blue-400 mt-1">
-                    管理员可以发布"峰言峰语"和"数据科普"分类的文章
-                  </p>
-                )}
-              </div>
-
-              {/* 二级分类 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2">
-                  二级分类（子目录）*
-                </label>
-                <select
-                  value={categorySecondary}
-                  onChange={(e) => setCategorySecondary(e.target.value)}
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
-                >
-                  {availableSecondaries.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">
-                  当前选择: {categoryPrimary} / {categorySecondary}
-                </p>
-              </div>
-
-              {/* 摘要 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2">
-                  文章摘要
-                </label>
-                <textarea
-                  value={article.excerpt || ''}
-                  onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                  placeholder="简短描述文章内容..."
-                  rows={3}
-                  className="w-full px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple resize-none"
-                />
-              </div>
-
-              {/* 标签 */}
-              <div className="mb-4">
-                <label className="block text-sm font-semibold theme-text-primary mb-2 flex items-center gap-2">
-                  <Tag className="w-4 h-4" />
-                  标签
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
+              <div className="space-y-5">
+                {/* 标题 */}
+                <div>
+                  <Label htmlFor="title" className="mb-2 flex items-center gap-2">
+                    <span className="text-red-500">*</span>
+                    文章标题
+                  </Label>
+                  <TextInput
+                    id="title"
                     type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                    placeholder="添加标签"
-                    className="flex-1 px-3 py-2 theme-bg-secondary theme-text-primary border theme-border-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-wangfeng-purple"
+                    theme={flowbiteTheme.textInput}
+                    placeholder="请输入文章标题"
+                    value={article.title || ''}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    required
                   />
-                  <button
-                    onClick={handleAddTag}
-                    className="px-3 py-2 bg-wangfeng-purple hover:bg-wangfeng-purple/80 rounded-lg transition-colors"
-                  >
-                    添加
-                  </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {article.tags?.map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-wangfeng-purple/20 text-wangfeng-purple text-sm rounded-full border border-wangfeng-purple/30"
+
+                {/* 作者 */}
+                <div>
+                  <Label htmlFor="author" className="mb-2 flex items-center gap-2">
+                    <HiUser className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    作者
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                      <HiUser className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="author"
+                      type="text"
+                      placeholder="作者姓名"
+                      value={article.author || ''}
+                      onChange={(e) => handleInputChange('author', e.target.value)}
+                      className="block w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-sm text-gray-900 transition focus:border-wangfeng-purple focus:ring-2 focus:ring-wangfeng-purple/40 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-wangfeng-purple/80 dark:focus:ring-wangfeng-purple/40"
+                    />
+                  </div>
+                </div>
+
+                {/* 日期 */}
+                <div>
+                  <Label htmlFor="date" className="mb-2 flex items-center gap-2">
+                    <HiCalendar className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+                    发布日期
+                  </Label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                      <HiCalendar className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      id="date"
+                      type="date"
+                      value={article.date || ''}
+                      onChange={(e) => handleInputChange('date', e.target.value)}
+                      className="block w-full rounded-xl border border-gray-300 bg-white pl-10 pr-4 py-3 text-sm text-gray-900 transition focus:border-wangfeng-purple focus:ring-2 focus:ring-wangfeng-purple/40 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:focus:border-wangfeng-purple/80 dark:focus:ring-wangfeng-purple/40"
+                    />
+                  </div>
+                </div>
+
+                {/* 一级分类 */}
+                <div>
+                  <Label htmlFor="primary-category" className="mb-2 flex items-center gap-2">
+                    <HiFolder className="h-4 w-4" />
+                    <span className="text-red-500">*</span>
+                    一级分类（主目录）
+                  </Label>
+                  <Select
+                    id="primary-category"
+                    value={categoryPrimary}
+                    onChange={(e) => setCategoryPrimary(e.target.value)}
+                    required
+                  >
+                    {availablePrimaryCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* 二级分类 */}
+                <div>
+                  <Label htmlFor="secondary-category" className="mb-2 flex items-center gap-2">
+                    <HiFolder className="h-4 w-4" />
+                    <span className="text-red-500">*</span>
+                    二级分类（子目录）
+                  </Label>
+                  <Select
+                    id="secondary-category"
+                    value={categorySecondary}
+                    onChange={(e) => setCategorySecondary(e.target.value)}
+                    required
+                  >
+                    {availableSecondaries.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </Select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                    当前选择: <span className="text-wangfeng-purple font-semibold">{categoryPrimary} / {categorySecondary}</span>
+                  </p>
+                </div>
+
+                {/* 摘要 */}
+                <div>
+                  <Label htmlFor="excerpt" className="mb-2">
+                    文章摘要
+                  </Label>
+                  <Textarea
+                    id="excerpt"
+                    placeholder="简短描述文章内容..."
+                    rows={4}
+                    value={article.excerpt || ''}
+                    onChange={(e) => handleInputChange('excerpt', e.target.value)}
+                  />
+                </div>
+
+                {/* 标签 */}
+                <div>
+                  <Label htmlFor="tags" className="mb-2 flex items-center gap-2">
+                    <HiTag className="h-4 w-4" />
+                    标签
+                  </Label>
+                  <div className="flex gap-2 mb-3">
+                    <TextInput
+                      id="tags"
+                      type="text"
+                      theme={flowbiteTheme.textInput}
+                      placeholder="添加标签"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                      className="flex-1"
+                    />
+                    <Button
+                      color="primary"
+                      theme={flowbiteTheme.button}
+                      onClick={handleAddTag}
+                      size="sm"
                     >
-                      {tag}
-                      <button
-                        onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-red-400 transition-colors"
+                      <HiPlus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {article.tags?.map((tag, index) => (
+                      <Badge
+                        key={index}
+                        color="purple"
+                        size="sm"
+                        className="inline-flex items-center gap-1 px-3 py-1"
                       >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 hover:text-red-400 transition-colors"
+                        >
+                          <HiX className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            </Card>
           </motion.div>
 
-          {/* 编辑器 */}
+          {/* 右侧：Markdown 编辑器 */}
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="lg:col-span-2"
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="lg:col-span-8"
           >
-            <div className="theme-bg-card rounded-xl border theme-border-primary p-6">
-              <h3 className="text-xl font-bold theme-text-primary mb-6">
-                文章内容 *
-              </h3>
+            <Card theme={flowbiteTheme.card}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <HiCode className="h-6 w-6 text-wangfeng-purple" />
+                  <span className="text-red-500">*</span>
+                  文章内容
+                </h3>
+                <Badge color="info" size="sm">
+                  所见即所得，像 Word 一样简单
+                </Badge>
+              </div>
 
-              <div data-color-mode="dark" className="markdown-editor-container">
-                <MDEditor
-                  value={article.content}
+              <div className="rich-text-editor-container rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <RichTextEditor
+                  value={article.content || ''}
                   onChange={handleContentChange}
-                  preview={isPreviewMode ? 'preview' : 'edit'}
-                  height={600}
-                  data-color-mode="dark"
-                  visibleDragbar={false}
+                  height={700}
                 />
               </div>
-            </div>
+            </Card>
           </motion.div>
         </div>
       </div>

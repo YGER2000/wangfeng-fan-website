@@ -9,7 +9,7 @@ export interface Article {
   category: string;
 
   // 新的二级分类系统
-  category_primary?: string;   // 一级分类：峰言峰语/峰迷聊峰/数据科普
+  category_primary?: string;   // 一级分类：峰言峰语/峰迷荟萃/资料科普
   category_secondary?: string; // 二级分类：汪峰博客/汪峰语录等
 
   tags: string[];
@@ -51,22 +51,25 @@ export const CATEGORIES = {
       '访谈记录': { name: '访谈记录', path: '/interviews' }
     }
   },
-  '峰迷聊峰': {
-    name: '峰迷聊峰',
-    path: '/content/峰迷聊峰',
+  '峰迷荟萃': {
+    name: '峰迷荟萃',
+    path: '/content/峰迷荟萃',
     subcategories: {
       '闲聊汪峰': { name: '闲聊汪峰', path: '/chat' },
       '歌曲赏析': { name: '歌曲赏析', path: '/song-analysis' }
     }
   },
-  '数据科普': {
-    name: '数据科普',
-    path: '/content/数据科普',
+  '资料科普': {
+    name: '资料科普',
+    path: '/content/资料科普',
     subcategories: {
       '汪峰数据': { name: '汪峰数据', path: '/data' },
       '辟谣考证': { name: '辟谣考证', path: '/fact-check' },
-      '媒体报道': { name: '媒体报道', path: '/media' },
-      '逸闻趣事': { name: '逸闻趣事', path: '/anecdotes' }
+      '演唱会资料': { name: '演唱会资料', path: '/concert-archives' },
+      '歌曲资料': { name: '歌曲资料', path: '/song-archives' },
+      '乐队资料': { name: '乐队资料', path: '/band-archives' },
+      '逸闻趣事': { name: '逸闻趣事', path: '/anecdotes' },
+      '媒体报道': { name: '媒体报道', path: '/media' }
     }
   }
 } as const;

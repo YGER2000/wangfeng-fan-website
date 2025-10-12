@@ -14,7 +14,7 @@ export class ContentLoader {
       let articles: Article[] = [];
       
       // 特殊处理：对于有预生成JSON数据的分类，直接从JSON加载
-      if (category === 'feng-yan-feng-yu') {
+      if (category === '峰言峰语') {
         articles = await this.loadFromJson(category);
       } else {
         // 其他分类继续使用文件路径方式加载
@@ -77,7 +77,7 @@ export class ContentLoader {
       let jsonPath = '';
       
       switch (category) {
-        case 'feng-yan-feng-yu':
+        case '峰言峰语':
           jsonPath = '/data/feng-yan-feng-yu-articles.json';
           break;
         default:
@@ -100,14 +100,14 @@ export class ContentLoader {
     const basePath = '/content';
     
     switch (category) {
-      case 'feng-mi-liao-feng':
+      case '峰迷荟萃':
         return [
-          `${basePath}/峰迷聊峰/歌曲赏析/2023-10-15-春天里深度解析.md`,
+          `${basePath}/峰迷荟萃/歌曲赏析/2023-10-15-春天里深度解析.md`,
           // 这里可以添加更多歌曲赏析文章路径
         ];
-      case 'shu-ju-ke-pu':
+      case '资料科普':
         return [
-          `${basePath}/数据科普/汪峰数据/2023-12-01-演唱会数据统计.md`,
+          `${basePath}/资料科普/汪峰数据/2023-12-01-演唱会数据统计.md`,
           // 这里可以添加更多数据文章路径
         ];
       default:
@@ -135,9 +135,19 @@ export class ContentLoader {
         case 'song-analysis':
           return article.category === '歌曲赏析' || article.songTitle;
         case 'data':
-          return article.dataType || article.category === '数据统计';
+          return (
+            article.dataType ||
+            article.category === '数据统计' ||
+            article.category === '汪峰数据'
+          );
         case 'fact-check':
           return article.category === '辟谣考证';
+        case 'concert':
+          return article.category === '演唱会资料';
+        case 'song':
+          return article.category === '歌曲资料';
+        case 'band':
+          return article.category === '乐队资料';
         case 'media':
           return article.category === '媒体报道';
         case 'anecdotes':
@@ -172,7 +182,7 @@ export class ContentLoader {
       }
 
       // 如果缓存中没有，尝试从所有分类加载
-      const categories = ['feng-yan-feng-yu', 'feng-mi-liao-feng', 'shu-ju-ke-pu'];
+      const categories = ['峰言峰语', '峰迷荟萃', '资料科普'];
       
       for (const category of categories) {
         const articles = await this.loadArticles(category);

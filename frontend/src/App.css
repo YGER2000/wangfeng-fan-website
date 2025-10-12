@@ -45,3 +45,117 @@
   border: 2px solid #8B5CF6;
   color: #8B5CF6;
 }
+
+/* Markdown Editor Styles */
+.markdown-editor-wrapper {
+  box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.1), 0 2px 4px -1px rgba(139, 92, 246, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.markdown-editor-wrapper:hover {
+  box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.2), 0 4px 6px -2px rgba(139, 92, 246, 0.1);
+}
+
+/* Override MDEditor dark mode styles */
+.w-md-editor {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.w-md-editor-toolbar {
+  background: rgba(139, 92, 246, 0.05) !important;
+  border-bottom: 1px solid rgba(139, 92, 246, 0.2) !important;
+  padding: 14px 12px !important;
+  min-height: 52px !important;
+}
+
+.w-md-editor-toolbar li button {
+  color: #8B5CF6 !important;
+  transition: all 0.2s ease;
+  width: 32px !important;
+  height: 32px !important;
+  padding: 6px !important;
+  border-radius: 6px !important;
+}
+
+.w-md-editor-toolbar li button svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.w-md-editor-toolbar li button:hover {
+  background: rgba(139, 92, 246, 0.15) !important;
+  color: #A855F7 !important;
+  transform: scale(1.05);
+}
+
+.w-md-editor-toolbar-divider {
+  height: 32px !important;
+}
+
+.w-md-editor-text-pre,
+.w-md-editor-text-input,
+.w-md-editor-text {
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+}
+
+.w-md-editor-preview {
+  padding: 20px !important;
+}
+
+/* Flowbite Badge custom colors */
+.badge-purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8B5CF6;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Smooth transitions for all Flowbite components */
+.flowbite-card,
+[class*="flowbite"] {
+  transition: all 0.3s ease;
+}
+
+/* Article Card Styles */
+.article-card-cover {
+  position: relative;
+  width: 100%;
+  padding-bottom: 150%; /* 2:3 ratio */
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a1a3a 100%);
+}
+
+.article-card-cover img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.article-card:hover .article-card-cover img {
+  transform: scale(1.1);
+}
+
+/* Avatar Ring Effect */
+.avatar-ring {
+  position: relative;
+}
+
+.avatar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #A855F7);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.article-card:hover .avatar-ring::before {
+  opacity: 1;
+}

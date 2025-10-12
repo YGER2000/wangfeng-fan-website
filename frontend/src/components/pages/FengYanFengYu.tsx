@@ -22,7 +22,7 @@ const FengYanFengYu = () => {
     const loadArticles = async () => {
       setLoading(true);
       try {
-        const allArticles = await ContentLoader.loadArticles('feng-yan-feng-yu');
+        const allArticles = await ContentLoader.loadArticles('峰言峰语');
         setArticles(allArticles);
       } catch (error) {
         console.error('加载文章失败:', error);
@@ -73,7 +73,7 @@ const FengYanFengYu = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-wrap justify-center gap-3 mb-12"
+          className="flex flex-wrap justify-center gap-4 mb-12"
         >
           {categories.map((category, index) => (
             <motion.button
@@ -84,10 +84,10 @@ const FengYanFengYu = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setActiveCategory(category.key)}
-              className={`px-6 py-2 rounded-full font-medium transition-all duration-300 border-2 ${
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
                 activeCategory === category.key
-                  ? 'bg-wangfeng-purple border-wangfeng-purple text-white shadow-lg shadow-wangfeng-purple/30'
-                  : 'bg-transparent border-gray-600 text-gray-300 hover:border-wangfeng-purple hover:text-wangfeng-purple'
+                  ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
+                  : 'theme-bg-card theme-text-secondary border theme-border-primary hover:bg-wangfeng-purple/20 hover:text-wangfeng-purple'
               }`}
             >
               {category.label}

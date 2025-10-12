@@ -67,7 +67,6 @@ class ArticleAdminResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     view_count: int
-    like_count: int
 
     class Config:
         from_attributes = True

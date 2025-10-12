@@ -199,42 +199,33 @@ const TourDates = () => {
                   whileHover={{ scale: 1.02 }}
                   onClick={() => setSelectedSchedule(item)}
                   className={cn(
-                    'p-6 rounded-xl border shadow-lg transition-all duration-300 cursor-pointer',
+                    'p-6 rounded-xl border shadow-lg transition-all duration-300 cursor-pointer flex',
                     item.isFuture
                       ? 'bg-wangfeng-purple/20 border-wangfeng-purple/50 shadow-wangfeng-purple/25'
                       : 'theme-bg-card theme-border-primary shadow-gray-900/50'
                   )}
                 >
-                  <div className="flex items-center mb-3">
-                    <div
-                      className={cn(
-                        'px-3 py-1 rounded-full text-sm font-bold',
-                        item.isFuture
-                          ? 'bg-wangfeng-purple text-white'
-                          : 'bg-gray-700 theme-text-secondary'
-                      )}
-                    >
-                      {new Date(item.date).toLocaleDateString('zh-CN', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </div>
-                    {item.isFuture && (
-                      <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                        即将举行
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-6">
-                    <div className="md:w-32 lg:w-36 flex-shrink-0 mx-auto md:mx-0">
-                      <div className="relative rounded-lg overflow-hidden border border-wangfeng-purple/40 shadow-lg aspect-[2/3]">
-                        <img
-                          src={posterSrc}
-                          alt={`${item.theme} 海报`}
-                          className="w-full h-full object-cover"
-                        />
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center mb-3">
+                      <div
+                        className={cn(
+                          'px-3 py-1 rounded-full text-sm font-bold',
+                          item.isFuture
+                            ? 'bg-wangfeng-purple text-white'
+                            : 'bg-gray-700 theme-text-secondary'
+                        )}
+                      >
+                        {new Date(item.date).toLocaleDateString('zh-CN', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })}
                       </div>
+                      {item.isFuture && (
+                        <span className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded-full">
+                          即将举行
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 space-y-2">
                       <h3 className="text-2xl font-bold text-wangfeng-purple animate-pulse-glow">
@@ -253,13 +244,21 @@ const TourDates = () => {
                           {item.description}
                         </p>
                       )}
-                      <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-wangfeng-purple/80">
+                      <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-wangfeng-purple/80 mt-auto">
                         <span className="h-2 w-2 rounded-full bg-wangfeng-purple"></span>
                         <span>{item.category}</span>
                       </div>
                     </div>
                   </div>
-
+                  <div className="w-32 lg:w-36 flex-shrink-0 ml-6">
+                    <div className="relative rounded-lg overflow-hidden border border-wangfeng-purple/40 shadow-lg h-full aspect-[2/3]">
+                      <img
+                        src={posterSrc}
+                        alt={`${item.theme} 海报`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
                 </motion.div>
               );
 

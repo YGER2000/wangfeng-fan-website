@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
 
 // Import context providers
@@ -28,7 +28,6 @@ import FengMiLiaoFeng from './components/pages/FengMiLiaoFengNew';
 import ShuJuKePu from './components/pages/ShuJuKePuNew';
 import ArticleDetail from './components/pages/ArticleDetail';
 import ArticleDetailPage from './components/pages/ArticleDetailPage';
-import CommentDemo from './components/pages/CommentDemo';
 import WriteArticle from './components/pages/WriteArticle';
 import PublishSchedule from './components/pages/PublishSchedule';
 import Profile from './components/pages/Profile';
@@ -75,12 +74,14 @@ const AppContent = () => {
           <Route path="/acting-career" element={<ActingCareer />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/quotes" element={<Quotes />} />
-          <Route path="/feng-yan-feng-yu" element={<FengYanFengYu />} />
-          <Route path="/feng-mi-liao-feng" element={<FengMiLiaoFeng />} />
-          <Route path="/shu-ju-ke-pu" element={<ShuJuKePu />} />
+          <Route path="/峰言峰语" element={<FengYanFengYu />} />
+          <Route path="/峰迷荟萃" element={<FengMiLiaoFeng />} />
+          <Route path="/资料科普" element={<ShuJuKePu />} />
+          <Route path="/feng-yan-feng-yu" element={<Navigate to="/峰言峰语" replace />} />
+          <Route path="/feng-mi-liao-feng" element={<Navigate to="/峰迷荟萃" replace />} />
+          <Route path="/shu-ju-ke-pu" element={<Navigate to="/资料科普" replace />} />
           <Route path="/article/:slug" element={<ArticleDetailPage />} />
           <Route path="/article-old/:slug" element={<ArticleDetail />} />
-          <Route path="/comment-demo" element={<CommentDemo />} />
           <Route path="/write-article" element={<WriteArticle />} />
           <Route path="/publish-schedule" element={<PublishSchedule />} />
           <Route path="/profile" element={<Profile />} />

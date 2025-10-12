@@ -9,8 +9,8 @@ import { UserRole } from '@/contexts/AuthContext';
  *
  * 权限规则：
  * - 游客：无发布权限
- * - 用户：只能发布 峰迷聊峰
- * - 管理员：可以发布 峰言峰语 和 数据科普
+ * - 用户：只能发布 峰迷荟萃
+ * - 管理员：可以发布 峰言峰语 和 资料科普
  * - 超级管理员：可以发布所有分类
  */
 export function canPublishCategory(userRole: UserRole, categoryPrimary: string): boolean {
@@ -19,13 +19,13 @@ export function canPublishCategory(userRole: UserRole, categoryPrimary: string):
   }
 
   if (userRole === 'admin') {
-    // 管理员可以发布 峰言峰语 和 数据科普
-    return ['峰言峰语', '数据科普'].includes(categoryPrimary);
+    // 管理员可以发布 峰言峰语 和 资料科普
+    return ['峰言峰语', '资料科普'].includes(categoryPrimary);
   }
 
   if (userRole === 'user') {
-    // 普通用户只能发布 峰迷聊峰
-    return categoryPrimary === '峰迷聊峰';
+    // 普通用户只能发布 峰迷荟萃
+    return categoryPrimary === '峰迷荟萃';
   }
 
   return false; // 游客无权限
@@ -36,15 +36,15 @@ export function canPublishCategory(userRole: UserRole, categoryPrimary: string):
  */
 export function getAvailableCategories(userRole: UserRole): string[] {
   if (userRole === 'super_admin') {
-    return ['峰言峰语', '峰迷聊峰', '数据科普'];
+    return ['峰言峰语', '峰迷荟萃', '资料科普'];
   }
 
   if (userRole === 'admin') {
-    return ['峰言峰语', '数据科普'];
+    return ['峰言峰语', '资料科普'];
   }
 
   if (userRole === 'user') {
-    return ['峰迷聊峰'];
+    return ['峰迷荟萃'];
   }
 
   return []; // 游客无权限
