@@ -1,42 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import {
-  User,
-  LogOut,
-  PenSquare,
-  UserCircle2,
-  ChevronDown,
-  CalendarPlus,
-  ClipboardCheck,
   Settings,
   Sun,
   Moon,
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import AuthModal from '@/components/ui/AuthModal';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, currentRole } = useAuth();
-  const actionMenuRef = useRef<HTMLDivElement | null>(null);
   const { theme, toggleTheme } = useTheme();
+  const { user, currentRole } = useAuth();
   const isLightMode = theme === 'white';
-  const isStaff = currentRole === 'admin' || currentRole === 'super_admin';
-  const isSuperAdmin = currentRole === 'super_admin';
 
   const navigation = [
     { name: '首页', path: '/' },
     { name: '关于汪峰', path: '/about' },
     { name: '行程信息', path: '/tour-dates' },
     { name: '音乐作品', path: '/discography' },
-    { name: '视频存档', path: '/video-archive' },
+    { name: '视频精选', path: '/video-archive' },
     { name: '图片画廊', path: '/gallery' },
     { name: '资料科普', path: '/shu-ju-ke-pu' },
     { name: '峰言峰语', path: '/feng-yan-feng-yu' },
@@ -55,92 +42,21 @@ const Header = () => {
 
   const handleLinkClick = () => {
     setIsMenuOpen(false);
-    setIsActionMenuOpen(false);
     // 滚动到页面顶部
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleWriteArticle = () => {
-    if (currentRole === 'guest') return;
-    setIsActionMenuOpen(false);
+  // 处理后台管理按钮点击
+  const handleAdminClick = () => {
     setIsMenuOpen(false);
-    navigate('/write-article');
+    // 检查是否已登录且有管理权限
+    if (user && (currentRole === 'admin' || currentRole === 'super_admin')) {
+      navigate('/admin/dashboard');
+    } else {
+      // 未登录或权限不足，跳转到登录页
+      navigate('/admin');
+    }
   };
-
-  const handleLogout = () => {
-    setIsActionMenuOpen(false);
-    setIsMenuOpen(false);
-    logout();
-  };
-
-  const handlePublishSchedule = () => {
-    if (currentRole === 'guest') return;
-    setIsActionMenuOpen(false);
-    setIsMenuOpen(false);
-    navigate('/publish-schedule');
-  };
-
-  const handleGoToAdmin = (path: string) => {
-    setIsActionMenuOpen(false);
-    setIsMenuOpen(false);
-    navigate(path);
-  };
-
-  useEffect(() => {
-    if (!isActionMenuOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target as Node)) {
-        setIsActionMenuOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isActionMenuOpen]);
-
-  const actionMenuItems = [
-    {
-      key: 'write-article',
-      label: '写文章',
-      onSelect: currentRole !== 'guest' ? handleWriteArticle : undefined,
-      icon: PenSquare,
-      disabled: currentRole === 'guest',
-    },
-    {
-      key: 'publish-schedule',
-      label: '发布行程',
-      onSelect: currentRole !== 'guest' ? handlePublishSchedule : undefined,
-      icon: CalendarPlus,
-      disabled: currentRole === 'guest',
-    },
-    {
-      key: 'review',
-      label: '审核中心',
-      icon: ClipboardCheck,
-      onSelect: isStaff ? () => handleGoToAdmin('/admin/review') : undefined,
-      disabled: !isStaff,
-    },
-    {
-      key: 'admin',
-      label: isSuperAdmin ? '后台管理' : '运营后台',
-      icon: Settings,
-      onSelect: isStaff ? () => handleGoToAdmin('/admin') : undefined,
-      disabled: !isStaff,
-    },
-    {
-      key: 'profile',
-      label: '个人中心',
-      icon: User,
-      onSelect: () => handleGoToAdmin('/profile'),
-    },
-    {
-      key: 'logout',
-      label: '退出登录',
-      onSelect: handleLogout,
-      icon: LogOut,
-    },
-  ];
 
   return (
     <header className={cn(
@@ -184,79 +100,26 @@ const Header = () => {
             </nav>
           </div>
 
-          {/* 右侧：用户操作菜单或登录按钮 */}
+          {/* 右侧：主题切换和后台管理按钮 */}
           <div className="hidden lg:flex items-center space-x-4">
             <button
               type="button"
               onClick={toggleTheme}
               className={cn(
                 'flex items-center justify-center rounded-full border px-3 py-2 transition-colors',
-                'border-wangfeng-purple/50 bg-black/60 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'  // 固定为黑色背景和白色文字
+                'border-wangfeng-purple/50 bg-black/60 text-wangfeng-purple hover:bg-wangfeng-purple hover:text-white'
               )}
               title={`切换到${isLightMode ? '深色模式' : '浅色模式'}`}
             >
               {isLightMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
-            {user ? (
-              <div className="relative" ref={actionMenuRef}>
-                <button
-                  onClick={() => setIsActionMenuOpen((prev) => !prev)}
-                  className={cn(
-                    'flex items-center gap-2 rounded-full border border-wangfeng-purple/50 px-3 py-2 text-sm transition-colors hover:border-wangfeng-purple',
-                    'bg-black/60 text-white'  // 固定为黑色背景和白色文字
-                  )}
-                  aria-haspopup="true"
-                  aria-expanded={isActionMenuOpen}
-                >
-                  <UserCircle2 className="w-5 h-5 text-wangfeng-purple" />
-                  <ChevronDown className="w-4 h-4 text-wangfeng-purple" />
-                </button>
-
-                {isActionMenuOpen && (
-                  <div
-                    className={cn(
-                      'absolute right-0 mt-2 w-52 rounded-xl border border-wangfeng-purple/30 p-2 shadow-glow backdrop-blur-md',
-                      'bg-black/90'  // 固定为黑色背景
-                    )}
-                  >
-                    {actionMenuItems.map((item) => {
-                      const ItemIcon = item.icon;
-                      const isLogout = item.key === 'logout';
-
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => {
-                            if (item.disabled || !item.onSelect) return;
-                            item.onSelect();
-                          }}
-                          className={cn(
-                            'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                            item.disabled
-                              ? 'cursor-not-allowed text-gray-500'
-                              : 'text-white hover:bg-wangfeng-purple/20',  // 固定为白色文字
-                            isLogout && !item.disabled && 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
-                          )}
-                          disabled={item.disabled}
-                        >
-                          {ItemIcon && <ItemIcon className="w-4 h-4" />}
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsAuthModalOpen(true)}
-                className="flex items-center space-x-2 rounded-lg bg-wangfeng-purple px-4 py-2 text-white transition-colors hover:bg-wangfeng-purple/80"
-              >
-                <User className="w-4 h-4" />
-                <span className="text-sm font-medium">登录</span>
-              </button>
-            )}
+            <button
+              onClick={handleAdminClick}
+              className="flex items-center space-x-2 rounded-lg bg-wangfeng-purple px-4 py-2 text-white transition-colors hover:bg-wangfeng-purple/80"
+            >
+              <Settings className="w-4 h-4" />
+              <span className="text-sm font-medium">后台管理</span>
+            </button>
           </div>
 
           {/* 移动端菜单按钮 */}
@@ -304,62 +167,19 @@ const Header = () => {
                 </Link>
               ))}
 
-              {/* 移动端用户操作或登录按钮 */}
-              <div className="mt-4 space-y-2">
-                {user ? (
-                  <div className={cn(
-                    'space-y-1 rounded-xl border border-wangfeng-purple/30 p-2',
-                    'bg-black/80'  // 固定为黑色背景
-                  )}>
-                    {actionMenuItems.map((item) => {
-                      const ItemIcon = item.icon;
-                      const isLogout = item.key === 'logout';
-
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          onClick={() => {
-                            if (item.disabled || !item.onSelect) return;
-                            item.onSelect();
-                          }}
-                          className={cn(
-                            'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors',
-                            item.disabled
-                              ? 'cursor-not-allowed text-gray-500'
-                              : 'text-white hover:bg-wangfeng-purple/20',  // 固定为白色文字
-                            isLogout && !item.disabled && 'text-red-400 hover:text-red-300 hover:bg-red-500/10'
-                          )}
-                          disabled={item.disabled}
-                        >
-                          {ItemIcon && <ItemIcon className="w-4 h-4" />}
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setIsAuthModalOpen(true);
-                      setIsMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center space-x-2 rounded-lg bg-wangfeng-purple px-4 py-2 text-white transition-colors hover:bg-wangfeng-purple/80"
-                  >
-                    <User className="w-4 h-4" />
-                    <span className="text-sm font-medium">登录</span>
-                  </button>
-                )}
+              {/* 移动端后台管理按钮 */}
+              <div className="mt-4">
+                <button
+                  onClick={handleAdminClick}
+                  className="w-full flex items-center justify-center space-x-2 rounded-lg bg-wangfeng-purple px-4 py-2 text-white transition-colors hover:bg-wangfeng-purple/80"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span className="text-sm font-medium">后台管理</span>
+                </button>
               </div>
             </nav>
           </div>
         )}
-
-        {/* 认证模态框 */}
-        <AuthModal 
-          isOpen={isAuthModalOpen}
-          onClose={() => setIsAuthModalOpen(false)}
-        />
       </div>
     </header>
   );

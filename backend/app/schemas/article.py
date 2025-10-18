@@ -14,12 +14,15 @@ class ArticleBase(BaseModel):
     category: str = Field(default="个人感悟", max_length=50)  # 保留兼容
 
     tags: List[str] = Field(default_factory=list)
+    cover_url: Optional[str] = Field(None, max_length=500)  # 封面图片URL
     meta_description: Optional[str] = Field(None, max_length=160)
     meta_keywords: Optional[str] = Field(None, max_length=255)
 
 class ArticleCreate(ArticleBase):
     category_primary: str
     category_secondary: str
+    review_status: Optional[str] = Field(default="pending", max_length=20)  # 审核状态
+    is_published: Optional[bool] = Field(default=False)  # 是否发布
 
 class ArticleUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=1, max_length=200)
@@ -30,15 +33,20 @@ class ArticleUpdate(BaseModel):
     category_secondary: Optional[str] = Field(None, max_length=50)
     category: Optional[str] = Field(None, max_length=50)
     tags: Optional[List[str]] = None
+    cover_url: Optional[str] = Field(None, max_length=500)  # 封面图片URL
     meta_description: Optional[str] = Field(None, max_length=160)
     meta_keywords: Optional[str] = Field(None, max_length=255)
     is_published: Optional[bool] = None
+    review_status: Optional[str] = Field(None, max_length=20)  # 审核状态
+    published_at: Optional[datetime] = None
 
 class ArticleInDBBase(ArticleBase):
     id: str
     slug: str
+    cover_url: Optional[str]  # 封面图片URL
     is_published: bool
     is_deleted: bool
+    review_status: str  # 审核状态
     created_at: datetime
     updated_at: datetime
     published_at: Optional[datetime]
@@ -65,7 +73,9 @@ class ArticleSummary(BaseModel):
     category_secondary: str
     category: str
     tags: List[str]
+    cover_url: Optional[str]  # 封面图片URL
     is_published: bool
+    review_status: str  # 审核状态
     created_at: datetime
     published_at: Optional[datetime]
     view_count: int

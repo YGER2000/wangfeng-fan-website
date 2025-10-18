@@ -33,10 +33,13 @@ async def create_schedule(
     venue: Optional[str] = Form(None),
     theme: str = Form(...),
     description: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     schedule_service: ScheduleServiceMySQL = Depends(get_schedule_service)
 ):
     try:
+        # 将逗号分隔的标签字符串转换为列表
+        tags_list = [tag.strip() for tag in tags.split(',')] if tags else None
         payload = ScheduleCreate(
             category=category,
             date=date,
@@ -44,6 +47,7 @@ async def create_schedule(
             venue=venue,
             theme=theme,
             description=description,
+            tags=tags_list,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
@@ -56,6 +60,7 @@ async def create_schedule(
         venue=payload.venue,
         theme=payload.theme,
         description=payload.description,
+        tags=','.join(payload.tags) if payload.tags else None,
         image_file=image,
         save_file=False,  # 不立即保存文件
     )

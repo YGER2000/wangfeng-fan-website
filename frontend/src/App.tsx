@@ -1,4 +1,4 @@
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
 // Import context providers
@@ -18,23 +18,37 @@ import About from './components/pages/About';
 import Discography from './components/pages/Discography';
 import TourDates from './components/pages/TourDates';
 import Gallery from './components/pages/Gallery';
-import ActingCareer from './components/pages/ActingCareer';
-import Quotes from './components/pages/Quotes';
 import FengYanFengYu from './components/pages/FengYanFengYuNew';
 import FengMiLiaoFeng from './components/pages/FengMiLiaoFengNew';
 import ShuJuKePu from './components/pages/ShuJuKePuNew';
 import VideoArchive from './components/pages/VideoArchive';
 import VideoDetail from './components/pages/VideoDetail';
 import AboutSite from './components/pages/AboutSite';
-import ArticleDetail from './components/pages/ArticleDetail';
 import ArticleDetailPage from './components/pages/ArticleDetailPage';
-import WriteArticle from './components/pages/WriteArticle';
-import PublishSchedule from './components/pages/PublishSchedule';
 import Profile from './components/pages/Profile';
 
 // Admin area
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import AdminLayout from './components/admin/AdminLayout';
+import NewAdminLayout from './components/admin/NewAdminLayout';
+import AdminLogin from './components/admin/AdminLogin';
+import Dashboard from './components/admin/pages/Dashboard';
+import SimpleDashboard from './components/admin/pages/SimpleDashboard';
+import ProfileAdmin from './components/admin/pages/ProfileAdmin';
+import ArticleCreate from './components/admin/pages/ArticleCreate';
+import ArticleEdit from './components/admin/pages/ArticleEdit';
+import ArticleList from './components/admin/pages/ArticleList';
+import ScheduleCreate from './components/admin/pages/ScheduleCreate';
+import ScheduleEdit from './components/admin/pages/ScheduleEdit';
+import ScheduleList from './components/admin/pages/ScheduleList';
+import PlaceholderAdmin from './components/admin/pages/PlaceholderAdmin';
+import VideoCreate from './components/admin/pages/VideoCreate';
+import VideoEdit from './components/admin/pages/VideoEdit';
+import VideoList from './components/admin/pages/VideoList';
+import GalleryUpload from './components/admin/pages/GalleryUpload';
+import TagManager from './components/admin/pages/TagManager';
+import GalleryList from './components/admin/pages/GalleryList';
+import GalleryEdit from './components/admin/pages/GalleryEdit';
 import DashboardOverview from './components/admin/pages/DashboardOverview';
 import ReviewCenter from './components/admin/pages/ReviewCenter';
 import ScheduleManager from './components/admin/pages/ScheduleManager';
@@ -46,6 +60,10 @@ import PlaceholderPage from './components/admin/pages/PlaceholderPage';
 const AppContent = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
+  const location = useLocation();
+  
+  // 判断当前是否在管理界面
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div
@@ -75,18 +93,42 @@ const AppContent = () => {
           <Route path="/feng-yan-feng-yu" element={<FengYanFengYu />} />
           <Route path="/feng-mi-liao-feng" element={<FengMiLiaoFeng />} />
           <Route path="/about-site" element={<AboutSite />} />
-          <Route path="/acting-career" element={<ActingCareer />} />
-          <Route path="/quotes" element={<Quotes />} />
           <Route path="/video/:id" element={<VideoDetail />} />
           <Route path="/article/:slug" element={<ArticleDetailPage />} />
-          <Route path="/article-old/:slug" element={<ArticleDetail />} />
-          <Route path="/write-article" element={<WriteArticle />} />
-          <Route path="/publish-schedule" element={<PublishSchedule />} />
-          <Route path="/profile" element={<Profile />} />
 
-          {/* Admin Routes */}
+          {/* New Admin Login - No Auth Required */}
+          <Route path="/admin" element={<AdminLogin />} />
+
+          {/* New Admin Routes - With Auth */}
           <Route
-            path="/admin"
+            path="/admin/*"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                <NewAdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<SimpleDashboard />} />
+            <Route path="dashboard-full" element={<Dashboard />} />
+            <Route path="articles/create" element={<ArticleCreate />} />
+            <Route path="articles/edit/:id" element={<ArticleEdit />} />
+            <Route path="articles/list" element={<ArticleList />} />
+            <Route path="schedules/create" element={<ScheduleCreate />} />
+            <Route path="schedules/edit/:id" element={<ScheduleEdit />} />
+            <Route path="schedules/list" element={<ScheduleList />} />
+            <Route path="videos/create" element={<VideoCreate />} />
+            <Route path="videos/list" element={<VideoList />} />
+            <Route path="videos/edit/:id" element={<VideoEdit />} />
+            <Route path="gallery/upload" element={<GalleryUpload />} />
+            <Route path="tags" element={<TagManager />} />
+            <Route path="gallery/list" element={<GalleryList />} />
+            <Route path="gallery/edit/:id" element={<GalleryEdit />} />
+            <Route path="profile" element={<ProfileAdmin />} />
+          </Route>
+
+          {/* Old Admin Routes (Keep for compatibility) */}
+          <Route
+            path="/admin-old"
             element={
               <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                 <AdminLayout />
@@ -111,22 +153,25 @@ const AppContent = () => {
           </Route>
         </Routes>
       </main>
-      <Footer />
+      {/* 只在非管理界面显示Footer */}
+      {!isAdminRoute && <Footer />}
 
       {/* Global Music Player */}
       <MusicPlayer />
 
-      {/* Floating fan comments - Wang Feng themed */}
-      <div className="fixed bottom-12 right-6 z-40 hidden md:block">
-        <div
-          className={cn(
-            'border-2 border-wangfeng-purple text-wangfeng-purple text-sm py-2 px-4 rounded-xl font-bold animate-float shadow-glow transition-colors duration-300',
-            isLight ? 'bg-white/80 backdrop-blur-md' : 'bg-black/70'
-          )}
-        >
-          摇滚精神永不灭! 🎸💜
+      {/* Floating fan comments - Wang Feng themed (隐藏于后台) */}
+      {!isAdminRoute && (
+        <div className="fixed bottom-12 right-6 z-40 hidden md:block">
+          <div
+            className={cn(
+              'border-2 border-wangfeng-purple text-wangfeng-purple text-sm py-2 px-4 rounded-xl font-bold animate-float shadow-glow transition-colors duration-300',
+              isLight ? 'bg-white/80 backdrop-blur-md' : 'bg-black/70'
+            )}
+          >
+            感受峰 感受存在! 🎸💜
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

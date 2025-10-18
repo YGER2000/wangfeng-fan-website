@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,7 @@ class ScheduleBase(BaseModel):
     venue: Optional[str] = Field(default=None, description='具体地点')
     theme: str = Field(..., description='行程主题或具体事项')
     description: Optional[str] = Field(default=None, description='补充说明')
+    tags: Optional[List[str]] = Field(default=None, description='标签列表')
 
 
 class ScheduleCreate(ScheduleBase):
@@ -28,6 +29,7 @@ class ScheduleCreate(ScheduleBase):
 class ScheduleResponse(ScheduleBase):
     id: int
     image: Optional[str] = None
+    tags: Optional[List[str]] = None
     source: Literal['legacy', 'custom']
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

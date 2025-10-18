@@ -37,30 +37,42 @@ const AdminLayout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="relative overflow-hidden pt-24 pb-12">
+    <div className={cn(
+      "relative overflow-hidden pt-24 pb-12",
+      isLight ? "bg-gray-50" : ""
+    )}>
       <div
         className={cn(
           'absolute inset-0 -z-10 opacity-80',
-          'bg-gradient-to-br from-black via-wangfeng-black to-wangfeng-purple/20'  // 固定为黑色背景，不随主题变化
+          isLight
+            ? 'bg-white'
+            : 'bg-gradient-to-br from-black via-wangfeng-black to-wangfeng-purple/20'
         )}
       />
 
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6 lg:flex-row lg:px-8">
         <aside
           className={cn(
-            'w-full shrink-0 rounded-2xl border border-wangfeng-purple/40 shadow-glow backdrop-blur-md transition-colors lg:max-w-xs',
-            'bg-black/40 text-gray-100'  // 固定为黑色背景，不随主题变化
+            'w-full shrink-0 rounded-2xl border shadow-glow backdrop-blur-md transition-colors lg:max-w-xs',
+            isLight
+              ? 'bg-white border-gray-200 text-gray-900'
+              : 'bg-black/40 border-wangfeng-purple/40 text-gray-100'
           )}
         >
-          <div className="flex items-center justify-between gap-3 border-b border-wangfeng-purple/30 px-5 py-4">
+          <div className={cn(
+            "flex items-center justify-between gap-3 border-b px-5 py-4",
+            isLight ? "border-gray-200" : "border-wangfeng-purple/30"
+          )}>
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-wangfeng-purple">WANG FENG</p>
               <h2 className="text-lg font-semibold text-wangfeng-purple/90">后台运营中心</h2>
             </div>
             <div
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-full border border-wangfeng-purple/60 text-sm font-bold',
-                'bg-black/50 text-wangfeng-light'  // 固定为黑色背景和浅色文字
+                'flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold',
+                isLight
+                  ? 'bg-wangfeng-purple/10 border-wangfeng-purple/30 text-wangfeng-purple'
+                  : 'bg-black/50 border-wangfeng-purple/60 text-wangfeng-light'
               )}
             >
               管理
@@ -79,8 +91,12 @@ const AdminLayout = () => {
                     cn(
                       'group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-all duration-300',
                       isActive
-                        ? 'border border-wangfeng-purple/60 bg-wangfeng-purple/20 text-wangfeng-light'
-                        : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
+                        ? isLight
+                          ? 'border border-wangfeng-purple/40 bg-wangfeng-purple/10 text-wangfeng-purple'
+                          : 'border border-wangfeng-purple/60 bg-wangfeng-purple/20 text-wangfeng-light'
+                        : isLight
+                          ? 'text-gray-700 hover:bg-gray-100 hover:text-wangfeng-purple'
+                          : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
                     )
                   }
                 >
@@ -103,7 +119,12 @@ const AdminLayout = () => {
             })}
           </nav>
 
-          <div className="border-t border-wangfeng-purple/30 px-5 py-4 text-xs text-gray-500">
+          <div className={cn(
+            "border-t px-5 py-4 text-xs",
+            isLight
+              ? "border-gray-200 text-gray-600"
+              : "border-wangfeng-purple/30 text-gray-500"
+          )}>
             <p>当前账号：</p>
             <p className="mt-1 font-medium text-wangfeng-purple">
               {user?.username || '管理员'}
@@ -115,7 +136,9 @@ const AdminLayout = () => {
             onClick={logout}
             className={cn(
               'mx-4 mb-4 flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-colors',
-              'border-wangfeng-purple/30 text-wangfeng-light hover:bg-wangfeng-purple/20'  // 固定为黑色主题样式
+              isLight
+                ? 'border-wangfeng-purple/30 text-wangfeng-purple hover:bg-wangfeng-purple/10'
+                : 'border-wangfeng-purple/30 text-wangfeng-light hover:bg-wangfeng-purple/20'
             )}
           >
             <LogOut className="h-4 w-4" />
@@ -124,12 +147,7 @@ const AdminLayout = () => {
         </aside>
 
         <section className="flex-1 space-y-6">
-          <header
-            className={cn(
-              'flex flex-col gap-4 rounded-2xl border border-wangfeng-purple/30 p-6 shadow-glow backdrop-blur-md lg:flex-row lg:items-center lg:justify-between',
-              'bg-black/50'  // 固定为黑色背景，不随主题变化
-            )}
-          >
+          <header className="flex flex-col gap-4 rounded-2xl border border-wangfeng-purple/30 p-6 shadow-glow backdrop-blur-md lg:flex-row lg:items-center lg:justify-between bg-black/50">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-wangfeng-purple">{new Date().toLocaleDateString('zh-CN')}</p>
               <h1 className="mt-2 text-2xl font-bold text-wangfeng-purple">
@@ -137,38 +155,24 @@ const AdminLayout = () => {
               </h1>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div
-                className={cn(
-                  'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm shadow-inner transition-colors',
-                  'border-wangfeng-purple/40 bg-black/60 text-gray-200'  // 固定为黑色背景，不随主题变化
-                )}
-              >
+              <div className="flex items-center gap-2 rounded-xl border border-wangfeng-purple/40 bg-black/60 text-gray-200 px-3 py-2 text-sm shadow-inner transition-colors">
                 <Search className="h-4 w-4 text-wangfeng-purple" />
                 <input
                   type="search"
                   placeholder="快速检索内容、用户或操作"
-                  className={cn(
-                    'w-full bg-transparent text-sm outline-none placeholder:text-gray-400',
-                    'text-gray-200'  // 固定为白色文字，不随主题变化
-                  )}
+                  className="w-full bg-transparent text-sm outline-none text-gray-200 placeholder:text-gray-400"
                 />
               </div>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 transition-colors',
-                    'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'  // 固定为黑色背景，不随主题变化
-                  )}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30 transition-colors"
                 >
                   <RefreshCcw className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
-                  className={cn(
-                    'relative flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 transition-colors',
-                    'bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30'  // 固定为黑色背景，不随主题变化
-                  )}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-wangfeng-purple/40 bg-black/60 text-wangfeng-light hover:bg-wangfeng-purple/30 transition-colors"
                 >
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">

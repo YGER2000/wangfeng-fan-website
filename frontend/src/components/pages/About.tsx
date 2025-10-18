@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, GraduationCap, Music, Award, BookOpen, Heart } from 'lucide-react';
-import AboutAwards from './AboutAwards';
 
 interface ArtistBio {
   basicInfo: {
@@ -477,11 +476,27 @@ const About = () => {
             </h3>
             
             <p className="text-gray-300 mb-6">
-              从1997年至今，汪峰在音乐生涯中获得了众多奖项与荣誉认可，以下是详细的获奖记录：
+              从1997年至今，汪峰在音乐生涯中获得了众多奖项与荣誉认可。包括华语音乐传媒大奖、东方风云榜、全球华语榜中榜等权威奖项。代表作品《春天里》《怒放的生命》《飞的更高》等多次获得年度金曲奖项。
             </p>
 
-            {/* 使用完整的获奖记录组件 */}
-            <AboutAwards />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-black/30 rounded-lg p-4 border border-wangfeng-purple/20">
+                <p className="text-3xl font-bold text-wangfeng-purple mb-1">80+</p>
+                <p className="text-sm text-gray-400">获奖记录</p>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 border border-wangfeng-purple/20">
+                <p className="text-3xl font-bold text-wangfeng-purple mb-1">30+</p>
+                <p className="text-sm text-gray-400">个人奖项</p>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 border border-wangfeng-purple/20">
+                <p className="text-3xl font-bold text-wangfeng-purple mb-1">25+</p>
+                <p className="text-sm text-gray-400">歌曲奖项</p>
+              </div>
+              <div className="bg-black/30 rounded-lg p-4 border border-wangfeng-purple/20">
+                <p className="text-3xl font-bold text-wangfeng-purple mb-1">15+</p>
+                <p className="text-sm text-gray-400">专辑奖项</p>
+              </div>
+            </div>
           </motion.div>
 
           {/* 社会影响 */}

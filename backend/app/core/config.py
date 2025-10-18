@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     # JWT 配置
     secret_key: str = "super-secret-key-for-wangfeng-fan-website"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 10080  # 7天 = 7 * 24 * 60 = 10080 分钟
 
     # 阿里云邮件服务配置
     smtp_host: str = "smtpdm.aliyun.com"  # 阿里云DirectMail SMTP服务器

@@ -44,6 +44,9 @@ def create_video(db: Session, video: VideoCreate) -> VideoModel:
         category=video.category,
         bvid=video.bvid,
         publish_date=video.publish_date,
+        cover_url=video.cover_url,  # 保存B站封面URL
+        cover_local=video.cover_local,  # 保存本地封面路径
+        cover_thumb=video.cover_thumb,  # 保存缩略图路径
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )

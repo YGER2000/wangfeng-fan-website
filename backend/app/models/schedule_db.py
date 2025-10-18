@@ -17,11 +17,13 @@ class Schedule(Base):
     description = Column(Text, nullable=True, comment='补充说明')
     image = Column(String(500), nullable=True, comment='海报图片路径（原图）')
     image_thumb = Column(String(500), nullable=True, comment='海报缩略图路径（压缩图）')
+    tags = Column(Text, nullable=True, comment='标签，用逗号分隔')
     source = Column(String(20), default='custom', nullable=False, comment='数据来源：legacy/custom')
 
     # 审核状态字段
     review_status = Column(String(20), default='pending', nullable=False, index=True, comment='审核状态: pending/approved')
     is_published = Column(Integer, default=0, nullable=False, comment='是否已发布: 0未发布/1已发布')
+    article_id = Column(String(36), nullable=True, index=True, comment='关联的文章ID')
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment='创建时间')
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False, comment='更新时间')
@@ -41,9 +43,11 @@ class Schedule(Base):
             'description': self.description,
             'image': self.image,
             'image_thumb': self.image_thumb,
+            'tags': self.tags.split(',') if self.tags else [],
             'source': self.source,
             'review_status': self.review_status,
             'is_published': self.is_published,
+            'article_id': self.article_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
         }

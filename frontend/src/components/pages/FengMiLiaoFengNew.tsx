@@ -8,7 +8,7 @@ const FengMiLiaoFeng = () => {
   const [loading, setLoading] = useState(true);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  const subcategories = ['闲聊汪峰', '歌曲赏析'];
+  const subcategories = ['闲聊汪峰', '歌曲赏析', '歌迷故事'];
 
   useEffect(() => {
     loadArticles();
@@ -47,7 +47,7 @@ const FengMiLiaoFeng = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            峰迷<span className="text-wangfeng-purple animate-pulse-glow">荟萃</span>
+            峰迷 <span className="text-wangfeng-purple animate-pulse-glow">荟萃</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
             Fans Spotlight on Wang Feng

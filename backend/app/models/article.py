@@ -32,6 +32,9 @@ class Article(Base):
 
     tags = Column(JSON, default=list)
 
+    # 封面图片
+    cover_url = Column(String(500), nullable=True)  # 文章封面图片URL
+
     # 状态字段
     is_published = Column(Boolean, default=True)
     is_deleted = Column(Boolean, default=False)

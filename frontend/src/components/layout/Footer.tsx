@@ -24,7 +24,7 @@ const Footer = () => {
               </span>
             </Link>
             <p className={cn('mb-4 transition-colors duration-300', isLightMode ? 'text-gray-600' : 'text-gray-300')}>
-              终极粉丝网站，展示我们的灵魂歌者！ <span className="fan-exclamation">燃爆</span> 自1994!
+              这里有关于汪峰的一切，让我们一起找点乐子吧！ <span className="fan-exclamation">燃爆</span> 自1994!
             </p>
             <div className="flex space-x-4">
               <a href="https://weibo.com/wangfeng" target="_blank" rel="noopener noreferrer" className="text-wangfeng-purple hover:text-purple-400 transition-colors hover:scale-110 transform duration-300">
@@ -52,7 +52,7 @@ const Footer = () => {
                 <span className="text-wangfeng-purple mr-2">•</span> 关于汪峰
               </Link></li>
               <li><Link to="/tour-dates" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 摇滚传奇巡演
+                <span className="text-wangfeng-purple mr-2">•</span> 行程信息
               </Link></li>
               <li><Link to="/discography" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
                 <span className="text-wangfeng-purple mr-2">•</span> 音乐作品 <span className="ml-2 text-xs bg-wangfeng-purple text-white px-1 rounded" style={{ animation: 'none' }}>新!</span>
@@ -61,7 +61,7 @@ const Footer = () => {
                 <span className="text-wangfeng-purple mr-2">•</span> 视频存档
               </Link></li>
               <li><Link to="/gallery" className={cn('hover:text-wangfeng-purple transition-colors flex items-center', isLightMode ? 'text-gray-600' : 'text-gray-200')}>
-                <span className="text-wangfeng-purple mr-2">•</span> 图库
+                <span className="text-wangfeng-purple mr-2">•</span> 图片画廊
               </Link></li>
             </ul>
           </div>
@@ -128,16 +128,16 @@ const Footer = () => {
         <div className="mt-12 pt-6 border-t border-wangfeng-purple/30 text-center">
           <div className="mb-4">
             <p className={cn('font-bebas tracking-wider text-xl transition-colors duration-300', isLightMode ? 'text-gray-800' : 'text-white')}>
-              <span className="text-wangfeng-purple">摇滚粉丝</span> 永远
+              <span className="text-wangfeng-purple">摇滚粉丝</span> forever
             </p>
           </div>
           
           <div className={cn('md:flex md:justify-between text-sm transition-colors duration-300', isLightMode ? 'text-gray-500' : 'text-gray-400')}>
             <p className="mb-2 md:mb-0">
-              © 2025 汪峰终极粉丝网站。由摇滚粉丝用 <span className="text-wangfeng-purple">♥</span> 创建。
+              © 2025 汪峰终极资料库。由歌迷们用 <span className="text-wangfeng-purple">♥</span> 创建。
             </p>
             <p>
-              汪峰，我们崇拜您的荣耀！ <span className="fan-exclamation">摇滚之王!</span>
+              汪峰，我们崇拜您！ <span className="fan-exclamation">摇滚之王!</span>
             </p>
           </div>
         </div>

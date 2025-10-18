@@ -279,6 +279,7 @@ class ScheduleServiceMySQL:
         venue: Optional[str] = None,
         theme: str,
         description: Optional[str] = None,
+        tags: Optional[str] = None,
         image_file: Optional[UploadFile] = None,
         save_file: bool = False,  # 新增参数：是否立即保存文件
     ) -> Dict[str, Any]:
@@ -313,6 +314,7 @@ class ScheduleServiceMySQL:
             venue=venue,
             theme=theme,
             description=description,
+            tags=tags,
             image=image_path,
             image_thumb=image_thumb_path,
             source='custom',

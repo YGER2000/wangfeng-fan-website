@@ -46,10 +46,10 @@ const VideoArchive = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            视频<span className="text-wangfeng-purple animate-pulse-glow">存档</span>
+            视频 <span className="text-wangfeng-purple animate-pulse-glow">精选</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
-            Video Archive of Wang Feng
+            Featured Videos of Wang Feng
           </h2>
         </motion.div>
 

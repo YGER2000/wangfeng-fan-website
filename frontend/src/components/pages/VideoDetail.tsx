@@ -2,108 +2,44 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
-
-// 模拟视频数据
-const mockVideos = [
-  {
-    id: '1',
-    title: '汪峰现场演出精彩瞬间',
-    date: '2024-10-10',
-    author: '官方频道',
-    category: '现场演出',
-    bvid: 'BV1xx411c7mu',
-    description: '汪峰最新演唱会精彩片段，包含了多首经典歌曲的现场演绎。'
-  },
-  {
-    id: '2',
-    title: '汪峰新歌MV首播',
-    date: '2024-09-15',
-    author: '音乐频道',
-    category: '音乐视频',
-    bvid: 'BV1yy411d7mN',
-    description: '汪峰最新单曲官方MV，由知名导演执导，展现了独特的视觉艺术。'
-  },
-  {
-    id: '3',
-    title: '汪峰访谈节目',
-    date: '2024-08-20',
-    author: '访谈频道',
-    category: '访谈节目',
-    bvid: 'BV1zz411e7nO',
-    description: '汪峰接受深度访谈，分享音乐创作背后的故事和人生感悟。'
-  },
-  {
-    id: '4',
-    title: '汪峰纪录片片段',
-    date: '2024-07-05',
-    author: '纪录片频道',
-    category: '纪录片',
-    bvid: 'BV1aa411f7pP',
-    description: '汪峰音乐之路纪录片，记录了他从乐队到 solo 的音乐历程。'
-  },
-  {
-    id: '5',
-    title: '汪峰慈善演出',
-    date: '2024-06-12',
-    author: '公益频道',
-    category: '公益活动',
-    bvid: 'BV1bb411g7qQ',
-    description: '汪峰参与的慈善义演，用音乐传递爱心和正能量。'
-  },
-  {
-    id: '6',
-    title: '汪峰音乐教学',
-    date: '2024-05-18',
-    author: '教育频道',
-    category: '音乐教学',
-    bvid: 'BV1cc411h7rR',
-    description: '汪峰分享音乐创作心得，讲解吉他演奏技巧和歌曲创作方法。'
-  },
-  {
-    id: '7',
-    title: '汪峰粉丝见面会',
-    date: '2024-04-22',
-    author: '粉丝频道',
-    category: '粉丝活动',
-    bvid: 'BV1dd411j7sS',
-    description: '汪峰与粉丝亲密互动，现场演唱多首经典歌曲并回答粉丝提问。'
-  },
-  {
-    id: '8',
-    title: '汪峰经典回顾',
-    date: '2024-03-30',
-    author: '怀旧频道',
-    category: '经典回顾',
-    bvid: 'BV1ee411k7tT',
-    description: '汪峰经典歌曲回顾，重温那些年感动过无数人的音乐作品。'
-  },
-  {
-    id: '13',
-    title: '当我想你的时候现场视频',
-    date: '2024-10-12',
-    author: '官方频道',
-    category: '现场演出',
-    bvid: 'BV1okVhzwEGo',
-    description: '《当我想你的时候》现场演出视频，感受汪峰的音乐魅力。'
-  }
-];
+import { videoAPI, Video } from '@/utils/api';
 
 const VideoDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [video, setVideo] = useState<any>(null);
+  const [video, setVideo] = useState<Video | null>(null);
+  const [relatedVideos, setRelatedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 模拟加载视频数据
     const loadVideo = async () => {
+      if (!id) return;
+
       setLoading(true);
-      // 模拟网络请求延迟
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const foundVideo = mockVideos.find(v => v.id === id);
-      setVideo(foundVideo || null);
-      setLoading(false);
+      setError(null);
+
+      try {
+        // 获取视频详情
+        const videoData = await videoAPI.getById(id);
+        setVideo(videoData);
+
+        // 获取相关推荐（同分类的其他视频）
+        const allVideos = await videoAPI.getList({
+          limit: 10,
+          category: videoData.category
+        });
+        // 过滤掉当前视频，只保留3个
+        const related = allVideos
+          .filter(v => v.id !== id)
+          .slice(0, 3);
+        setRelatedVideos(related);
+      } catch (err) {
+        console.error('加载视频失败:', err);
+        setError('加载视频失败');
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadVideo();
@@ -112,20 +48,21 @@ const VideoDetail = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wangfeng-purple mx-auto mb-4"></div>
         <div className="text-gray-600 text-xl">加载中...</div>
       </div>
     );
   }
 
-  if (!video) {
+  if (error || !video) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center text-gray-700">
-        <h1 className="text-3xl mb-4">😢 视频未找到</h1>
+        <h1 className="text-3xl mb-4">😢 {error || '视频未找到'}</h1>
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/video-archive')}
           className="px-6 py-2 bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80 rounded-lg transition-colors"
         >
-          返回上一页
+          返回视频存档
         </button>
       </div>
     );
@@ -172,7 +109,7 @@ const VideoDetail = () => {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              <span>{new Date(video.date).toLocaleDateString('zh-CN')}</span>
+              <span>{new Date(video.publish_date).toLocaleDateString('zh-CN')}</span>
             </div>
           </div>
 
@@ -203,19 +140,17 @@ const VideoDetail = () => {
         </motion.div>
 
         {/* 相关推荐 */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mb-12"
-        >
-          <h2 className="text-2xl font-bold mb-6 text-gray-900">相关推荐</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {mockVideos
-              .filter(v => v.id !== video.id)
-              .slice(0, 3)
-              .map((relatedVideo) => (
-                <div 
+        {relatedVideos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mb-12"
+          >
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">相关推荐</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {relatedVideos.map((relatedVideo) => (
+                <div
                   key={relatedVideo.id}
                   className="flex gap-3 p-3 rounded-lg border border-gray-200 hover:border-wangfeng-purple transition-colors cursor-pointer"
                   onClick={() => navigate(`/video/${relatedVideo.id}`)}
@@ -224,12 +159,13 @@ const VideoDetail = () => {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 truncate">{relatedVideo.title}</h3>
                     <p className="text-sm text-gray-500 truncate">{relatedVideo.author}</p>
-                    <p className="text-xs text-gray-400">{new Date(relatedVideo.date).toLocaleDateString('zh-CN')}</p>
+                    <p className="text-xs text-gray-400">{new Date(relatedVideo.publish_date).toLocaleDateString('zh-CN')}</p>
                   </div>
                 </div>
               ))}
-          </div>
-        </motion.div>
+            </div>
+          </motion.div>
+        )}
 
         {/* 底部操作 */}
         <motion.div
@@ -240,11 +176,11 @@ const VideoDetail = () => {
         >
           <div className="flex justify-between items-center">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/video-archive')}
               className="flex items-center gap-2 px-6 py-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              返回列表
+              返回视频存档
             </button>
           </div>
         </motion.div>

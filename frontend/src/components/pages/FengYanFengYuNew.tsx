@@ -47,7 +47,7 @@ const FengYanFengYu = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            峰言<span className="text-wangfeng-purple animate-pulse-glow">峰语</span>
+            峰言 <span className="text-wangfeng-purple animate-pulse-glow">峰语</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
             Wang Feng's Words

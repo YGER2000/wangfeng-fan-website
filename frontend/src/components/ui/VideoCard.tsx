@@ -5,11 +5,15 @@ import { withBasePath } from '@/lib/utils';
 interface Video {
   id: string;
   title: string;
-  date: string;
+  date?: string;  // 兼容旧数据
+  publish_date?: string;  // 新的API字段
   author: string;
   category: string;
   bvid: string;
   description?: string;
+  cover_url?: string;  // B站视频封面URL
+  cover_local?: string;  // 本地缓存的封面路径(640x360, 16:9)
+  cover_thumb?: string;  // 本地缓存的缩略图路径(480x270, 16:9)
 }
 
 interface VideoCardProps {
@@ -73,20 +77,45 @@ const VideoCard = ({ video, index = 0 }: VideoCardProps) => {
       onClick={handleClick}
     >
       <div className="relative overflow-hidden rounded-xl theme-bg-card border theme-border-primary group-hover:border-wangfeng-purple/50 transition-all duration-300 w-full">
-        {/* 封面区域 - 固定 1:1 正方形 */}
-        <div className="relative aspect-square w-full">
-          {/* 显示纯文字渐变背景 */}
-          <div className={`w-full h-full bg-gradient-to-br ${getGradientColors(video.title)} flex items-center justify-center p-4 transition-transform duration-300 group-hover:scale-105`}>
-            <h3 className="text-white text-lg font-bold text-center leading-tight line-clamp-3">
-              {video.title}
-            </h3>
-          </div>
+        {/* 封面区域 - 固定 16:9 比例 */}
+        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+          {/* 优先使用本地缓存的缩略图（16:9），其次是B站封面，最后是渐变背景 */}
+          {(video.cover_thumb || video.cover_local || video.cover_url) ? (
+            <>
+              {/* 封面图片 - 优先级：缩略图 > 本地原图 > B站URL */}
+              <img
+                src={withBasePath(video.cover_thumb || video.cover_local || video.cover_url || '')}
+                alt={video.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  // 如果封面图片加载失败，隐藏图片元素，让下面的渐变背景显示
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              {/* 封面加载失败时的fallback渐变背景 */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${getGradientColors(video.title)} flex items-center justify-center p-4 transition-transform duration-300 group-hover:scale-105`}
+                   style={{ zIndex: -1 }}>
+                <h3 className="text-white text-lg font-bold text-center leading-tight line-clamp-3">
+                  {video.title}
+                </h3>
+              </div>
+            </>
+          ) : (
+            /* 没有任何封面时显示纯文字渐变背景 */
+            <div className={`w-full h-full bg-gradient-to-br ${getGradientColors(video.title)} flex items-center justify-center p-4 transition-transform duration-300 group-hover:scale-105`}>
+              <h3 className="text-white text-lg font-bold text-center leading-tight line-clamp-3">
+                {video.title}
+              </h3>
+            </div>
+          )}
 
           {/* 分类标签 - 右上角 */}
           <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
             {video.category}
           </div>
-          
+
           {/* 播放图标 - 中间 */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-black/50 rounded-full p-3 backdrop-blur-sm transition-all duration-300 group-hover:scale-110">
@@ -97,30 +126,24 @@ const VideoCard = ({ video, index = 0 }: VideoCardProps) => {
           </div>
         </div>
 
-        {/* 视频信息 - 固定高度和布局 */}
-        <div className="p-4" style={{ height: '160px' }}>
+        {/* 视频信息 - 固定高度和布局（减少21px：从139px改为118px） */}
+        <div className="p-4" style={{ height: '118px' }}>
           {/* 标题 - 单行 */}
           <h3 className="font-bold theme-text-primary mb-3 truncate group-hover:text-wangfeng-purple transition-colors text-base" style={{ height: '24px', lineHeight: '24px' }}>
             {video.title}
           </h3>
 
-          {/* 描述 - 固定三行高度 */}
-          <div className="mb-3 overflow-hidden" style={{ height: '63px' }}>
-            <p className="theme-text-muted text-sm leading-relaxed" style={{
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              lineHeight: '21px'
-            }}>
-              {video.description || '暂无描述'}...
+          {/* 描述 - 固定一行高度（从42px改为21px） */}
+          <div className="mb-3 overflow-hidden" style={{ height: '21px' }}>
+            <p className="theme-text-muted text-sm truncate" style={{ lineHeight: '21px' }}>
+              {video.description || '暂无描述'}
             </p>
           </div>
 
           {/* 作者和日期 - 固定在底部 */}
           <div className="flex items-center justify-between theme-text-muted text-xs" style={{ height: '20px', lineHeight: '20px' }}>
             <span className="truncate mr-2">{video.author}</span>
-            <span className="whitespace-nowrap">{formatDate(video.date)}</span>
+            <span className="whitespace-nowrap">{formatDate(video.publish_date || video.date || '')}</span>
           </div>
         </div>
       </div>

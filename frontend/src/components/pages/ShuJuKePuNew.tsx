@@ -1,14 +1,32 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { articleAPI, Article } from '@/utils/api';
+import { articleAPI, Article as ApiArticle } from '@/utils/api';
 import ArticleCard from '@/components/ui/ArticleCard';
+import { Article as ContentArticle } from '@/utils/contentManager';
+
+// 转换API文章类型为内容管理器文章类型
+const convertApiArticleToContentArticle = (apiArticle: ApiArticle): ContentArticle => {
+  return {
+    id: apiArticle.id,
+    title: apiArticle.title,
+    date: apiArticle.published_at || apiArticle.created_at || new Date().toISOString().split('T')[0],
+    author: apiArticle.author,
+    category: apiArticle.category,
+    category_primary: apiArticle.category_primary,
+    category_secondary: apiArticle.category_secondary,
+    tags: apiArticle.tags || [],
+    excerpt: apiArticle.excerpt || '',
+    content: apiArticle.content,
+    slug: apiArticle.slug,
+  };
+};
 
 const ShuJuKePu = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<ContentArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
 
-  const subcategories = ['汪峰数据', '辟谣考证', '演唱会资料', '歌曲资料', '乐队资料', '逸闻趣事', '媒体报道'];
+  const subcategories = ['汪峰数据', '辟谣考证', '演唱会资料', '歌曲资料', '乐队资料', '逸闻趣事', '媒体报道', '行程信息'];
 
   useEffect(() => {
     loadArticles();
@@ -28,7 +46,9 @@ const ShuJuKePu = () => {
         (!selectedSubcategory || article.category_secondary === selectedSubcategory)
       );
 
-      setArticles(filtered);
+      // 转换文章类型
+      const convertedArticles = filtered.map(convertApiArticleToContentArticle);
+      setArticles(convertedArticles);
     } catch (error) {
       console.error('加载文章失败:', error);
     } finally {
@@ -47,7 +67,7 @@ const ShuJuKePu = () => {
           className="text-center mb-16"
         >
           <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            资料<span className="text-wangfeng-purple animate-pulse-glow">科普</span>
+            资料 <span className="text-wangfeng-purple animate-pulse-glow">科普</span>
           </h1>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
             Knowledge Repository

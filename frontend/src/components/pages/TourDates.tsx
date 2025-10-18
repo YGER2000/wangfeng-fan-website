@@ -126,38 +126,6 @@ const TourDates = () => {
           </h2>
         </motion.div>
 
-        {/* Statistics */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="max-w-4xl mx-auto mb-16"
-        >
-          <div className="bg-black/70 rounded-2xl border border-wangfeng-purple/40 shadow-glow p-8 backdrop-blur-sm">
-            <h3 className="text-3xl font-bold text-wangfeng-purple mb-8 text-center tracking-wider">行程统计</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
-                <div className="text-5xl font-bold text-white mb-3">
-                  {schedule.length}
-                </div>
-                <div className="text-lg text-wangfeng-purple/80 font-medium">总行程数量</div>
-              </div>
-              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
-                <div className="text-5xl font-bold text-wangfeng-purple mb-3 animate-pulse-glow">
-                  {schedule.filter((c) => c.isFuture).length}
-                </div>
-                <div className="text-lg text-wangfeng-purple/80 font-medium">即将举行</div>
-              </div>
-              <div className="bg-black/50 rounded-xl border border-wangfeng-purple/30 p-6 transition-all duration-300 hover:shadow-glow hover:border-wangfeng-purple/50">
-                <div className="text-5xl font-bold text-gray-300 mb-3">
-                  {schedule.length - schedule.filter((c) => c.isFuture).length}
-                </div>
-                <div className="text-lg text-wangfeng-purple/80 font-medium">已完成行程</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
         {/* Category Filter */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -399,10 +367,23 @@ const TourDates = () => {
 
                     <div className="mt-auto pt-6 border-t theme-border-primary">
                       <button
-                        onClick={() => setSelectedSchedule(null)}
+                        onClick={() => {
+                          // 跳转到文章详情页
+                          // 使用日期和主题生成 slug（与后端逻辑一致）
+                          const dateStr = selectedSchedule.date.replace(/-/g, '');
+                          // 移除所有特殊字符，只保留中文、英文、数字、空格和连字符
+                          const cleanedTheme = selectedSchedule.theme.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s-]/g, '').trim();
+                          const theme = cleanedTheme.substring(0, 20).replace(/\s+/g, '-').toLowerCase();
+                          const slug = `${dateStr}-${theme}`;
+
+                          // 先滚动到页面顶部
+                          window.scrollTo(0, 0);
+                          // 然后跳转
+                          window.location.href = `/#/article/${slug}`;
+                        }}
                         className="w-full px-6 py-3 bg-wangfeng-purple text-white rounded-lg font-semibold hover:bg-wangfeng-purple/80 transition-colors"
                       >
-                        关闭
+                        查看详情
                       </button>
                     </div>
                   </div>

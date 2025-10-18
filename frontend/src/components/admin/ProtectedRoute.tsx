@@ -11,7 +11,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
-  const { currentRole, isLoading } = useAuth();
+  const { currentRole, isLoading, user } = useAuth();
   const { theme } = useTheme();
   const location = useLocation();
   const isLight = theme === 'white';
@@ -33,7 +33,10 @@ const ProtectedRoute = ({ allowedRoles, children }: ProtectedRouteProps) => {
   const hasAccess = allowedRoles.some((role) => canAccess(currentRole, role));
 
   if (!hasAccess) {
-    return <Navigate to="/" state={{ from: location.pathname }} replace />;
+    // 如果用户未登录（guest），跳转到登录页
+    // 如果用户已登录但权限不足，跳转到首页
+    const redirectTo = !user || currentRole === 'guest' ? '/admin' : '/';
+    return <Navigate to={redirectTo} state={{ from: location.pathname }} replace />;
   }
 
   return <>{children}</>;

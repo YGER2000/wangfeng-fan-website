@@ -50,6 +50,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // 当前用户角色，未登录时为游客
   const currentRole: UserRole = user?.role || 'guest';
 
+  // 解析JWT token获取过期时间
+  const isTokenExpired = (token: string): boolean => {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000; // 转换为毫秒
+      return Date.now() >= expirationTime;
+    } catch (error) {
+      console.error('解析token失败:', error);
+      return true; // 解析失败视为过期
+    }
+  };
+
   useEffect(() => {
     // 从 localStorage 恢复认证状态
     const savedToken =
@@ -57,13 +69,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedUser = localStorage.getItem('user');
 
     if (savedToken && savedUser) {
-      if (!localStorage.getItem('access_token')) {
-        localStorage.setItem('access_token', savedToken);
+      // 检查token是否过期
+      if (isTokenExpired(savedToken)) {
+        console.log('Token已过期，自动退出登录');
+        // Token过期，清除所有认证信息
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      } else {
+        // Token有效，恢复认证状态
+        if (!localStorage.getItem('access_token')) {
+          localStorage.setItem('access_token', savedToken);
+        }
+        setToken(savedToken);
+        setUser(JSON.parse(savedUser));
       }
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
     }
-    
+
     setIsLoading(false);
   }, []);
 

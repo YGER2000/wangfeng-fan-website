@@ -11,7 +11,7 @@ export const ARTICLE_CATEGORIES: CategoryConfig[] = [
   },
   {
     primary: '峰迷荟萃',
-    secondary: ['闲聊汪峰', '歌曲赏析']
+    secondary: ['闲聊汪峰', '歌曲赏析', '歌迷故事']
   },
   {
     primary: '资料科普',

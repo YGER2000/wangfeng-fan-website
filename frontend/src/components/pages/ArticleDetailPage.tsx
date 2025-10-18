@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, User, Eye, Heart, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Eye, Tag } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
 import 'react-quill/dist/quill.snow.css';
 
@@ -194,10 +194,11 @@ const ArticleDetailPage = () => {
 
         /* 图片样式 */
         .article-content-wrapper .ql-editor img {
-          max-width: 100%;
+          max-width: 50%;
           height: auto;
           border-radius: 8px;
-          margin: 1.5em 0;
+          margin: 1.5em auto;
+          display: block;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
@@ -302,19 +303,7 @@ const ArticleDetailPage = () => {
               <Eye className="w-4 h-4" />
               <span>{article.view_count} 阅读</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4" />
-              <span>{article.like_count} 点赞</span>
-            </div>
           </div>
-
-          {/* 摘要 */}
-          {excerptText && (
-            <div className="text-lg text-gray-700 bg-gray-50 p-4 rounded-lg border-l-4 border-wangfeng-purple">
-              {excerptText}
-              {article.excerpt && getPlainTextFromHtml(article.excerpt).length > 200 ? '...' : ''}
-            </div>
-          )}
         </motion.div>
 
         {/* 文章内容 */}

@@ -27,7 +27,10 @@ class Video(Base):
     author = Column(String(100), default="汪峰")
     category = Column(String(50), nullable=False, index=True)  # 使用新的分类
     bvid = Column(String(50), nullable=False)  # B站视频ID
-    
+    cover_url = Column(String(500))  # B站封面图片URL
+    cover_local = Column(String(500))  # 本地缓存的封面路径
+    cover_thumb = Column(String(500))  # 本地缓存的缩略图路径
+
     # 时间字段
     publish_date = Column(DateTime, nullable=False)  # 视频发布日期
     created_at = Column(DateTime, default=datetime.utcnow)

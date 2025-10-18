@@ -16,7 +16,8 @@ export interface Article {
   excerpt: string;
   content: string;
   featured?: boolean;
-  coverImage?: string;
+  coverImage?: string;    // 旧的封面字段（兼容性）
+  coverUrl?: string;      // 新的封面URL字段（从后端获取）
   slug: string;
 
   // 特殊字段

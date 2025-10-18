@@ -43,6 +43,25 @@ const ScheduleManager = () => {
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
   const [activeAction, setActiveAction] = useState<'update' | 'publish' | 'delete' | null>(null);
+  const [selectedDate, setSelectedDate] = useState({
+    year: new Date().getFullYear(),
+    month: new Date().getMonth() + 1, // 月份从1开始
+    day: new Date().getDate()
+  });
+
+  // 生成年份选项（1971年到2071年）
+  const years = Array.from({ length: 101 }, (_, i) => 1971 + i);
+  
+  // 生成月份选项
+  const months = Array.from({ length: 12 }, (_, i) => i + 1);
+  
+  // 根据年份和月份生成日期选项
+  const getDaysInMonth = (year: number, month: number) => {
+    return new Date(year, month, 0).getDate();
+  };
+
+  // 当年份或月份改变时，更新日期选项
+  const days = Array.from({ length: getDaysInMonth(selectedDate.year, selectedDate.month) }, (_, i) => i + 1);
 
   const isBusy = activeAction !== null;
   const pendingSchedules = schedules.filter((item) => item.is_published !== 1);
@@ -63,10 +82,27 @@ const ScheduleManager = () => {
         theme: selectedSchedule.theme,
         description: selectedSchedule.description || '',
       });
+      
+      // 解析选中的日期
+      if (selectedSchedule.date) {
+        const [year, month, day] = selectedSchedule.date.split('-').map(Number);
+        setSelectedDate({
+          year,
+          month,
+          day
+        });
+      }
+      
       resetImageSelection();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSchedule?.id]);
+
+  // 当selectedDate改变时，更新表单中的date字段
+  useEffect(() => {
+    const formattedDate = `${selectedDate.year}-${String(selectedDate.month).padStart(2, '0')}-${String(selectedDate.day).padStart(2, '0')}`;
+    setEditForm(prev => ({ ...prev, date: formattedDate }));
+  }, [selectedDate]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -118,6 +154,21 @@ const ScheduleManager = () => {
     setSelectedImageFile(file);
     setSelectedImagePreview(URL.createObjectURL(file));
     event.target.value = '';
+  };
+
+  // 更新选中的日期
+  const updateSelectedDate = (field: 'year' | 'month' | 'day', value: number) => {
+    setSelectedDate(prev => {
+      const newDate = { ...prev, [field]: value };
+      
+      // 如果选择的日期超出了该月的最大日期，则调整为该月最后一天
+      const daysInMonth = getDaysInMonth(newDate.year, newDate.month);
+      if (field !== 'day' && newDate.day > daysInMonth) {
+        newDate.day = daysInMonth;
+      }
+      
+      return newDate;
+    });
   };
 
   const updateSchedulesState = (updated: ScheduleAdminResponse) => {
@@ -315,24 +366,61 @@ const ScheduleManager = () => {
                   )}
                 >
                   <option value="演唱会">演唱会</option>
+                  <option value="livehouse">Livehouse</option>
                   <option value="音乐节">音乐节</option>
-                  <option value="商演">商演</option>
-                  <option value="综艺活动">综艺活动</option>
+                  <option value="商演拼盘">商演拼盘</option>
+                  <option value="综艺晚会">综艺晚会</option>
+                  <option value="直播">直播</option>
+                  <option value="商业活动">商业活动</option>
                   <option value="其他">其他</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-2">
                 <span className="text-sm text-wangfeng-purple/80">行程日期</span>
-                <input
-                  type="date"
-                  value={editForm.date}
-                  onChange={(e) => handleEditChange('date', e.target.value)}
-                  className={cn(
-                    'rounded-lg border px-4 py-3 focus:outline-none focus:ring-2 focus:ring-wangfeng-purple',
-                    isLight ? 'border-gray-300 bg-white' : 'border-wangfeng-purple/40 bg-black/60 text-white'
-                  )}
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  {/* 年份选择 */}
+                  <select
+                    value={selectedDate.year}
+                    onChange={(e) => updateSelectedDate('year', parseInt(e.target.value))}
+                    className={cn(
+                      "w-full px-2 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-wangfeng-purple",
+                      isLight ? 'border-gray-300 bg-white' : 'border-wangfeng-purple/40 bg-black/60 text-white'
+                    )}
+                  >
+                    {years.map(year => (
+                      <option key={year} value={year}>{year}年</option>
+                    ))}
+                  </select>
+                  
+                  {/* 月份选择 */}
+                  <select
+                    value={selectedDate.month}
+                    onChange={(e) => updateSelectedDate('month', parseInt(e.target.value))}
+                    className={cn(
+                      "w-full px-2 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-wangfeng-purple",
+                      isLight ? 'border-gray-300 bg-white' : 'border-wangfeng-purple/40 bg-black/60 text-white'
+                    )}
+                  >
+                    {months.map(month => (
+                      <option key={month} value={month}>{month}月</option>
+                    ))}
+                  </select>
+                  
+                  {/* 日期选择 */}
+                  <select
+                    value={selectedDate.day}
+                    onChange={(e) => updateSelectedDate('day', parseInt(e.target.value))}
+                    className={cn(
+                      "w-full px-2 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-wangfeng-purple",
+                      isLight ? 'border-gray-300 bg-white' : 'border-wangfeng-purple/40 bg-black/60 text-white'
+                    )}
+                  >
+                    {days.map(day => (
+                      <option key={day} value={day}>{day}日</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">

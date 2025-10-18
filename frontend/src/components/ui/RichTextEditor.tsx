@@ -12,7 +12,7 @@ interface RichTextEditorProps {
  * 基于 Quill 的富文本编辑器
  * 完全所见即所得，像 Word 一样简单易用
  */
-const RichTextEditor = ({ value, onChange, height = 700 }: RichTextEditorProps) => {
+const RichTextEditor = ({ value, onChange, height = undefined }: RichTextEditorProps) => {
   const quillRef = useRef<ReactQuill>(null);
 
   // 上传图片到服务器
@@ -142,8 +142,8 @@ const RichTextEditor = ({ value, onChange, height = 700 }: RichTextEditorProps) 
 
   return (
     <div
-      className="rich-text-editor-wrapper"
-      style={{ height: `${height}px` }}
+      className="rich-text-editor-wrapper h-full"
+      style={height ? { height: `${height}px` } : {}}
     >
       <ReactQuill
         ref={quillRef}
@@ -252,11 +252,10 @@ const RichTextEditor = ({ value, onChange, height = 700 }: RichTextEditorProps) 
 
         /* 编辑区域 */
         .rich-text-editor-wrapper .ql-container {
-          border: 1px solid rgba(139, 92, 246, 0.2) !important;
-          border-radius: 0 0 8px 8px !important;
+          border: none !important;
           flex: 1;
           overflow-y: auto;
-          background: white;
+          background: transparent;
         }
 
         .rich-text-editor-wrapper .ql-editor {
@@ -333,10 +332,11 @@ const RichTextEditor = ({ value, onChange, height = 700 }: RichTextEditorProps) 
         }
 
         .rich-text-editor-wrapper .ql-editor img {
-          max-width: 100%;
+          max-width: 50%;
           height: auto;
           border-radius: 8px;
-          margin: 1em 0;
+          margin: 1em auto;
+          display: block;
         }
 
         .rich-text-editor-wrapper .ql-editor ul,

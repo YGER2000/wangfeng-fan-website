@@ -35,37 +35,11 @@ echo ""
 echo "🔍 检查 MySQL 连接..."
 if ! nc -z localhost 3306 2>/dev/null; then
     echo "⚠️  警告: MySQL 似乎没有运行在 localhost:3306"
+    echo "请确保本地 MySQL 数据库已经启动，或者手动启动 Docker MySQL 容器"
+    echo "提示：你可以使用以下命令启动 Docker MySQL："
+    echo "docker run -d --name mysql-wangfeng -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_DATABASE=wangfeng_fan_website mysql:8.0"
     echo ""
-    echo "请选择操作："
-    echo "1) 启动 Docker MySQL (推荐)"
-    echo "2) 我已经手动启动了 MySQL，继续"
-    echo "3) 取消启动"
-    read -p "请输入选项 (1-3): " choice
-
-    case $choice in
-        1)
-            echo "🐳 启动 Docker MySQL..."
-            docker run -d \
-                --name mysql-wangfeng \
-                -p 3306:3306 \
-                -e MYSQL_ROOT_PASSWORD=123456 \
-                -e MYSQL_DATABASE=wangfeng_fan_website \
-                mysql:8.0
-            echo "✅ MySQL 已启动"
-            sleep 5  # 等待 MySQL 完全启动
-            ;;
-        2)
-            echo "继续启动..."
-            ;;
-        3)
-            echo "取消启动"
-            exit 0
-            ;;
-        *)
-            echo "无效选项，取消启动"
-            exit 1
-            ;;
-    esac
+    read -p "按回车键继续启动应用（如果MySQL未启动，应用可能无法正常工作）..."
 else
     echo "✅ MySQL 已运行"
 fi

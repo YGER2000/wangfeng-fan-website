@@ -141,8 +141,8 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
       onClick={handleClick}
     >
       <div className="relative overflow-hidden rounded-xl theme-bg-card border theme-border-primary group-hover:border-wangfeng-purple/50 transition-all duration-300 w-full">
-        {/* 封面区域 - 固定 1:1 正方形 */}
-        <div className="relative aspect-square w-full">
+        {/* 封面区域 - 固定 16:9 比例 */}
+        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
           {hasImage && coverImage ? (
             // 有图片时显示图片
             <img
@@ -169,22 +169,22 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
         </div>
 
         {/* 文章信息 - 固定高度和布局 */}
-        <div className="p-4" style={{ height: '160px' }}>
+        <div className="p-4" style={{ height: '139px' }}>
           {/* 标题 - 单行 */}
           <h3 className="font-bold theme-text-primary mb-3 truncate group-hover:text-wangfeng-purple transition-colors text-base" style={{ height: '24px', lineHeight: '24px' }}>
             {article.title}
           </h3>
 
-          {/* 正文开头 - 固定三行高度 */}
-          <div className="mb-3 overflow-hidden" style={{ height: '63px' }}>
+          {/* 正文开头 - 固定两行高度 */}
+          <div className="mb-3 overflow-hidden" style={{ height: '42px' }}>
             <p className="theme-text-muted text-sm leading-relaxed" style={{
               display: '-webkit-box',
-              WebkitLineClamp: 3,
+              WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
               overflow: 'hidden',
               lineHeight: '21px'
             }}>
-              {displayExcerpt}...
+              {displayExcerpt}
             </p>
           </div>
 
