@@ -43,11 +43,17 @@ def get_photo_groups(
     category: Optional[str] = None,
     published_only: bool = True
 ) -> List[PhotoGroup]:
-    """获取照片组列表"""
-    query = db.query(PhotoGroup).filter(PhotoGroup.is_deleted == False)
+    """获取照片组列表（只返回云端存储，过滤掉 legacy）"""
+    query = db.query(PhotoGroup).filter(
+        PhotoGroup.is_deleted == False,
+        PhotoGroup.storage_type != 'legacy'  # 只返回云端存储的照片组
+    )
 
     if published_only:
-        query = query.filter(PhotoGroup.is_published == True)
+        query = query.filter(
+            PhotoGroup.is_published == True,
+            PhotoGroup.review_status == 'approved'
+        )
 
     if category:
         query = query.filter(PhotoGroup.category == category)
@@ -92,8 +98,11 @@ def get_photo_group_count(
     category: Optional[str] = None,
     published_only: bool = True
 ) -> int:
-    """获取照片组总数"""
-    query = db.query(PhotoGroup).filter(PhotoGroup.is_deleted == False)
+    """获取照片组总数（只计算云端存储，过滤掉 legacy）"""
+    query = db.query(PhotoGroup).filter(
+        PhotoGroup.is_deleted == False,
+        PhotoGroup.storage_type != 'legacy'  # 只计算云端存储的照片组
+    )
 
     if published_only:
         query = query.filter(PhotoGroup.is_published == True)
@@ -188,3 +197,41 @@ def batch_create_photos(db: Session, photos: List[PhotoCreate]) -> List[Photo]:
         db.refresh(db_photo)
 
     return db_photos
+
+
+def get_photo_groups_by_author(
+    db: Session,
+    author_id: str,
+    skip: int = 0,
+    limit: int = 500,
+    category: Optional[str] = None
+) -> List[PhotoGroup]:
+    """获取指定作者的所有照片组（包含所有状态）"""
+    query = db.query(PhotoGroup).filter(
+        PhotoGroup.is_deleted == False,
+        PhotoGroup.author_id == author_id
+    )
+
+    if category:
+        query = query.filter(PhotoGroup.category == category)
+
+    return query.order_by(PhotoGroup.updated_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_all_photo_groups_admin(
+    db: Session,
+    skip: int = 0,
+    limit: int = 500,
+    category: Optional[str] = None,
+    review_status: Optional[str] = None
+) -> List[PhotoGroup]:
+    """获取所有照片组（管理员用,包含所有状态）"""
+    query = db.query(PhotoGroup).filter(PhotoGroup.is_deleted == False)
+
+    if category:
+        query = query.filter(PhotoGroup.category == category)
+
+    if review_status:
+        query = query.filter(PhotoGroup.review_status == review_status)
+
+    return query.order_by(PhotoGroup.updated_at.desc()).offset(skip).limit(limit).all()

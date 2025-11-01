@@ -27,26 +27,50 @@
 
 ### 表结构
 
-#### 1. tags 表（标签主表）
+#### 1. tag_categories 表（标签种类表）
 ```sql
-CREATE TABLE tags (
+CREATE TABLE tag_categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    created_at DATETIME,
-    updated_at DATETIME
+    name VARCHAR(100) UNIQUE NOT NULL COMMENT '标签种类名称',
+    description TEXT NULL COMMENT '标签种类描述',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
 
-#### 2. content_tags 表（内容-标签关联表）
+#### 2. tags 表（标签主表）
+```sql
+CREATE TABLE tags (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    category_id INT NOT NULL COMMENT '标签种类 ID',
+    value VARCHAR(150) NOT NULL COMMENT '标签值',
+    name VARCHAR(200) NOT NULL COMMENT '标签显示名称 = 种类 + 值',
+    description TEXT NULL COMMENT '标签描述',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_category_value (category_id, value),
+    INDEX idx_name (name),
+    INDEX idx_category_value (category_id, value),
+    CONSTRAINT fk_tags_category
+        FOREIGN KEY (category_id) REFERENCES tag_categories(id)
+        ON DELETE RESTRICT
+);
+```
+
+#### 3. content_tags 表（内容-标签关联表）
 ```sql
 CREATE TABLE content_tags (
     id INT PRIMARY KEY AUTO_INCREMENT,
     tag_id INT NOT NULL,
     content_type VARCHAR(50) NOT NULL,  -- video/article/gallery/schedule/music
     content_id INT NOT NULL,
-    created_at DATETIME,
-    UNIQUE KEY (content_type, content_id, tag_id)
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_content_tag (content_type, content_id, tag_id),
+    INDEX idx_tag (tag_id),
+    INDEX idx_content (content_type, content_id),
+    CONSTRAINT fk_content_tags_tag
+        FOREIGN KEY (tag_id) REFERENCES tags(id)
+        ON DELETE CASCADE
 );
 ```
 
@@ -54,27 +78,44 @@ CREATE TABLE content_tags (
 
 ### 1. 数据库迁移
 
-运行迁移脚本创建标签表：
+运行迁移脚本创建 / 更新标签表结构：
 
 ```bash
 # 连接到 MySQL
 mysql -u your_username -p your_database
 
-# 执行迁移脚本
+# 执行迁移脚本（初次部署使用）
 source backend/migrations/001_create_tags_tables.sql
+
+# 如果从旧版本迁移，请运行 Python 脚本拆分旧标签
+python backend/migrate_tags_to_categories.py
 ```
 
-或者直接在 MySQL 客户端中运行：
+或者直接在 MySQL 客户端中运行（首次部署）：
 
 ```sql
+-- 创建标签种类表
+CREATE TABLE IF NOT EXISTS tag_categories (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) UNIQUE NOT NULL COMMENT '标签种类名称',
+    description TEXT NULL COMMENT '标签种类描述',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 创建标签表
 CREATE TABLE IF NOT EXISTS tags (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE NOT NULL COMMENT '标签名称',
+    category_id INT NOT NULL COMMENT '标签种类 ID',
+    value VARCHAR(150) NOT NULL COMMENT '标签值',
+    name VARCHAR(200) NOT NULL COMMENT '标签显示名称',
     description TEXT NULL COMMENT '标签描述',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_name (name)
+    UNIQUE KEY unique_category_value (category_id, value),
+    INDEX idx_name (name),
+    INDEX idx_category_value (category_id, value),
+    CONSTRAINT fk_tags_category FOREIGN KEY (category_id) REFERENCES tag_categories(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 创建关联表
@@ -84,10 +125,10 @@ CREATE TABLE IF NOT EXISTS content_tags (
     content_type VARCHAR(50) NOT NULL,
     content_id INT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
     UNIQUE KEY unique_content_tag (content_type, content_id, tag_id),
     INDEX idx_tag (tag_id),
-    INDEX idx_content (content_type, content_id)
+    INDEX idx_content (content_type, content_id),
+    CONSTRAINT fk_content_tags_tag FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 为 schedules 表添加 tags 字段

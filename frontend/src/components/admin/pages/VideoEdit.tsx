@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Calendar,
   User,
@@ -10,12 +10,17 @@ import {
   ArrowLeft,
   Video,
   Loader2,
-  Trash2
+  Trash2,
+  ArrowRight,
+  Check,
+  XCircle
 } from 'lucide-react';
-import { videoAPI, VideoData } from '@/utils/api';
+import { videoAPI, VideoData, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 // 视频分类枚举
 const VIDEO_CATEGORIES = [
@@ -31,9 +36,25 @@ const VIDEO_CATEGORIES = [
 const VideoEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const location = useLocation();
+  const { user, token, currentRole } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'white';
+
+  // 检查是否从审核中心来的
+  const navigationState = location.state as { fromReview?: boolean; backPath?: string } | null;
+  const fromReview = Boolean(navigationState?.fromReview);
+  const defaultBackPath =
+    fromReview
+      ? '/admin/videos/all'
+      : (currentRole === 'admin' || currentRole === 'super_admin'
+          ? '/admin/videos/all'
+          : '/admin/my-videos');
+  const backPath = navigationState?.backPath || defaultBackPath;
+  const backButtonLabel = backPath === '/admin/my-videos' ? '返回我的视频' : '返回视频列表';
+
+  // 步骤管理
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
   // 表单数据
   const [formData, setFormData] = useState<VideoData>({
@@ -43,7 +64,15 @@ const VideoEdit = () => {
     category: '演出现场',
     bvid: '',
     publish_date: new Date().toISOString().split('T')[0],
+    cover_url: '',
+    tags: []
   });
+
+  // 标签数据
+  const [selectedTags, setSelectedTags] = useState<TagData[]>([]);
+
+  // 审核状态
+  const [reviewStatus, setReviewStatus] = useState<string>('');
 
   // 表单验证错误
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -52,8 +81,7 @@ const VideoEdit = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   // 日期选择状态
   const [selectedDate, setSelectedDate] = useState({
@@ -89,14 +117,45 @@ const VideoEdit = () => {
           category: videoData.category,
           bvid: videoData.bvid,
           publish_date: videoData.publish_date,
+          cover_url: videoData.cover_thumb || videoData.cover_local || videoData.cover_url || '',
+          tags: videoData.tags || []
         });
 
+        // 设置审核状态
+        setReviewStatus(videoData.review_status || '');
+
         // 设置日期选择器
-        const [year, month, day] = videoData.publish_date.split('-').map(Number);
-        setSelectedDate({ year, month, day });
+        try {
+          const dateStr = videoData.publish_date;
+          // 处理可能的日期格式: YYYY-MM-DD 或 YYYY-MM-DDTHH:mm:ss
+          const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+          const [year, month, day] = datePart.split('-').map(Number);
+
+          // 验证日期值是否有效
+          if (!isNaN(year) && !isNaN(month) && !isNaN(day) &&
+              year > 0 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+            setSelectedDate({ year, month, day });
+          } else {
+            console.error('无效的日期值:', { year, month, day });
+            // 使用默认日期
+            setSelectedDate({
+              year: new Date().getFullYear(),
+              month: new Date().getMonth() + 1,
+              day: new Date().getDate()
+            });
+          }
+        } catch (dateError) {
+          console.error('日期解析失败:', dateError);
+          // 使用默认日期
+          setSelectedDate({
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            day: new Date().getDate()
+          });
+        }
       } catch (err: any) {
         console.error('加载视频失败:', err);
-        setError(err.message || '加载视频失败');
+        setToast({ message: err.message || '加载视频失败，请稍后重试', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -121,6 +180,30 @@ const VideoEdit = () => {
       }
       return newDate;
     });
+  };
+
+  // 生成标签上下文文本
+  const tagContext = useMemo(
+    () => [
+      formData.title,
+      formData.description,
+      formData.author,
+      formData.category
+    ].filter(Boolean).join(' '),
+    [formData.title, formData.description, formData.author, formData.category]
+  );
+
+  // 处理下一步
+  const handleNextStep = () => {
+    if (!validateForm()) return;
+    setToast(null);
+    setCurrentStep(2);
+  };
+
+  // 处理上一步
+  const handlePrevStep = () => {
+    setToast(null);
+    setCurrentStep(1);
   };
 
   // 表单输入处理
@@ -163,23 +246,33 @@ const VideoEdit = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成基础信息填写', type: 'error' });
+      return;
+    }
+
     if (!validateForm() || !id) return;
 
     setSubmitting(true);
-    setError(null);
-    setSuccess(null);
+    setToast(null);
 
     try {
-      await videoAPI.update(id, formData, token);
-      setSuccess('视频更新成功！');
+      // 准备视频数据，包含标签
+      const videoData = {
+        ...formData,
+        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean)
+      };
 
-      // 2秒后跳转到视频列表
+      await videoAPI.update(id, videoData, token);
+      setToast({ message: '视频更新成功！', type: 'success' });
+
+      // 2秒后跳转
       setTimeout(() => {
-        navigate('/admin/videos/list');
+        navigate(backPath);
       }, 2000);
     } catch (err: any) {
       console.error('更新视频失败:', err);
-      setError(err.message || '更新视频失败');
+      setToast({ message: err.message || '更新视频失败，请稍后重试', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -189,25 +282,122 @@ const VideoEdit = () => {
   const handleDelete = async () => {
     if (!id) return;
 
-    if (!window.confirm('确定要删除这个视频吗？此操作无法撤销。')) {
+    if (!window.confirm('确定要删除这个视频吗?此操作无法撤销。')) {
       return;
     }
 
     setDeleting(true);
-    setError(null);
+    setToast(null);
 
     try {
       await videoAPI.delete(id, token);
-      setSuccess('视频删除成功！');
+      setToast({ message: '视频删除成功！', type: 'success' });
 
       // 1秒后跳转到视频列表
       setTimeout(() => {
-        navigate('/admin/videos/list');
+        navigate(backPath);
       }, 1000);
     } catch (err: any) {
       console.error('删除视频失败:', err);
-      setError(err.message || '删除视频失败');
+      setToast({ message: err.message || '删除视频失败，请稍后重试', type: 'error' });
       setDeleting(false);
+    }
+  };
+
+  // 审核通过
+  const handleApprove = async () => {
+    if (!id) return;
+
+    setSubmitting(true);
+    try {
+      // 1. 先保存视频修改(包括标签)
+      const videoData = {
+        ...formData,
+        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean)
+      };
+
+      console.log('=== 审核通过 - 发送数据 ===');
+      console.log('formData:', formData);
+      console.log('selectedTags:', selectedTags);
+      console.log('videoData:', videoData);
+      console.log('videoData.tags:', videoData.tags);
+      console.log('tags类型:', typeof videoData.tags, Array.isArray(videoData.tags));
+      console.log('JSON.stringify(videoData):', JSON.stringify(videoData, null, 2));
+
+      try {
+        await videoAPI.update(id, videoData, token);
+      } catch (updateError: any) {
+        console.error('视频更新失败:', updateError);
+        console.error('错误详情:', updateError.message);
+        throw updateError;
+      }
+
+      // 2. 然后调用审核通过
+      const authToken = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:1994/api/admin/reviews/video/${id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ reviewNotes: '' })
+      });
+
+      if (!response.ok) {
+        throw new Error('审核失败');
+      }
+
+      setToast({ message: '审核通过！', type: 'success' });
+      setTimeout(() => {
+        navigate(backPath);
+      }, 1500);
+    } catch (error) {
+      console.error('审核失败:', error);
+      setToast({ message: '审核失败，请稍后重试', type: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 驳回
+  const handleReject = async () => {
+    if (!id) return;
+
+    const reason = window.prompt('请输入驳回原因：');
+    if (!reason || !reason.trim()) {
+      setToast({ message: '请输入驳回原因', type: 'error' });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:1994/api/admin/reviews/video/${id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reviewNotes: reason.trim() })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || '驳回失败');
+      }
+
+      setToast({ message: '已驳回！', type: 'success' });
+      setTimeout(() => {
+        navigate(backPath);
+      }, 1500);
+    } catch (error) {
+      console.error('驳回失败:', error);
+      setToast({
+        message: '驳回失败: ' + (error instanceof Error ? error.message : '请稍后重试'),
+        type: 'error'
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -221,7 +411,7 @@ const VideoEdit = () => {
     return (
       <div className={cn(
         "h-full flex items-center justify-center",
-        isLight ? "bg-gray-50" : "bg-black"
+        isLight ? "bg-gray-50" : "bg-transparent"
       )}>
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-wangfeng-purple" />
@@ -236,7 +426,7 @@ const VideoEdit = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -246,7 +436,7 @@ const VideoEdit = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/admin/videos/list')}
+              onClick={() => navigate(backPath)}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 isLight
@@ -255,7 +445,7 @@ const VideoEdit = () => {
               )}
             >
               <ArrowLeft className="h-4 w-4" />
-              返回列表
+              {backButtonLabel}
             </button>
             <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
             <h1 className={cn(
@@ -263,32 +453,118 @@ const VideoEdit = () => {
               isLight ? "text-gray-900" : "text-white"
             )}>
               <Video className="h-5 w-5 text-wangfeng-purple" />
-              编辑视频
+              {fromReview ? '视频审核' : '编辑视频'}
+              <span className={cn(
+                "text-sm font-normal ml-2",
+                isLight ? "text-gray-500" : "text-gray-400"
+              )}>
+                步骤 {currentStep}/2
+              </span>
             </h1>
           </div>
 
           {/* 操作按钮 */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleDelete}
-              disabled={deleting || submitting}
-              className={cn(
-                "px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
-                isLight
-                  ? "bg-red-100 text-red-700 hover:bg-red-200"
-                  : "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
-              )}
-            >
-              <Trash2 className="h-4 w-4" />
-              {deleting ? '删除中...' : '删除视频'}
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || deleting}
-              className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? '保存中...' : '保存修改'}
-            </button>
+            {currentStep === 1 && (
+              <>
+                {!fromReview && (
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting || submitting}
+                    className={cn(
+                      "px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                      isLight
+                        ? "bg-red-100 text-red-700 hover:bg-red-200"
+                        : "bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20"
+                    )}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deleting ? '删除中...' : '删除视频'}
+                  </button>
+                )}
+                <button
+                  onClick={handleNextStep}
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
+                >
+                  下一步
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </>
+            )}
+            {currentStep === 2 && !fromReview && (
+              <>
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || deleting}
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? '保存中...' : '保存修改'}
+                </button>
+              </>
+            )}
+            {currentStep === 2 && fromReview && (
+              <>
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={submitting}
+                  className={cn(
+                    "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                    "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
+                    submitting && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  删除
+                </button>
+                <button
+                  onClick={handleReject}
+                  disabled={submitting}
+                  className={cn(
+                    "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                    "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
+                    submitting && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <XCircle className="h-4 w-4" />
+                  驳回
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={submitting}
+                  className={cn(
+                    "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
+                    "bg-green-600 text-white hover:bg-green-700",
+                    submitting && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  <Check className="h-4 w-4" />
+                  审核通过
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -297,33 +573,11 @@ const VideoEdit = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-6 py-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 错误和成功消息 */}
-            {error && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3",
-                isLight
-                  ? "bg-red-50 border-red-200 text-red-800"
-                  : "bg-red-500/10 border-red-500/30 text-red-300"
-              )}>
-                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3",
-                isLight
-                  ? "bg-green-50 border-green-200 text-green-800"
-                  : "bg-green-500/10 border-green-500/30 text-green-300"
-              )}>
-                <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{success}</span>
-              </div>
-            )}
-
-            {/* 基础信息区域 */}
-            <div className={cn(
+            {/* 步骤1: 基础信息 */}
+            {currentStep === 1 && (
+              <>
+                {/* 基础信息区域 */}
+                <div className={cn(
               "rounded-lg border p-6",
               isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
             )}>
@@ -435,7 +689,7 @@ const VideoEdit = () => {
               </div>
             </div>
 
-            {/* 分类与日期区域 */}
+            {/* 作者与日期区域 */}
             <div className={cn(
               "rounded-lg border p-6",
               isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
@@ -444,38 +698,10 @@ const VideoEdit = () => {
                 "text-lg font-semibold mb-4 pb-2 border-b",
                 isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
               )}>
-                分类与日期
+                作者与日期
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* 分类 */}
-                <div>
-                  <label className={cn(
-                    "block text-sm font-medium mb-2",
-                    isLight ? "text-gray-700" : "text-gray-300"
-                  )}>
-                    <Tag className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                    分类
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className={cn(
-                      "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      isLight
-                        ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                  >
-                    {VIDEO_CATEGORIES.map(category => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* 作者 */}
                 <div>
                   <label className={cn(
@@ -573,9 +799,74 @@ const VideoEdit = () => {
                 )}
               </div>
             </div>
+              </>
+            )}
+
+            {/* 步骤2: 分类与标签 */}
+            {currentStep === 2 && (
+              <>
+                {/* 分类区域 */}
+                <div className={cn(
+                  "rounded-lg border p-6",
+                  isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
+                )}>
+                  <h2 className={cn(
+                    "text-lg font-semibold mb-4 pb-2 border-b",
+                    isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
+                  )}>
+                    视频分类
+                  </h2>
+
+                  <div>
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      <Tag className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                      分类 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    >
+                      {VIDEO_CATEGORIES.map(category => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* 标签管理 */}
+                <TagSelectionPanel
+                  contextText={tagContext}
+                  selectedTags={selectedTags}
+                  onChange={setSelectedTags}
+                  isLight={isLight}
+                  infoMessage="我们会根据视频标题、简介、分类等信息推荐相关标签，也可以搜索或直接创建新标签。"
+                />
+              </>
+            )}
           </form>
         </div>
       </div>
+
+      {/* Toast 通知 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

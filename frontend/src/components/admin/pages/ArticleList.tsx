@@ -9,7 +9,10 @@ import {
   Eye,
   Calendar,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Clock,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -40,7 +43,7 @@ const ArticleList = () => {
 
   const loadArticles = async () => {
     try {
-      const data = await articleAPI.getList({ limit: 100 });
+      const data = await articleAPI.getList({ limit: 100, published_only: false });
       setArticles(data);
     } catch (error) {
       console.error('加载文章失败:', error);
@@ -115,7 +118,7 @@ const ArticleList = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -265,6 +268,12 @@ const ArticleList = () => {
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
                       isLight ? "text-gray-600" : "text-gray-400"
                     )}>
+                      状态
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
                       <button
                         onClick={() => toggleSort('view_count')}
                         className="flex items-center gap-2 hover:text-wangfeng-purple transition-colors"
@@ -358,6 +367,43 @@ const ArticleList = () => {
                             )}>
                               {article.category_secondary}
                             </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {article.review_status === 'pending' && (
+                            <>
+                              <Clock className="h-4 w-4 text-yellow-500" />
+                              <span className={cn(
+                                "text-sm font-medium",
+                                isLight ? "text-yellow-700" : "text-yellow-400"
+                              )}>
+                                待审核
+                              </span>
+                            </>
+                          )}
+                          {article.review_status === 'approved' && (
+                            <>
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span className={cn(
+                                "text-sm font-medium",
+                                isLight ? "text-green-700" : "text-green-400"
+                              )}>
+                                已发布
+                              </span>
+                            </>
+                          )}
+                          {article.review_status === 'rejected' && (
+                            <>
+                              <XCircle className="h-4 w-4 text-red-500" />
+                              <span className={cn(
+                                "text-sm font-medium",
+                                isLight ? "text-red-700" : "text-red-400"
+                              )}>
+                                已驳回
+                              </span>
+                            </>
                           )}
                         </div>
                       </td>

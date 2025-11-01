@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Album, useMusicContext } from '@/contexts/MusicContext';
 import AlbumModal from '@/components/ui/AlbumModal';
 import { withBasePath } from '@/lib/utils';
-import { Play, Music } from 'lucide-react';
+import { Play, Music, Sparkles } from 'lucide-react';
 
 type MusicCategory = 'all' | 'album' | 'live' | 'remaster' | 'other';
 
@@ -219,9 +219,23 @@ const Discography = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            音乐 <span className="text-wangfeng-purple animate-pulse-glow">作品</span>
-          </h1>
+          <div className="relative inline-block">
+            <motion.h1
+              className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4 relative z-10"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              音乐 <span className="text-wangfeng-purple">作品</span>
+            </motion.h1>
+            <motion.div
+              className="absolute -top-4 -right-4 text-wangfeng-purple/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-12 h-12 md:w-16 md:h-16" />
+            </motion.div>
+          </div>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
             汪峰经典专辑收录
           </h2>

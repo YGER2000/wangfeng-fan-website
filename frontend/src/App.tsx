@@ -26,35 +26,37 @@ import VideoDetail from './components/pages/VideoDetail';
 import AboutSite from './components/pages/AboutSite';
 import ArticleDetailPage from './components/pages/ArticleDetailPage';
 import Profile from './components/pages/Profile';
+import GameActivity from './components/pages/GameActivity';
 
 // Admin area
 import ProtectedRoute from './components/admin/ProtectedRoute';
-import AdminLayout from './components/admin/AdminLayout';
 import NewAdminLayout from './components/admin/NewAdminLayout';
 import AdminLogin from './components/admin/AdminLogin';
 import Dashboard from './components/admin/pages/Dashboard';
 import SimpleDashboard from './components/admin/pages/SimpleDashboard';
 import ProfileAdmin from './components/admin/pages/ProfileAdmin';
+
+// 普通用户页面 - 卡片式
+import MyArticleList from './components/admin/pages/MyArticleList';
+import MyVideoList from './components/admin/pages/MyVideoList';
+import MyGalleryList from './components/admin/pages/MyGalleryList';
+
+// 管理员页面 - 列表式
+import AllArticleList from './components/admin/pages/AllArticleList';
+import AllVideoList from './components/admin/pages/AllVideoList';
+import AllGalleryList from './components/admin/pages/AllGalleryList';
+
+// 编辑器和创建页面
 import ArticleCreate from './components/admin/pages/ArticleCreate';
 import ArticleEdit from './components/admin/pages/ArticleEdit';
-import ArticleList from './components/admin/pages/ArticleList';
 import ScheduleCreate from './components/admin/pages/ScheduleCreate';
 import ScheduleEdit from './components/admin/pages/ScheduleEdit';
 import ScheduleList from './components/admin/pages/ScheduleList';
-import PlaceholderAdmin from './components/admin/pages/PlaceholderAdmin';
 import VideoCreate from './components/admin/pages/VideoCreate';
 import VideoEdit from './components/admin/pages/VideoEdit';
-import VideoList from './components/admin/pages/VideoList';
 import GalleryUpload from './components/admin/pages/GalleryUpload';
-import TagManager from './components/admin/pages/TagManager';
-import GalleryList from './components/admin/pages/GalleryList';
 import GalleryEdit from './components/admin/pages/GalleryEdit';
-import DashboardOverview from './components/admin/pages/DashboardOverview';
-import ReviewCenter from './components/admin/pages/ReviewCenter';
-import ScheduleManager from './components/admin/pages/ScheduleManager';
-import UserManagement from './components/admin/pages/UserManagement';
-import SystemLogs from './components/admin/pages/SystemLogs';
-import VideoManagement from './components/admin/pages/VideoManagement';
+import TagManager from './components/admin/pages/TagManager';
 import PlaceholderPage from './components/admin/pages/PlaceholderPage';
 
 const AppContent = () => {
@@ -73,7 +75,7 @@ const AppContent = () => {
       )}
     >
       {/* 动态背景系统 */}
-      <BackgroundManager mode={isLight ? 'light' : 'dark'} />
+      <BackgroundManager key={theme} mode={isLight ? 'light' : 'dark'} />
 
       <Header />
       <main
@@ -92,6 +94,7 @@ const AppContent = () => {
           <Route path="/shu-ju-ke-pu" element={<ShuJuKePu />} />
           <Route path="/feng-yan-feng-yu" element={<FengYanFengYu />} />
           <Route path="/feng-mi-liao-feng" element={<FengMiLiaoFeng />} />
+          <Route path="/game-activity" element={<GameActivity />} />
           <Route path="/about-site" element={<AboutSite />} />
           <Route path="/video/:id" element={<VideoDetail />} />
           <Route path="/article/:slug" element={<ArticleDetailPage />} />
@@ -103,54 +106,123 @@ const AppContent = () => {
           <Route
             path="/admin/*"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+              <ProtectedRoute allowedRoles={['admin', 'super_admin', 'user']}>
                 <NewAdminLayout />
               </ProtectedRoute>
             }
           >
+            {/* 通用页面 */}
             <Route path="dashboard" element={<SimpleDashboard />} />
-            <Route path="dashboard-full" element={<Dashboard />} />
-            <Route path="articles/create" element={<ArticleCreate />} />
-            <Route path="articles/edit/:id" element={<ArticleEdit />} />
-            <Route path="articles/list" element={<ArticleList />} />
+            <Route path="profile" element={<ProfileAdmin />} />
+
+            {/* 普通用户 - 我的内容(卡片式) */}
+            <Route path="my-articles" element={<MyArticleList />} />
+            <Route path="my-videos" element={<MyVideoList />} />
+            <Route path="my-gallery" element={<MyGalleryList />} />
+
+            {/* 编辑和创建页面 */}
+            <Route
+              path="articles/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ArticleCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="articles/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ArticleEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="videos/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <VideoCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="videos/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <VideoEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="gallery/upload"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <GalleryUpload />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="gallery/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <GalleryEdit />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 路由重定向 - 将旧的 /list 路径重定向到新的 /all 路径 */}
+            <Route path="articles/list" element={<Navigate to="/admin/articles/all" replace />} />
+            <Route path="videos/list" element={<Navigate to="/admin/videos/all" replace />} />
+            <Route path="gallery/list" element={<Navigate to="/admin/gallery/all" replace />} />
+
+            {/* 管理员专属 - 全部内容(列表式) */}
+            <Route
+              path="articles/all"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <AllArticleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="videos/all"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <AllVideoList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="gallery/all"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <AllGalleryList />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 管理员专属 - 行程和标签 */}
+            <Route path="schedules" element={<Navigate to="/admin/schedules/list" replace />} />
             <Route path="schedules/create" element={<ScheduleCreate />} />
             <Route path="schedules/edit/:id" element={<ScheduleEdit />} />
-            <Route path="schedules/list" element={<ScheduleList />} />
-            <Route path="videos/create" element={<VideoCreate />} />
-            <Route path="videos/list" element={<VideoList />} />
-            <Route path="videos/edit/:id" element={<VideoEdit />} />
-            <Route path="gallery/upload" element={<GalleryUpload />} />
-            <Route path="tags" element={<TagManager />} />
-            <Route path="gallery/list" element={<GalleryList />} />
-            <Route path="gallery/edit/:id" element={<GalleryEdit />} />
-            <Route path="profile" element={<ProfileAdmin />} />
-          </Route>
-
-          {/* Old Admin Routes (Keep for compatibility) */}
-          <Route
-            path="/admin-old"
-            element={
-              <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<DashboardOverview />} />
-            <Route path="review" element={<ReviewCenter />} />
-            <Route path="schedules" element={<ScheduleManager />} />
-            <Route path="videos" element={<VideoManagement />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="audit" element={<SystemLogs />} />
             <Route
-              path="*"
+              path="schedules/list"
               element={
-                <PlaceholderPage
-                  title="模块开发中"
-                  description="该后台模块正在完善，将很快与大家见面。"
-                />
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ScheduleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="tags"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <TagManager />
+                </ProtectedRoute>
               }
             />
           </Route>
+
         </Routes>
       </main>
       {/* 只在非管理界面显示Footer */}

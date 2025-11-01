@@ -1,30 +1,67 @@
 """Tag Schemas"""
-from typing import Optional, List, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field
+from typing import List, Literal, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class TagBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=100, description='标签名称')
-    description: Optional[str] = Field(default=None, description='标签描述')
+class TagCategoryBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100, description='标签种类名称')
+    description: Optional[str] = Field(default=None, description='标签种类描述')
 
 
-class TagCreate(TagBase):
+class TagCategoryCreate(TagCategoryBase):
     pass
 
 
-class TagUpdate(BaseModel):
-    name: Optional[str] = Field(default=None, min_length=1, max_length=100, description='标签名称')
-    description: Optional[str] = Field(default=None, description='标签描述')
+class TagCategoryUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100, description='标签种类名称')
+    description: Optional[str] = Field(default=None, description='标签种类描述')
 
 
-class TagResponse(TagBase):
+class TagCategoryResponse(TagCategoryBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TagBase(BaseModel):
+    value: str = Field(..., min_length=1, max_length=150, description='标签值')
+    description: Optional[str] = Field(default=None, description='标签描述')
+
+
+class TagCreate(TagBase):
+    category_id: Optional[int] = Field(default=None, ge=1, description='标签种类ID')
+    category_name: Optional[str] = Field(default=None, min_length=1, max_length=100, description='标签种类名称')
+
+    @model_validator(mode='after')
+    def validate_category(cls, model: 'TagCreate'):
+        if not model.category_id and not model.category_name:
+            raise ValueError('创建标签时必须提供标签种类ID或标签种类名称')
+        return model
+
+
+class TagUpdate(BaseModel):
+    category_id: Optional[int] = Field(default=None, ge=1, description='标签种类ID')
+    category_name: Optional[str] = Field(default=None, min_length=1, max_length=100, description='标签种类名称')
+    value: Optional[str] = Field(default=None, min_length=1, max_length=150, description='标签值')
+    description: Optional[str] = Field(default=None, description='标签描述')
+
+
+class TagResponse(BaseModel):
+    id: int
+    category_id: int
+    category_name: Optional[str] = None
+    value: str
+    name: str
+    display_name: str
+    description: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 ContentType = Literal['video', 'article', 'gallery', 'schedule', 'music']
@@ -43,8 +80,7 @@ class ContentTagResponse(BaseModel):
     content_id: int
     created_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ContentWithTags(BaseModel):

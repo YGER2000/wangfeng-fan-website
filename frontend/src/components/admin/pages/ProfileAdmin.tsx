@@ -15,7 +15,6 @@ import {
   X,
   Upload,
   Loader2,
-  CheckCircle2,
   AlertCircle,
   ZoomIn,
   ZoomOut,
@@ -24,6 +23,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 interface ProfileData {
   id: number;
@@ -120,29 +120,12 @@ const ProfileAdmin = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  // 提示信息
-  const [successMsg, setSuccessMsg] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  // Toast 提示
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
     loadProfileData();
   }, []);
-
-  // 自动清除成功消息
-  useEffect(() => {
-    if (successMsg) {
-      const timer = setTimeout(() => setSuccessMsg(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMsg]);
-
-  // 自动清除错误消息
-  useEffect(() => {
-    if (errorMsg) {
-      const timer = setTimeout(() => setErrorMsg(''), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [errorMsg]);
 
   const loadProfileData = async () => {
     try {
@@ -159,7 +142,7 @@ const ProfileAdmin = () => {
       setProfileData(data);
     } catch (error) {
       console.error('Error loading profile:', error);
-      setErrorMsg('加载个人信息失败');
+      setToast({ message: '加载个人信息失败', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -175,13 +158,13 @@ const ProfileAdmin = () => {
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('请选择图片文件');
+      setToast({ message: '请选择图片文件', type: 'error' });
       return;
     }
 
     // 验证文件大小（最大10MB）
     if (file.size > 10 * 1024 * 1024) {
-      setErrorMsg('文件大小不能超过10MB');
+      setToast({ message: '文件大小不能超过10MB', type: 'error' });
       return;
     }
 
@@ -224,7 +207,7 @@ const ProfileAdmin = () => {
 
       if (!response.ok) throw new Error('上传失败');
 
-      setSuccessMsg('头像上传成功！');
+      setToast({ message: '头像上传成功！', type: 'success' });
       setShowCropModal(false);
       setImageSrc(null);
 
@@ -232,7 +215,7 @@ const ProfileAdmin = () => {
       await loadProfileData();
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      setErrorMsg('头像上传失败');
+      setToast({ message: '头像上传失败', type: 'error' });
     } finally {
       setUploading(false);
     }
@@ -240,16 +223,14 @@ const ProfileAdmin = () => {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
-    setSuccessMsg('');
 
     if (newPassword !== confirmPassword) {
-      setErrorMsg('两次输入的新密码不一致');
+      setToast({ message: '两次输入的新密码不一致', type: 'error' });
       return;
     }
 
     if (newPassword.length < 6) {
-      setErrorMsg('新密码长度不能少于6位');
+      setToast({ message: '新密码长度不能少于6位', type: 'error' });
       return;
     }
 
@@ -272,13 +253,13 @@ const ProfileAdmin = () => {
         throw new Error(error.detail || '修改失败');
       }
 
-      setSuccessMsg('密码修改成功！');
+      setToast({ message: '密码修改成功！', type: 'success' });
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
       console.error('Error changing password:', error);
-      setErrorMsg(error.message || '密码修改失败');
+      setToast({ message: error.message || '密码修改失败', type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -339,7 +320,7 @@ const ProfileAdmin = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -360,31 +341,6 @@ const ProfileAdmin = () => {
       {/* 主内容区域 */}
       <div className="flex-1 overflow-y-auto p-6">
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* 成功/错误提示 */}
-          {successMsg && (
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-green-500">{successMsg}</p>
-              </div>
-              <button onClick={() => setSuccessMsg('')} className="text-green-500 hover:text-green-400">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-sm text-red-500">{errorMsg}</p>
-              </div>
-              <button onClick={() => setErrorMsg('')} className="text-red-500 hover:text-red-400">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-
           {/* 个人信息卡片 */}
           <div className={cn(
             "rounded-lg border p-6",
@@ -824,6 +780,15 @@ const ProfileAdmin = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast 提示 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

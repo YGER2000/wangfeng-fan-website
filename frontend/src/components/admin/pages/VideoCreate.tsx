@@ -1,21 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
   User,
   Tag,
   AlertCircle,
-  CheckCircle2,
   Upload,
   ArrowLeft,
   Video,
   Sparkles,
-  Loader2
+  Loader2,
+  ArrowRight,
+  CheckCircle2
 } from 'lucide-react';
-import { videoAPI, VideoData } from '@/utils/api';
+import { videoAPI, VideoData, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
+import InfoTooltip from '@/components/ui/InfoTooltip';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 // 视频分类枚举
 const VIDEO_CATEGORIES = [
@@ -34,6 +38,9 @@ const VideoCreate = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
 
+  // 步骤管理
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
   // 表单数据
   const [formData, setFormData] = useState<VideoData>({
     title: '',
@@ -42,15 +49,20 @@ const VideoCreate = () => {
     category: '演出现场',
     bvid: '',
     publish_date: new Date().toISOString().split('T')[0],
+    cover_url: ''
   });
+
+  // 标签数据
+  const [selectedTags, setSelectedTags] = useState<TagData[]>([]);
 
   // 表单验证错误
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // 状态管理
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+
+  // Toast 提示
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   // 自动解析相关状态
   const [bilibiliUrl, setBilibiliUrl] = useState('');
@@ -102,6 +114,28 @@ const VideoCreate = () => {
     });
   };
 
+  // 生成标签上下文文本
+  const tagContext = useMemo(
+    () => [
+      formData.title,
+      formData.description,
+      formData.author,
+      formData.category
+    ].filter(Boolean).join(' '),
+    [formData.title, formData.description, formData.author, formData.category]
+  );
+
+  // 处理下一步
+  const handleNextStep = () => {
+    if (!validateForm()) return;
+    setCurrentStep(2);
+  };
+
+  // 处理上一步
+  const handlePrevStep = () => {
+    setCurrentStep(1);
+  };
+
   // 表单输入处理
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -142,15 +176,24 @@ const VideoCreate = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成基础信息填写', type: 'error' });
+      return;
+    }
+
     if (!validateForm()) return;
 
     setSubmitting(true);
-    setError(null);
-    setSuccess(null);
 
     try {
-      await videoAPI.create(formData, token);
-      setSuccess('视频创建成功！');
+      // 准备视频数据，包含标签
+      const videoData = {
+        ...formData,
+        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
+      };
+
+      await videoAPI.create(videoData, token);
+      setToast({ message: '视频创建成功！', type: 'success' });
 
       // 3秒后跳转到视频列表
       setTimeout(() => {
@@ -175,7 +218,7 @@ const VideoCreate = () => {
         }
       }
 
-      setError(errorMessage);
+      setToast({ message: errorMessage, type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -237,6 +280,7 @@ const VideoCreate = () => {
         title: videoInfo.title || prev.title,
         description: videoInfo.description || prev.description,
         author: videoInfo.author || prev.author,
+        cover_url: videoInfo.cover_url || prev.cover_url
       }));
 
       // 如果有发布日期，更新日期选择器
@@ -273,7 +317,7 @@ const VideoCreate = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -301,17 +345,49 @@ const VideoCreate = () => {
             )}>
               <Video className="h-5 w-5 text-wangfeng-purple" />
               发布视频
+              <span className={cn(
+                "text-sm font-normal ml-2",
+                isLight ? "text-gray-500" : "text-gray-400"
+              )}>
+                步骤 {currentStep}/2
+              </span>
             </h1>
           </div>
 
           {/* 操作按钮 */}
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? '发布中...' : '发布视频'}
-          </button>
+          <div className="flex items-center gap-2">
+            {currentStep === 1 && (
+              <button
+                onClick={handleNextStep}
+                className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
+              >
+                下一步
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+            {currentStep === 2 && (
+              <>
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? '发布中...' : '发布视频'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -319,33 +395,11 @@ const VideoCreate = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-6 py-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 错误和成功消息 */}
-            {error && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3",
-                isLight
-                  ? "bg-red-50 border-red-200 text-red-800"
-                  : "bg-red-500/10 border-red-500/30 text-red-300"
-              )}>
-                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3",
-                isLight
-                  ? "bg-green-50 border-green-200 text-green-800"
-                  : "bg-green-500/10 border-green-500/30 text-green-300"
-              )}>
-                <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{success}</span>
-              </div>
-            )}
-
-            {/* 自动解析区域 */}
-            <div className={cn(
+            {/* 步骤1: 基础信息 */}
+            {currentStep === 1 && (
+              <>
+                {/* 自动解析区域 */}
+                <div className={cn(
               "rounded-lg border p-6",
               isLight ? "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200" : "bg-gradient-to-br from-wangfeng-purple/10 to-blue-500/10 border-wangfeng-purple/30"
             )}>
@@ -363,14 +417,12 @@ const VideoCreate = () => {
                 )}>
                   Beta
                 </span>
+                <InfoTooltip
+                  content="粘贴B站视频链接，自动提取视频信息（标题、简介、作者、发布时间）。支持完整链接或短链接，解析后可以手动修改任何表单内容。如解析失败，请检查链接是否有效。"
+                  isLight={isLight}
+                  position="top"
+                />
               </div>
-
-              <p className={cn(
-                "text-sm mb-4",
-                isLight ? "text-gray-600" : "text-gray-400"
-              )}>
-                粘贴B站视频链接，自动提取视频信息（标题、简介、作者、发布时间）
-              </p>
 
               {parseError && (
                 <div className={cn(
@@ -439,13 +491,6 @@ const VideoCreate = () => {
                     </>
                   )}
                 </button>
-              </div>
-
-              <div className={cn(
-                "mt-3 text-xs",
-                isLight ? "text-gray-500" : "text-gray-500"
-              )}>
-                💡 提示：支持完整链接或短链接，解析后可以手动修改表单内容
               </div>
             </div>
 
@@ -537,6 +582,102 @@ const VideoCreate = () => {
                   )}
                 </div>
 
+                {/* 作者 */}
+                <div>
+                  <label className={cn(
+                    "block text-sm font-medium mb-2",
+                    isLight ? "text-gray-700" : "text-gray-300"
+                  )}>
+                    <User className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                    作者
+                  </label>
+                  <input
+                    type="text"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleInputChange}
+                    className={cn(
+                      "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                      isLight
+                        ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                    )}
+                    placeholder="作者"
+                  />
+                </div>
+
+                {/* 发布日期 */}
+                <div>
+                  <label className={cn(
+                    "block text-sm font-medium mb-2",
+                    isLight ? "text-gray-700" : "text-gray-300"
+                  )}>
+                    <Calendar className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                    发布日期 <span className="text-red-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {/* 年份选择 */}
+                    <select
+                      value={selectedDate.year}
+                      onChange={(e) => updateSelectedDate('year', parseInt(e.target.value))}
+                      className={cn(
+                        "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        formErrors.publish_date
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    >
+                      {years.map(year => (
+                        <option key={year} value={year}>{year}年</option>
+                      ))}
+                    </select>
+
+                    {/* 月份选择 */}
+                    <select
+                      value={selectedDate.month}
+                      onChange={(e) => updateSelectedDate('month', parseInt(e.target.value))}
+                      className={cn(
+                        "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        formErrors.publish_date
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    >
+                      {months.map(month => (
+                        <option key={month} value={month}>{month}月</option>
+                      ))}
+                    </select>
+
+                    {/* 日期选择 */}
+                    <select
+                      value={selectedDate.day}
+                      onChange={(e) => updateSelectedDate('day', parseInt(e.target.value))}
+                      className={cn(
+                        "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        formErrors.publish_date
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+                          : isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    >
+                      {days.map(day => (
+                        <option key={day} value={day}>{day}日</option>
+                      ))}
+                    </select>
+                  </div>
+                  {formErrors.publish_date && (
+                    <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {formErrors.publish_date}
+                    </p>
+                  )}
+                </div>
+
                 {/* 视频描述 */}
                 <div>
                   <label className={cn(
@@ -561,148 +702,74 @@ const VideoCreate = () => {
                 </div>
               </div>
             </div>
+              </>
+            )}
 
-            {/* 分类与日期区域 */}
-            <div className={cn(
-              "rounded-lg border p-6",
-              isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
-            )}>
-              <h2 className={cn(
-                "text-lg font-semibold mb-4 pb-2 border-b",
-                isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
-              )}>
-                分类与日期
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* 分类 */}
-                <div>
-                  <label className={cn(
-                    "block text-sm font-medium mb-2",
-                    isLight ? "text-gray-700" : "text-gray-300"
-                  )}>
-                    <Tag className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                    分类
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className={cn(
-                      "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      isLight
-                        ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                  >
-                    {VIDEO_CATEGORIES.map(category => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 作者 */}
-                <div>
-                  <label className={cn(
-                    "block text-sm font-medium mb-2",
-                    isLight ? "text-gray-700" : "text-gray-300"
-                  )}>
-                    <User className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                    作者
-                  </label>
-                  <input
-                    type="text"
-                    name="author"
-                    value={formData.author}
-                    onChange={handleInputChange}
-                    className={cn(
-                      "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      isLight
-                        ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                    placeholder="作者"
-                  />
-                </div>
-              </div>
-
-              {/* 发布日期 */}
-              <div className="mt-5">
-                <label className={cn(
-                  "block text-sm font-medium mb-2",
-                  isLight ? "text-gray-700" : "text-gray-300"
+            {/* 步骤2: 分类与标签 */}
+            {currentStep === 2 && (
+              <>
+                {/* 分类区域 */}
+                <div className={cn(
+                  "rounded-lg border p-6",
+                  isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
                 )}>
-                  <Calendar className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                  发布日期 <span className="text-red-500">*</span>
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {/* 年份选择 */}
-                  <select
-                    value={selectedDate.year}
-                    onChange={(e) => updateSelectedDate('year', parseInt(e.target.value))}
-                    className={cn(
-                      "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      formErrors.publish_date
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                        : isLight
-                        ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                  >
-                    {years.map(year => (
-                      <option key={year} value={year}>{year}年</option>
-                    ))}
-                  </select>
+                  <h2 className={cn(
+                    "text-lg font-semibold mb-4 pb-2 border-b",
+                    isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
+                  )}>
+                    视频分类
+                  </h2>
 
-                  {/* 月份选择 */}
-                  <select
-                    value={selectedDate.month}
-                    onChange={(e) => updateSelectedDate('month', parseInt(e.target.value))}
-                    className={cn(
-                      "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      formErrors.publish_date
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                        : isLight
-                        ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                  >
-                    {months.map(month => (
-                      <option key={month} value={month}>{month}月</option>
-                    ))}
-                  </select>
-
-                  {/* 日期选择 */}
-                  <select
-                    value={selectedDate.day}
-                    onChange={(e) => updateSelectedDate('day', parseInt(e.target.value))}
-                    className={cn(
-                      "rounded-lg border px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                      formErrors.publish_date
-                        ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                        : isLight
-                        ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    )}
-                  >
-                    {days.map(day => (
-                      <option key={day} value={day}>{day}日</option>
-                    ))}
-                  </select>
+                  <div>
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      <Tag className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                      分类 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    >
+                      {VIDEO_CATEGORIES.map(category => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                {formErrors.publish_date && (
-                  <p className="mt-1.5 text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {formErrors.publish_date}
-                  </p>
-                )}
-              </div>
-            </div>
+
+                {/* 标签管理 */}
+                <TagSelectionPanel
+                  contextText={tagContext}
+                  selectedTags={selectedTags}
+                  onChange={setSelectedTags}
+                  isLight={isLight}
+                  infoMessage="我们会根据视频标题、简介、分类等信息推荐相关标签，也可以搜索或直接创建新标签。"
+                />
+              </>
+            )}
           </form>
         </div>
       </div>
+
+      {/* Toast 提示 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

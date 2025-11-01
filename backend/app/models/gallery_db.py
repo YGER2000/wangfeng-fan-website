@@ -25,17 +25,24 @@ class PhotoGroup(Base):
     display_date = Column(String(100))  # 显示日期（如：2023年7月8日）
     year = Column(String(4), index=True)  # 年份
     description = Column(Text)  # 描述
+    author_id = Column(String(36), nullable=True, index=True)  # 创建者用户ID
 
     # 封面图片信息
     cover_image_url = Column(String(500))  # 封面图片完整URL（原图）
     cover_image_thumb_url = Column(String(500))  # 封面图片缩略图URL
 
     # 存储相关
-    storage_type = Column(String(20), default="local")  # local, oss, r2, minio
+    storage_type = Column(String(20), default="oss")  # local, oss, r2, minio (默认oss)
 
     # 状态
-    is_published = Column(Boolean, default=True, index=True)  # 是否发布
+    is_published = Column(Boolean, default=False, index=True)  # 是否发布（默认未发布）
     is_deleted = Column(Boolean, default=False, index=True)  # 是否删除
+
+    # 审核字段
+    review_status = Column(String(20), default='pending', nullable=False, index=True)  # 审核状态
+    reviewer_id = Column(String(36), nullable=True, index=True)  # 审核人ID
+    review_notes = Column(Text, nullable=True)  # 审核备注/拒绝原因
+    reviewed_at = Column(DateTime, nullable=True)  # 审核时间
 
     # 时间戳
     created_at = Column(DateTime, default=datetime.utcnow)

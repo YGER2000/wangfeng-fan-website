@@ -1,0 +1,50 @@
+export default {
+  kind: 'collectionType',
+  collectionName: 'category_primaries',
+  displayName: 'Category Primary',
+  singularName: 'category-primary',
+  pluralName: 'category-primaries',
+  description: '一级分类',
+  attributes: {
+    // 基础信息
+    name: {
+      type: 'string',
+      required: true,
+      unique: true,
+      maxLength: 100,
+    },
+    slug: {
+      type: 'uid',
+      targetField: 'name',
+      unique: true,
+    },
+
+    // 排序
+    order: {
+      type: 'integer',
+      default: 0,
+    },
+
+    // 适用类型
+    applicableTypes: {
+      type: 'json',
+      default: ['article', 'video', 'gallery', 'schedule'],
+    },
+
+    // 二级分类
+    secondaryCategories: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::category-secondary.category-secondary',
+      mappedBy: 'primaryCategory',
+    },
+
+    // 关系
+    articles: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::article.article',
+      mappedBy: 'categoryPrimary',
+    },
+  },
+};

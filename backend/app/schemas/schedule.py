@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Literal, Optional, List
+from typing import List, Literal, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ScheduleCategory(str, Enum):
@@ -34,5 +35,4 @@ class ScheduleResponse(ScheduleBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

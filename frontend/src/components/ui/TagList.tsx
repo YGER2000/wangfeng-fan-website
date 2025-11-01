@@ -1,10 +1,6 @@
 import { Tag as TagIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-
-export interface TagData {
-  id: number;
-  name: string;
-}
+import type { TagData } from '@/utils/api';
 
 interface TagListProps {
   tags: TagData[];

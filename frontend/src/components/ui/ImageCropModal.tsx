@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
-import { X, Check, RotateCw } from 'lucide-react';
+import { X, Check, RotateCcw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 
@@ -106,33 +106,44 @@ const ImageCropModal = ({ image, onCropComplete, onClose, aspect = 16 / 9 }: Ima
     }
   };
 
+  const handleResetZoom = () => {
+    setZoom(1);
+    setCrop({ x: 0, y: 0 });
+    setRotation(0);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className={cn(
-        "relative w-full max-w-4xl h-[80vh] mx-4 rounded-xl overflow-hidden border shadow-2xl",
-        isLight ? "bg-white border-gray-200" : "bg-black/90 border-wangfeng-purple/30"
+        "relative w-full max-w-5xl h-[85vh] rounded-2xl overflow-hidden border shadow-2xl flex flex-col",
+        isLight ? "bg-white border-gray-200" : "bg-black/95 border-wangfeng-purple/40"
       )}>
-        {/* 顶部操作栏 */}
+        {/* 顶部标题栏 */}
         <div className={cn(
-          "absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-4 border-b",
-          isLight ? "bg-white/95 backdrop-blur-md border-gray-200" : "bg-black/95 backdrop-blur-md border-wangfeng-purple/30"
+          "flex items-center justify-between px-6 py-4 border-b flex-shrink-0",
+          isLight ? "bg-gray-50 border-gray-200" : "bg-black/50 border-wangfeng-purple/30"
         )}>
-          <h3 className={cn("text-lg font-semibold", isLight ? "text-gray-900" : "text-white")}>
-            裁剪封面图片（16:9）
-          </h3>
+          <div>
+            <h3 className={cn("text-lg font-bold", isLight ? "text-gray-900" : "text-white")}>
+              编辑封面图片
+            </h3>
+            <p className={cn("text-xs mt-1", isLight ? "text-gray-500" : "text-gray-400")}>
+              拖动、缩放和旋转图片来调整合适的位置
+            </p>
+          </div>
           <button
             onClick={onClose}
             className={cn(
-              "p-2 rounded-lg transition-colors",
-              isLight ? "hover:bg-gray-100" : "hover:bg-white/10"
+              "p-2 rounded-lg transition-colors hover:bg-gray-200 dark:hover:bg-white/10",
+              isLight ? "text-gray-600" : "text-gray-400"
             )}
           >
-            <X className={cn("h-5 w-5", isLight ? "text-gray-600" : "text-gray-400")} />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        {/* 裁剪区域 */}
-        <div className="absolute inset-0 mt-16 mb-32">
+        {/* 裁剪区域 - 占据中间部分 */}
+        <div className="flex-1 overflow-hidden relative bg-black">
           <Cropper
             image={image}
             crop={crop}
@@ -143,81 +154,164 @@ const ImageCropModal = ({ image, onCropComplete, onClose, aspect = 16 / 9 }: Ima
             onZoomChange={setZoom}
             onRotationChange={setRotation}
             onCropComplete={onCropAreaChange}
+            showGrid={true}
+            gridColor="rgba(139, 92, 246, 0.2)"
           />
+
+          {/* 宽高比标签 */}
+          <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-lg">
+            <p className="text-white text-xs font-semibold">{aspect.toFixed(2)} : 1</p>
+          </div>
         </div>
 
         {/* 底部控制栏 */}
         <div className={cn(
-          "absolute bottom-0 left-0 right-0 z-10 px-6 py-6 border-t space-y-4",
-          isLight ? "bg-white/95 backdrop-blur-md border-gray-200" : "bg-black/95 backdrop-blur-md border-wangfeng-purple/30"
+          "px-6 py-6 border-t flex-shrink-0",
+          isLight ? "bg-gray-50 border-gray-200" : "bg-black/50 border-wangfeng-purple/30"
         )}>
-          {/* 缩放控制 */}
-          <div>
-            <label className={cn("block text-sm font-medium mb-2", isLight ? "text-gray-700" : "text-gray-300")}>
-              缩放
-            </label>
-            <input
-              type="range"
-              value={zoom}
-              min={1}
-              max={3}
-              step={0.1}
-              onChange={(e) => setZoom(Number(e.target.value))}
-              className="w-full"
-            />
-          </div>
+          {/* 工具按钮 - 单一行 */}
+          <div className="flex items-center justify-between gap-4">
+            {/* 缩放控制 */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setZoom(Math.max(1, zoom - 0.2))}
+                className={cn(
+                  "p-2.5 rounded-lg transition-all",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+                title="缩小"
+              >
+                <ZoomOut className="h-5 w-5" />
+              </button>
 
-          {/* 旋转控制 */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <label className={cn("block text-sm font-medium mb-2", isLight ? "text-gray-700" : "text-gray-300")}>
-                旋转
-              </label>
               <input
-                type="range"
-                value={rotation}
-                min={0}
-                max={360}
-                step={1}
-                onChange={(e) => setRotation(Number(e.target.value))}
-                className="w-full"
+                type="number"
+                value={Math.round(zoom * 100)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val)) {
+                    setZoom(Math.max(100, Math.min(300, val)) / 100);
+                  }
+                }}
+                min="100"
+                max="300"
+                className={cn(
+                  "w-16 px-3 py-2.5 rounded-lg border text-center font-semibold text-sm",
+                  isLight
+                    ? "bg-white border-gray-300 text-gray-900"
+                    : "bg-black/40 border-wangfeng-purple/30 text-white"
+                )}
               />
-            </div>
-            <button
-              onClick={() => setRotation((prev) => (prev + 90) % 360)}
-              className={cn(
-                "mt-6 p-2 rounded-lg transition-colors",
-                isLight
-                  ? "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                  : "bg-white/10 hover:bg-white/20 text-gray-300"
-              )}
-              title="旋转90度"
-            >
-              <RotateCw className="h-5 w-5" />
-            </button>
-          </div>
 
-          {/* 操作按钮 */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              onClick={onClose}
-              className={cn(
-                "px-5 py-2 rounded-lg text-sm font-medium transition-colors",
-                isLight
-                  ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  : "bg-white/10 text-gray-300 hover:bg-white/20"
-              )}
-            >
-              取消
-            </button>
-            <button
-              onClick={handleCropConfirm}
-              disabled={isProcessing}
-              className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <Check className="h-4 w-4" />
-              {isProcessing ? '处理中...' : '确认裁剪'}
-            </button>
+              <span className={cn("text-sm font-medium", isLight ? "text-gray-600" : "text-gray-400")}>
+                %
+              </span>
+
+              <button
+                onClick={() => setZoom(Math.min(3, zoom + 0.2))}
+                className={cn(
+                  "p-2.5 rounded-lg transition-all",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+                title="放大"
+              >
+                <ZoomIn className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 旋转控制 */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRotation((prev) => (prev - 90 + 360) % 360)}
+                className={cn(
+                  "p-2.5 rounded-lg transition-all",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+                title="逆时针旋转90°"
+              >
+                <RotateCcw className="h-5 w-5" />
+              </button>
+
+              <input
+                type="number"
+                value={rotation}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val)) {
+                    setRotation(((val % 360) + 360) % 360);
+                  }
+                }}
+                min="0"
+                max="359"
+                className={cn(
+                  "w-16 px-3 py-2.5 rounded-lg border text-center font-semibold text-sm",
+                  isLight
+                    ? "bg-white border-gray-300 text-gray-900"
+                    : "bg-black/40 border-wangfeng-purple/30 text-white"
+                )}
+              />
+
+              <span className={cn("text-sm font-medium", isLight ? "text-gray-600" : "text-gray-400")}>
+                °
+              </span>
+
+              <button
+                onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                className={cn(
+                  "p-2.5 rounded-lg transition-all",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+                title="顺时针旋转90°"
+              >
+                <RotateCcw className="h-5 w-5 transform scale-x-[-1]" />
+              </button>
+            </div>
+
+            {/* 重置和操作按钮 */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleResetZoom}
+                className={cn(
+                  "px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+                title="重置缩放和位置"
+              >
+                <Maximize2 className="h-4 w-4" />
+                重置
+              </button>
+
+              <button
+                onClick={onClose}
+                className={cn(
+                  "px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors",
+                  isLight
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-white/10 text-gray-300 hover:bg-white/20"
+                )}
+              >
+                取消
+              </button>
+
+              <button
+                onClick={handleCropConfirm}
+                disabled={isProcessing}
+                className="px-8 py-2.5 bg-gradient-to-r from-wangfeng-purple to-wangfeng-light text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:shadow-wangfeng-purple/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                <Check className="h-4 w-4" />
+                {isProcessing ? '处理中...' : '确认裁剪'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

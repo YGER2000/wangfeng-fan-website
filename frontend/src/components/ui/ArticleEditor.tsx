@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useEffect, FormEvent } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import RichTextEditor from './RichTextEditor';
 import ImageCropModal from './ImageCropModal';
 import {
@@ -15,7 +16,13 @@ import {
   X,
   Plus,
   Image as ImageIcon,
-  Upload
+  Upload,
+  Sparkles,
+  Search,
+  Loader2,
+  Check,
+  XCircle,
+  Trash2
 } from 'lucide-react';
 import { Article } from '@/utils/contentManager';
 import { getSecondaryCategories } from '@/config/categories';
@@ -23,6 +30,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getAvailableCategories } from '@/utils/permissions';
 import { cn } from '@/lib/utils';
+import { tagAPI, TagData, TagCategoryData } from '@/utils/api';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 interface ArticleEditorProps {
   initialArticle?: Partial<Article>;
@@ -31,14 +40,36 @@ interface ArticleEditorProps {
   onDelete?: (articleId: string) => void;
 }
 
+interface NewTagFormState {
+  categoryId: string;
+  value: string;
+  description: string;
+}
+
 const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleEditorProps) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const navigationState = location.state as { fromReview?: boolean; backPath?: string } | null;
   const { currentRole, user } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'white';
 
-  // 步骤管理：1=编辑内容, 2=设置元数据和封面
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  // 检查来源信息并确定返回路径
+  const fromReview = Boolean(navigationState?.fromReview);
+  const defaultBackPath =
+    currentRole === 'admin' || currentRole === 'super_admin'
+      ? '/admin/articles/all'
+      : '/admin/my-articles';
+  const backPath =
+    navigationState?.backPath || (fromReview ? '/admin/reviews' : defaultBackPath);
+  const backButtonLabel = fromReview
+    ? '返回审核中心'
+    : backPath === '/admin/my-articles'
+    ? '返回我的文章'
+    : '返回文章列表';
+
+  // 步骤管理：1=编辑内容, 2=设置元数据, 3=标签与发布
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   // 根据用户角色获取可用的一级分类
   const availablePrimaryCategories = getAvailableCategories(currentRole);
@@ -82,8 +113,52 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [tagInput, setTagInput] = useState('');
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+
+  // 审核相关状态
+  const [reviewStatus, setReviewStatus] = useState<string>(initialArticle?.review_status || 'pending');
+  const [reviewNotes, setReviewNotes] = useState<string>('');
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+
+  // 标签资源与推荐
+  const [allTags, setAllTags] = useState<TagData[]>([]);
+  const [tagCategories, setTagCategories] = useState<TagCategoryData[]>([]);
+  const [tagsLoading, setTagsLoading] = useState(false);
+  const [tagFetchError, setTagFetchError] = useState<string | null>(null);
+  const [suggestedTags, setSuggestedTags] = useState<TagData[]>([]);
+  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [tagSearchResults, setTagSearchResults] = useState<TagData[]>([]);
+  const [isSearchingTags, setIsSearchingTags] = useState(false);
+  const [newTagForm, setNewTagForm] = useState<NewTagFormState>({
+    categoryId: '',
+    value: '',
+    description: '',
+  });
+  const [newTagError, setNewTagError] = useState<string | null>(null);
+  const [isCreatingTag, setIsCreatingTag] = useState(false);
+  const [showCreateTagModal, setShowCreateTagModal] = useState(false);
+
+  const handleResetNewTagForm = useCallback(() => {
+    setNewTagError(null);
+    setNewTagForm({
+      categoryId: tagCategories[0] ? String(tagCategories[0].id) : '',
+      value: '',
+      description: '',
+    });
+  }, [tagCategories]);
+
+  const openCreateTagModal = useCallback(() => {
+    handleResetNewTagForm();
+    setShowCreateTagModal(true);
+  }, [handleResetNewTagForm]);
+
+  const closeCreateTagModal = useCallback(() => {
+    handleResetNewTagForm();
+    setShowCreateTagModal(false);
+  }, [handleResetNewTagForm]);
 
   // 封面相关状态
   const [coverImage, setCoverImage] = useState<string | null>(null); // 封面URL或base64
@@ -157,14 +232,19 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
     });
   };
 
-  const handleAddTag = () => {
-    if (tagInput.trim() && !article.tags?.includes(tagInput.trim())) {
-      setArticle(prev => ({
+  const handleAddTag = (tagName: string) => {
+    const normalized = tagName.trim();
+    if (!normalized) return;
+    setArticle(prev => {
+      const existing = prev.tags || [];
+      if (existing.includes(normalized)) {
+        return prev;
+      }
+      return {
         ...prev,
-        tags: [...(prev.tags || []), tagInput.trim()]
-      }));
-      setTagInput('');
-    }
+        tags: [...existing, normalized]
+      };
+    });
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -204,31 +284,213 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
     setShowCropModal(false);
   };
 
-  // 进入下一步
-  const handleNextStep = () => {
-    if (!article.title || !article.content) {
-      setSaveError('请填写标题和内容');
+  const loadTagResources = useCallback(async () => {
+    setTagsLoading(true);
+    setTagFetchError(null);
+    try {
+      const [tagsData, categoriesData] = await Promise.all([
+        tagAPI.list(0, 500),
+        tagAPI.listCategories()
+      ]);
+      setAllTags(tagsData);
+      setTagCategories(categoriesData);
+    } catch (error) {
+      console.error('加载标签资源失败:', error);
+      setTagFetchError('加载标签资源失败，请稍后重试');
+    } finally {
+      setTagsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentStep === 3 && !tagsLoading && allTags.length === 0 && !tagFetchError) {
+      loadTagResources();
+    }
+  }, [currentStep, tagsLoading, allTags.length, tagFetchError, loadTagResources]);
+
+  useEffect(() => {
+    if (tagCategories.length > 0) {
+      setNewTagForm(prev => {
+        if (prev.categoryId) {
+          return prev;
+        }
+        return {
+          ...prev,
+          categoryId: String(tagCategories[0].id),
+        };
+      });
+    }
+  }, [tagCategories]);
+
+  const getTagDisplayName = useCallback(
+    (tag: TagData) => (tag.display_name || tag.name || tag.value || '').trim(),
+    []
+  );
+
+  const recomputeSuggestions = useCallback(() => {
+    if (allTags.length === 0) {
+      setSuggestedTags([]);
+      setIsGeneratingSuggestions(false);
       return;
     }
-    setSaveError(null);
+
+    const plainContent = (article.content || '').replace(/<[^>]+>/g, ' ');
+    if (!plainContent.trim()) {
+      setSuggestedTags([]);
+      setIsGeneratingSuggestions(false);
+      return;
+    }
+
+    setIsGeneratingSuggestions(true);
+    const normalizedContent = plainContent.toLowerCase();
+    const condensedContent = normalizedContent.replace(/\s+/g, '');
+    const selectedSet = new Set((article.tags || []).map(tag => tag.toLowerCase()));
+    const matches: TagData[] = [];
+
+    allTags.forEach(tag => {
+      const displayName = getTagDisplayName(tag);
+      if (!displayName || selectedSet.has(displayName.toLowerCase())) {
+        return;
+      }
+
+      const candidates = [tag.value, tag.display_name, tag.name].filter(Boolean) as string[];
+      const matched = candidates.some(candidate => {
+        const normalizedCandidate = candidate.toLowerCase();
+        const condensedCandidate = normalizedCandidate.replace(/\s+/g, '');
+        return (
+          normalizedCandidate.length > 0 &&
+          (normalizedContent.includes(normalizedCandidate) ||
+            condensedContent.includes(condensedCandidate))
+        );
+      });
+
+      if (matched && !matches.some(item => item.id === tag.id)) {
+        matches.push(tag);
+      }
+    });
+
+    setSuggestedTags(matches.slice(0, 10));
+    setIsGeneratingSuggestions(false);
+  }, [allTags, article.content, article.tags, getTagDisplayName]);
+
+  useEffect(() => {
+    if (currentStep === 3) {
+      recomputeSuggestions();
+    }
+  }, [currentStep, recomputeSuggestions]);
+
+  useEffect(() => {
+    if (currentStep !== 3) {
+      return;
+    }
+
+    if (!tagSearchQuery.trim()) {
+      setTagSearchResults([]);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setIsSearchingTags(true);
+      try {
+        const results = await tagAPI.search(tagSearchQuery.trim());
+        const selectedSet = new Set((article.tags || []).map(tag => tag.toLowerCase()));
+        setTagSearchResults(
+          results.filter(tag => {
+            const displayName = getTagDisplayName(tag).toLowerCase();
+            return displayName && !selectedSet.has(displayName);
+          })
+        );
+      } catch (error) {
+        console.error('搜索标签失败:', error);
+        setTagSearchResults([]);
+      } finally {
+        setIsSearchingTags(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(handler);
+  }, [tagSearchQuery, currentStep, article.tags, getTagDisplayName]);
+
+  const handleAddTagFromData = (tag: TagData) => {
+    const displayName = getTagDisplayName(tag);
+    if (!displayName) return;
+    handleAddTag(displayName);
+    setTagSearchResults(prev => prev.filter(item => item.id !== tag.id));
+    setSuggestedTags(prev => prev.filter(item => item.id !== tag.id));
+  };
+
+  const handleCreateNewTag = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!newTagForm.value.trim()) {
+      setNewTagError('请输入标签名称');
+      return;
+    }
+
+    const categoryId = Number(newTagForm.categoryId);
+    if (!newTagForm.categoryId || Number.isNaN(categoryId) || categoryId <= 0) {
+      setNewTagError('请选择标签种类');
+      return;
+    }
+
+    setNewTagError(null);
+    setIsCreatingTag(true);
+
+    try {
+      const created = await tagAPI.create({
+        categoryId,
+        value: newTagForm.value.trim(),
+        description: newTagForm.description.trim() ? newTagForm.description.trim() : undefined,
+      });
+      setAllTags(prev => [...prev, created]);
+      const displayName = getTagDisplayName(created);
+      if (displayName) {
+        handleAddTag(displayName);
+      }
+      closeCreateTagModal();
+    } catch (error) {
+      console.error('创建标签失败:', error);
+      setNewTagError(error instanceof Error ? error.message : '创建标签失败，请稍后重试');
+    } finally {
+      setIsCreatingTag(false);
+    }
+  };
+
+  // 步骤导航
+  const handleNextFromStepOne = () => {
+    if (!article.title || !article.content) {
+      setToast({ message: '请填写标题和内容', type: 'error' });
+      return;
+    }
+    setToast(null);
     setCurrentStep(2);
   };
 
-  // 返回上一步
+  const handleNextFromStepTwo = () => {
+    setToast(null);
+    setCurrentStep(3);
+  };
+
   const handlePrevStep = () => {
-    setCurrentStep(1);
-    setSaveError(null);
+    setToast(null);
+    setCurrentStep(prev => {
+      if (prev === 3) return 2;
+      return 1;
+    });
   };
 
   // 发布文章
   const handlePublish = async () => {
+    console.log('=== handlePublish 被调用 ===');
     if (!article.title || !article.content) {
-      setSaveError('请填写标题和内容');
+      console.log('标题或内容为空，显示错误提示');
+      setToast({ message: '请填写标题和内容', type: 'error' });
       return;
     }
 
+    console.log('开始保存文章...');
     setIsSaving(true);
-    setSaveError(null);
+    setToast(null);
     setSaveSuccess(false);
 
     try {
@@ -250,27 +512,119 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
         await onSave(fullArticle, coverImageFile || undefined);
       }
 
-      // 根据用户角色显示不同的成功消息
-      const isAdmin = currentRole === 'admin' || currentRole === 'super_admin';
-      const successMessage = isAdmin
-        ? '发布成功！'
-        : '发布成功，待管理员审核。';
-
       setSaveSuccess(true);
-      setSaveError(null);
+      // 所有文章（新建和编辑）都需要审核
+      console.log('设置 toast 消息');
+      setToast({ message: '文章已提交审核，等待审核通过后发布！', type: 'success' });
+      console.log('toast 已设置:', { message: '文章已提交审核，等待审核通过后发布！', type: 'success' });
 
-      // 显示成功消息后跳转
+      // 显示成功消息后跳转(3秒延迟,让用户看到提示)
       setTimeout(() => {
-        navigate('/admin/articles/list');
-      }, 2000);
-
-      // 暂时显示提示
-      alert(successMessage);
+        console.log('3秒后跳转到:', backPath);
+        navigate(backPath);
+      }, 3000);
     } catch (error) {
       console.error('保存失败:', error);
-      setSaveError('保存失败，请重试');
+      setToast({ message: '保存失败，请重试', type: 'error' });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // 审核通过
+  const handleApprove = async () => {
+    if (!initialArticle?.id) {
+      setToast({ message: '文章ID不存在', type: 'error' });
+      return;
+    }
+
+    setIsApproving(true);
+    setToast(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reviewNotes: reviewNotes || '内容优质,通过审核',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || '审核通过失败');
+      }
+
+      setSaveSuccess(true);
+      setReviewStatus('approved');
+      setToast({ message: '审核通过！', type: 'success' });
+
+      setTimeout(() => {
+        navigate(backPath);
+      }, 2000);
+    } catch (error) {
+      console.error('审核通过失败:', error);
+      setToast({
+        message: '审核操作失败: ' + (error instanceof Error ? error.message : '请重试'),
+        type: 'error'
+      });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // 审核驳回
+  const handleReject = async () => {
+    if (!initialArticle?.id) {
+      setToast({ message: '文章ID不存在', type: 'error' });
+      return;
+    }
+
+    if (!reviewNotes || reviewNotes.trim() === '') {
+      setToast({ message: '驳回时必须填写审核备注', type: 'error' });
+      return;
+    }
+
+    setIsRejecting(true);
+    setToast(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reviewNotes: reviewNotes,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || '审核驳回失败');
+      }
+
+      setSaveSuccess(true);
+      setReviewStatus('rejected');
+      setToast({ message: '已驳回！', type: 'success' });
+
+      setTimeout(() => {
+        navigate(backPath);
+      }, 2000);
+    } catch (error) {
+      console.error('审核驳回失败:', error);
+      setToast({
+        message: '审核操作失败: ' + (error instanceof Error ? error.message : '请重试'),
+        type: 'error'
+      });
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -279,7 +633,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
     return (
       <div className={cn(
         "h-full flex items-center justify-center",
-        isLight ? "bg-gray-50" : "bg-black"
+        isLight ? "bg-gray-50" : "bg-transparent"
       )}>
         <div className={cn(
           "max-w-md p-8 rounded-lg border text-center",
@@ -300,7 +654,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -310,7 +664,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/admin/articles/list')}
+              onClick={() => navigate(backPath)}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 isLight
@@ -319,7 +673,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
               )}
             >
               <ArrowLeft className="h-4 w-4" />
-              返回列表
+              {backButtonLabel}
             </button>
             <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
             <h1 className={cn(
@@ -329,14 +683,15 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
               <FileText className="h-5 w-5 text-wangfeng-purple" />
               {initialArticle?.id ? '编辑文章' : '发布文章'}
               <span className={cn("text-sm font-normal ml-2", isLight ? "text-gray-500" : "text-gray-400")}>
-                步骤 {currentStep}/2
+                步骤 {currentStep}/3
               </span>
             </h1>
           </div>
 
           {/* 操作按钮 */}
           <div className="flex items-center gap-2">
-            {currentStep === 2 && onDelete && initialArticle?.id && (
+            {/* 只在非审核模式下显示删除按钮 */}
+            {currentStep > 1 && onDelete && initialArticle?.id && reviewStatus !== 'pending' && (
               <button
                 onClick={() => onDelete(initialArticle.id as string)}
                 className={cn(
@@ -350,15 +705,17 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
               </button>
             )}
 
-            {currentStep === 1 ? (
+            {currentStep === 1 && (
               <button
-                onClick={handleNextStep}
+                onClick={handleNextFromStepOne}
                 className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
               >
                 下一步
                 <ArrowRight className="h-4 w-4" />
               </button>
-            ) : (
+            )}
+
+            {currentStep === 2 && (
               <>
                 <button
                   onClick={handlePrevStep}
@@ -372,12 +729,109 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                   上一步
                 </button>
                 <button
-                  onClick={handlePublish}
-                  disabled={isSaving}
-                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleNextFromStepTwo}
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
                 >
-                  {isSaving ? '发布中...' : '发布文章'}
+                  下一步
+                  <ArrowRight className="h-4 w-4" />
                 </button>
+              </>
+            )}
+
+            {/* 步骤3的按钮 */}
+            {currentStep === 3 && (
+              <>
+                {/* 从审核中心进入且是待审核状态 - 显示审核按钮 */}
+                {fromReview && reviewStatus === 'pending' && initialArticle?.id && (currentRole === 'admin' || currentRole === 'super_admin') ? (
+                  <>
+                    <button
+                      onClick={handlePrevStep}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                        isLight
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-white/10 text-gray-300 hover:bg-white/20"
+                      )}
+                    >
+                      上一步
+                    </button>
+                    <button
+                      onClick={() => onDelete && onDelete(initialArticle.id as string)}
+                      disabled={isApproving || isRejecting}
+                      className={cn(
+                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                        "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
+                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      删除
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowRejectModal(true)}
+                      disabled={isApproving || isRejecting}
+                      className={cn(
+                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                        "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
+                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      <X className="h-4 w-4" />
+                      驳回
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      disabled={isApproving || isRejecting}
+                      className={cn(
+                        "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
+                        "bg-green-600 text-white hover:bg-green-700",
+                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                      )}
+                    >
+                      {isApproving && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <CheckCircle2 className="h-4 w-4" />
+                      {isApproving ? '发布中...' : '审核通过并发布'}
+                    </button>
+                  </>
+                ) : (
+                  /* 从文章管理进入 - 显示删除和提交审核按钮 */
+                  <>
+                    <button
+                      onClick={handlePrevStep}
+                      className={cn(
+                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                        isLight
+                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          : "bg-white/10 text-gray-300 hover:bg-white/20"
+                      )}
+                    >
+                      上一步
+                    </button>
+                    {/* 编辑文章时显示删除按钮 */}
+                    {onDelete && initialArticle?.id && (
+                      <button
+                        onClick={() => onDelete(initialArticle.id as string)}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                          isLight
+                            ? "bg-red-50 text-red-600 hover:bg-red-100"
+                            : "bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                        )}
+                      >
+                        删除文章
+                      </button>
+                    )}
+                    <button
+                      onClick={handlePublish}
+                      disabled={isSaving}
+                      className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSaving ? '提交中...' : '提交审核'}
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -387,36 +841,6 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
       {/* 主要内容区域 - 允许滚动 */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          {/* 保存成功消息 */}
-          {saveSuccess && (
-            <div className={cn(
-              "rounded-lg border p-4 flex items-start gap-3 mb-6",
-              isLight
-                ? "bg-green-50 border-green-200 text-green-800"
-                : "bg-green-500/10 border-green-500/30 text-green-300"
-            )}>
-              <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <span className="text-sm">
-                {currentRole === 'admin' || currentRole === 'super_admin'
-                  ? '发布成功！'
-                  : '发布成功，待管理员审核。'}
-              </span>
-            </div>
-          )}
-
-          {/* 保存错误消息 */}
-          {saveError && (
-            <div className={cn(
-              "rounded-lg border p-4 flex items-start gap-3 mb-6",
-              isLight
-                ? "bg-red-50 border-red-200 text-red-800"
-                : "bg-red-500/10 border-red-500/30 text-red-300"
-            )}>
-              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <span className="text-sm">{saveError}</span>
-            </div>
-          )}
-
           {/* 步骤1: 编辑标题和内容 */}
           {currentStep === 1 && (
             <>
@@ -458,11 +882,10 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                   文章内容 <span className="text-red-500">*</span>
                 </h2>
 
-                <div className="rich-text-editor-container">
+                <div className="rich-text-editor-container min-h-[40vh]">
                   <RichTextEditor
                     value={article.content || ''}
                     onChange={handleContentChange}
-                    height={undefined as any}
                   />
                 </div>
               </div>
@@ -680,62 +1103,6 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                     </div>
                   </div>
 
-                  {/* 分类 */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isLight ? "text-gray-700" : "text-gray-300"
-                      )}>
-                        <Folder className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                        一级分类 <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={categoryPrimary}
-                        onChange={(e) => setCategoryPrimary(e.target.value)}
-                        className={cn(
-                          "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                          isLight
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                            : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        )}
-                        required
-                      >
-                        {availablePrimaryCategories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isLight ? "text-gray-700" : "text-gray-300"
-                      )}>
-                        <Folder className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                        二级分类 <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={categorySecondary}
-                        onChange={(e) => setCategorySecondary(e.target.value)}
-                        className={cn(
-                          "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                          isLight
-                            ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                            : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        )}
-                        required
-                      >
-                        {availableSecondaries.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                      <p className={cn("text-xs mt-1.5", isLight ? "text-gray-500" : "text-gray-400")}>
-                        当前选择: <span className="text-wangfeng-purple font-semibold">{categoryPrimary} / {categorySecondary}</span>
-                      </p>
-                    </div>
-                  </div>
-
                   {/* 文章摘要 */}
                   <div>
                     <label className={cn(
@@ -758,40 +1125,309 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                     />
                   </div>
 
-                  {/* 标签 */}
+                </div>
+              </div>
+            </>
+          )}
+ 
+          {/* 步骤3: 分类与标签 */}
+          {currentStep === 3 && (
+            <>
+              {/* 分类选择 */}
+              <div className={cn(
+                "rounded-lg border p-6 mb-6",
+                isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
+              )}>
+                <h2 className={cn(
+                  "text-lg font-semibold mb-4 pb-2 border-b",
+                  isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
+                )}>
+                  <Folder className="inline h-5 w-5 mr-2 text-wangfeng-purple" />
+                  文章分类
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
                     <label className={cn(
                       "block text-sm font-medium mb-2",
                       isLight ? "text-gray-700" : "text-gray-300"
                     )}>
-                      <TagIcon className="inline h-4 w-4 mr-1.5 -mt-0.5" />
-                      标签（可选）
+                      <Folder className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                      一级分类 <span className="text-red-500">*</span>
                     </label>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                        className={cn(
-                          "flex-1 rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
-                          isLight
-                            ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                            : "bg-black/50 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                        )}
-                        placeholder="添加标签（按 Enter 确认）"
-                      />
+                    <select
+                      value={categoryPrimary}
+                      onChange={(e) => setCategoryPrimary(e.target.value)}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                      required
+                    >
+                      {availablePrimaryCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={cn(
+                      "block text-sm font-medium mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      <Folder className="inline h-4 w-4 mr-1.5 -mt-0.5" />
+                      二级分类 <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={categorySecondary}
+                      onChange={(e) => setCategorySecondary(e.target.value)}
+                      className={cn(
+                        "w-full rounded-lg border px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                      required
+                    >
+                      {availableSecondaries.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                    <p className={cn("text-xs mt-1.5", isLight ? "text-gray-500" : "text-gray-400")}>
+                      当前选择: <span className="text-wangfeng-purple font-semibold">{categoryPrimary} / {categorySecondary}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 标签管理 */}
+              <div className={cn(
+                "rounded-lg border p-6 mb-6",
+                isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
+              )}>
+                <h2 className={cn(
+                  "text-lg font-semibold mb-3 pb-2 border-b flex items-center justify-between",
+                  isLight ? "text-gray-900 border-gray-200" : "text-white border-wangfeng-purple/20"
+                )}>
+                  <span className="flex items-center gap-2">
+                    <TagIcon className="h-5 w-5 text-wangfeng-purple" />
+                    标签管理
+                    {/* 信息提示图标 */}
+                    <div className="relative group">
                       <button
-                        onClick={handleAddTag}
-                        className="px-4 py-2.5 bg-wangfeng-purple text-white rounded-lg text-sm hover:bg-wangfeng-purple/90 transition-colors"
+                        type="button"
+                        className={cn(
+                          "p-1.5 rounded-full transition-colors",
+                          isLight
+                            ? "text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                            : "text-gray-500 hover:bg-white/10 hover:text-gray-300"
+                        )}
+                        title="标签管理帮助"
                       >
-                        <Plus className="h-4 w-4" />
+                        <span className="text-xs">ⓘ</span>
                       </button>
+
+                      {/* Tooltip 提示框 */}
+                      <div className={cn(
+                        "invisible group-hover:visible absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 px-4 py-2 rounded-lg text-xs whitespace-nowrap",
+                        isLight
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-800 text-gray-100"
+                      )}>
+                        我们会基于内容推荐标签，也可搜索或创建新标签
+                        {/* Tooltip 箭头 */}
+                        <div className={cn(
+                          "absolute top-full left-1/2 transform -translate-x-1/2 w-2 h-2 rotate-45",
+                          isLight ? "bg-gray-900" : "bg-gray-800"
+                        )} />
+                      </div>
                     </div>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={recomputeSuggestions}
+                    className={cn(
+                      "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                      isLight
+                        ? "bg-wangfeng-purple/10 text-wangfeng-purple hover:bg-wangfeng-purple/20"
+                        : "bg-wangfeng-purple/30 text-wangfeng-purple hover:bg-wangfeng-purple/40"
+                    )}
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    重新匹配
+                  </button>
+                </h2>
+
+                {/* 推荐标签 */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className={cn(
+                      "text-sm font-semibold flex items-center gap-2",
+                      isLight ? "text-gray-900" : "text-gray-200"
+                    )}>
+                      <Sparkles className="h-4 w-4 text-wangfeng-purple" />
+                      推荐标签
+                    </h3>
+                    {tagsLoading && (
+                      <span className={cn(
+                        "text-xs flex items-center gap-1",
+                        isLight ? "text-gray-500" : "text-gray-400"
+                      )}>
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        加载标签资源...
+                      </span>
+                    )}
+                  </div>
+
+                  {tagFetchError && (
+                    <div className={cn(
+                      "rounded-lg border px-3 py-2 text-xs flex items-start gap-2 mb-3",
+                      isLight
+                        ? "bg-red-50 border-red-200 text-red-700"
+                        : "bg-red-500/10 border-red-500/30 text-red-300"
+                    )}>
+                      <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p>{tagFetchError}</p>
+                        <button
+                          type="button"
+                          onClick={loadTagResources}
+                          className="mt-1 inline-flex items-center gap-1 text-xs text-wangfeng-purple hover:underline"
+                        >
+                          重新加载
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {isGeneratingSuggestions ? (
+                    <div className={cn(
+                      "rounded-lg border px-4 py-6 text-center",
+                      isLight ? "border-gray-200 bg-gray-50" : "border-wangfeng-purple/20 bg-black/40"
+                    )}>
+                      <Loader2 className="h-5 w-5 mx-auto mb-2 animate-spin text-wangfeng-purple" />
+                      <p className={cn(
+                        "text-xs",
+                        isLight ? "text-gray-500" : "text-gray-400"
+                      )}>
+                        正在分析正文内容，寻找合适的标签...
+                      </p>
+                    </div>
+                  ) : suggestedTags.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
-                      {article.tags?.map((tag, index) => (
+                      {suggestedTags.map(tag => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => handleAddTagFromData(tag)}
+                          className={cn(
+                            "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                            isLight
+                              ? "bg-wangfeng-purple/10 text-wangfeng-purple hover:bg-wangfeng-purple/20"
+                              : "bg-wangfeng-purple/20 text-wangfeng-purple hover:bg-wangfeng-purple/30"
+                          )}
+                        >
+                          {getTagDisplayName(tag)}
+                          <Plus className="h-3 w-3" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={cn(
+                      "text-xs px-3 py-2 rounded-lg border",
+                      isLight ? "border-gray-200 text-gray-500 bg-gray-50" : "border-wangfeng-purple/20 text-gray-400 bg-black/40"
+                    )}>
+                      暂未找到匹配的推荐标签。您可以使用下方的搜索或创建功能。
+                    </p>
+                  )}
+                </div>
+
+                {/* 标签搜索 */}
+                <div className="mb-6">
+                  <label className={cn(
+                    "text-sm font-semibold flex items-center gap-2 mb-2",
+                    isLight ? "text-gray-900" : "text-gray-200"
+                  )}>
+                    <Search className="h-4 w-4 text-wangfeng-purple" />
+                    搜索标签
+                  </label>
+                  <div className="relative mb-3">
+                    <Search className={cn(
+                      "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
+                      isLight ? "text-gray-500" : "text-gray-400"
+                    )} />
+                    <input
+                      value={tagSearchQuery}
+                      onChange={(e) => setTagSearchQuery(e.target.value)}
+                      placeholder="输入关键词搜索标签..."
+                      className={cn(
+                        "w-full rounded-lg border pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                      )}
+                    />
+                    {isSearchingTags && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-wangfeng-purple" />
+                    )}
+                  </div>
+                  <div className={cn(
+                    "rounded-lg border px-3 py-3 min-h-[60px]",
+                    isLight ? "border-gray-200 bg-gray-50" : "border-wangfeng-purple/20 bg-black/40"
+                  )}>
+                    {tagSearchQuery.trim() === '' ? (
+                      <p className={cn(
+                        "text-xs",
+                        isLight ? "text-gray-500" : "text-gray-400"
+                      )}>
+                        输入关键词后，我们会显示匹配的标签结果。
+                      </p>
+                    ) : tagSearchResults.length === 0 ? (
+                      <p className={cn(
+                        "text-xs",
+                        isLight ? "text-gray-500" : "text-gray-400"
+                      )}>
+                        没有找到相关标签。可以尝试使用其他关键词，或直接在下方创建新标签。
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {tagSearchResults.map(tag => (
+                          <button
+                            key={tag.id}
+                            type="button"
+                            onClick={() => handleAddTagFromData(tag)}
+                            className={cn(
+                              "inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                              isLight
+                                ? "bg-white text-wangfeng-purple border border-wangfeng-purple/40 hover:bg-wangfeng-purple/10"
+                                : "bg-black/60 text-wangfeng-purple border border-wangfeng-purple/40 hover:bg-wangfeng-purple/20"
+                            )}
+                          >
+                            {getTagDisplayName(tag)}
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 已选标签 */}
+                <div className="mb-6">
+                  <h3 className={cn(
+                    "text-sm font-semibold mb-2 flex items-center gap-2",
+                    isLight ? "text-gray-900" : "text-gray-200"
+                  )}>
+                    <TagIcon className="h-4 w-4 text-wangfeng-purple" />
+                    已选择的标签
+                  </h3>
+                  {article.tags && article.tags.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {article.tags.map((tag) => (
                         <span
-                          key={index}
+                          key={tag}
                           className={cn(
                             "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium",
                             isLight
@@ -801,6 +1437,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                         >
                           {tag}
                           <button
+                            type="button"
                             onClick={() => handleRemoveTag(tag)}
                             className="hover:text-red-500 transition-colors"
                           >
@@ -809,13 +1446,316 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
                         </span>
                       ))}
                     </div>
+                  ) : (
+                    <p className={cn(
+                      "text-xs px-3 py-2 rounded-lg border",
+                      isLight ? "border-gray-200 text-gray-500 bg-gray-50" : "border-wangfeng-purple/20 text-gray-400 bg-black/40"
+                    )}>
+                      还没有选择标签。建议至少添加 1-2 个标签，便于内容分类与检索。
+                    </p>
+                  )}
+                </div>
+
+                {/* 创建新标签入口 */}
+                <div className={cn(
+                  "rounded-lg border px-4 py-4",
+                  isLight ? "border-gray-200 bg-gray-50" : "border-wangfeng-purple/20 bg-black/30"
+                )}>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className={cn(
+                        "text-sm font-semibold flex items-center gap-2",
+                        isLight ? "text-gray-900" : "text-gray-200"
+                      )}>
+                        <Plus className="h-4 w-4 text-wangfeng-purple" />
+                        创建新标签
+                      </h3>
+                      <p className={cn(
+                        "text-xs mt-1",
+                        isLight ? "text-gray-500" : "text-gray-400"
+                      )}>
+                        若搜索结果中没有合适的标签，可以点击按钮新建。创建后会同步到标签管理页。
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={openCreateTagModal}
+                      disabled={tagCategories.length === 0}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
+                        isLight
+                          ? "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 disabled:bg-gray-200 disabled:text-gray-500"
+                          : "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 disabled:bg-white/10 disabled:text-gray-500"
+                      )}
+                    >
+                      <Plus className="h-4 w-4" />
+                      新建标签
+                    </button>
                   </div>
+                  {tagCategories.length === 0 && (
+                    <p className={cn(
+                      "text-xs mt-3 rounded-lg border px-3 py-2",
+                      isLight ? "border-gray-200 text-gray-500 bg-white" : "border-wangfeng-purple/20 text-gray-400 bg-black/40"
+                    )}>
+                      正在加载标签种类...
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* 审核区域移除，改为固定底部栏 */}
             </>
           )}
-        </div>
       </div>
+    </div>
+
+      {/* 创建标签弹窗 */}
+      {showCreateTagModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/60" onClick={closeCreateTagModal} />
+          <div className="absolute inset-0 flex items-center justify-center p-4 overflow-y-auto">
+            <div className={cn(
+              "relative w-full max-w-2xl rounded-2xl border shadow-2xl",
+              isLight ? "bg-white border-gray-200" : "bg-black/80 border-wangfeng-purple/40"
+            )}>
+              <div className={cn(
+                "flex items-center justify-between px-6 py-4 border-b",
+                isLight ? "border-gray-200" : "border-wangfeng-purple/30"
+              )}>
+                <div>
+                  <h2 className={cn(
+                    "text-lg font-semibold",
+                    isLight ? "text-gray-900" : "text-white"
+                  )}>
+                    创建新标签
+                  </h2>
+                  <p className={cn(
+                    "text-xs mt-1",
+                    isLight ? "text-gray-500" : "text-gray-400"
+                  )}>
+                    创建后将自动添加到当前文章，并在标签管理页面中可见与管理。
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeCreateTagModal}
+                  className={cn(
+                    "rounded-full p-2 transition-colors",
+                    isLight ? "text-gray-500 hover:bg-gray-100" : "text-gray-300 hover:bg-white/10"
+                  )}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateNewTag} className="px-6 py-5 space-y-4">
+                {newTagError && (
+                  <div className={cn(
+                    "rounded-lg border px-3 py-2 text-sm flex items-start gap-2",
+                    isLight
+                      ? "bg-red-50 border-red-200 text-red-600"
+                      : "bg-red-500/10 border-red-500/30 text-red-300"
+                  )}>
+                    <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>{newTagError}</span>
+                  </div>
+                )}
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className={cn(
+                      "block text-xs font-semibold mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      选择标签种类
+                    </label>
+                    <select
+                      value={newTagForm.categoryId}
+                      onChange={(e) => setNewTagForm(prev => ({ ...prev, categoryId: e.target.value }))}
+                      className={cn(
+                        "w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/60 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/30"
+                      )}
+                    >
+                      <option value="">请选择标签种类</option>
+                      {tagCategories.map(category => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className={cn(
+                      "block text-xs font-semibold mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      标签名称
+                    </label>
+                    <input
+                      value={newTagForm.value}
+                      onChange={(e) => setNewTagForm(prev => ({ ...prev, value: e.target.value }))}
+                      placeholder="例如：2024巡演、汪峰经典"
+                      className={cn(
+                        "w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/60 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/30"
+                      )}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className={cn(
+                      "block text-xs font-semibold mb-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      标签描述（可选）
+                    </label>
+                    <textarea
+                      value={newTagForm.description}
+                      onChange={(e) => setNewTagForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className={cn(
+                        "w-full rounded-lg border px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2",
+                        isLight
+                          ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                          : "bg-black/60 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/30"
+                      )}
+                      placeholder="补充标签使用场景或说明，便于其他管理员理解（可选）"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleResetNewTagForm}
+                    className={cn(
+                      "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                      isLight
+                        ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        : "bg-white/10 text-gray-300 hover:bg-white/20"
+                    )}
+                  >
+                    重置
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isCreatingTag}
+                    className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingTag ? '创建中...' : '创建并添加'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 驳回弹窗 */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setShowRejectModal(false)} />
+          <div className="absolute inset-0 flex items-center justify-center p-4">
+            <div className={cn(
+              "relative w-full max-w-md rounded-2xl border shadow-2xl",
+              isLight ? "bg-white border-gray-200" : "bg-black/90 border-wangfeng-purple/40"
+            )}>
+              <div className={cn(
+                "flex items-center justify-between px-6 py-4 border-b",
+                isLight ? "border-gray-200" : "border-wangfeng-purple/30"
+              )}>
+                <div>
+                  <h2 className={cn(
+                    "text-lg font-semibold flex items-center gap-2",
+                    isLight ? "text-gray-900" : "text-white"
+                  )}>
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    驳回文章
+                  </h2>
+                  <p className={cn(
+                    "text-xs mt-1",
+                    isLight ? "text-gray-500" : "text-gray-400"
+                  )}>
+                    请填写驳回理由，帮助作者改进内容
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRejectModal(false)}
+                  className={cn(
+                    "rounded-full p-2 transition-colors",
+                    isLight ? "text-gray-500 hover:bg-gray-100" : "text-gray-300 hover:bg-white/10"
+                  )}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="px-6 py-5">
+                <label className={cn(
+                  "block text-sm font-semibold mb-2",
+                  isLight ? "text-gray-700" : "text-gray-300"
+                )}>
+                  驳回理由 <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                  placeholder="请详细说明驳回原因，例如：内容不符合规范、标题需要修改等..."
+                  rows={5}
+                  className={cn(
+                    "w-full rounded-lg border px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2",
+                    isLight
+                      ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-red-500 focus:ring-red-500/20"
+                      : "bg-black/60 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-red-500 focus:ring-red-500/20"
+                  )}
+                />
+              </div>
+
+              <div className={cn(
+                "flex justify-end gap-3 px-6 py-4 border-t",
+                isLight ? "border-gray-200" : "border-wangfeng-purple/30"
+              )}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setReviewNotes('');
+                  }}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleReject();
+                    setShowRejectModal(false);
+                  }}
+                  disabled={!reviewNotes.trim() || isRejecting}
+                  className={cn(
+                    "px-6 py-2 rounded-lg text-sm font-medium transition-colors",
+                    "bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  )}
+                >
+                  {isRejecting ? '驳回中...' : '确认驳回'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 图片裁剪弹窗 */}
       {showCropModal && imageToCrop && (
@@ -824,6 +1764,15 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
           onCropComplete={handleCropComplete}
           onClose={() => setShowCropModal(false)}
           aspect={16 / 9}
+        />
+      )}
+
+      {/* Toast 通知 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>

@@ -1,0 +1,61 @@
+export default {
+  kind: 'collectionType',
+  collectionName: 'category_secondaries',
+  displayName: 'Category Secondary',
+  singularName: 'category-secondary',
+  pluralName: 'category-secondaries',
+  description: '二级分类',
+  attributes: {
+    // 基础信息
+    name: {
+      type: 'string',
+      required: true,
+      maxLength: 100,
+    },
+    slug: {
+      type: 'uid',
+      targetField: 'name',
+    },
+
+    // 排序
+    order: {
+      type: 'integer',
+      default: 0,
+    },
+
+    // 一级分类
+    primaryCategory: {
+      type: 'relation',
+      relation: 'manyToOne',
+      target: 'api::category-primary.category-primary',
+      inversedBy: 'secondaryCategories',
+      required: true,
+    },
+
+    // 关系
+    articles: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::article.article',
+      mappedBy: 'categorySecondary',
+    },
+    videos: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::video.video',
+      mappedBy: 'category',
+    },
+    photoGroups: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::photo-group.photo-group',
+      mappedBy: 'category',
+    },
+    schedules: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::schedule.schedule',
+      mappedBy: 'category',
+    },
+  },
+};

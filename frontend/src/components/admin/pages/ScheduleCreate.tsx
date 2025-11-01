@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { scheduleAPI, ScheduleCategory, ScheduleItemResponse, tagAPI, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +13,11 @@ import {
   Calendar,
   MapPin,
   Tag as TagIcon,
-  FileText
+  FileText,
+  ArrowRight
 } from 'lucide-react';
-import TagInputWithSearch from '@/components/ui/TagInputWithSearch';
+import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 const categoryOptions: ScheduleCategory[] = [
   '演唱会',
@@ -54,12 +56,14 @@ const ScheduleCreate = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
 
+  // 步骤管理
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
   const [formState, setFormState] = useState<FormState>(defaultState);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [selectedDate, setSelectedDate] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -125,45 +129,55 @@ const ScheduleCreate = () => {
     });
   };
 
-  // 标签处理函数
-  const handleAddTag = (tag: TagData) => {
-    if (!formState.tags.some(t => t.id === tag.id)) {
-      setFormState(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
+  // 生成标签上下文文本
+  const tagContext = useMemo(
+    () => [
+      formState.theme,
+      formState.description,
+      formState.city,
+      formState.venue,
+      formState.category
+    ].filter(Boolean).join(' '),
+    [formState.theme, formState.description, formState.city, formState.venue, formState.category]
+  );
+
+  // 处理下一步
+  const handleNextStep = () => {
+    if (!formState.theme.trim()) {
+      setToast({ message: '请输入行程主题', type: 'error' });
+      return;
     }
+    if (!formState.city.trim()) {
+      setToast({ message: '请输入所在城市', type: 'error' });
+      return;
+    }
+    setToast(null);
+    setCurrentStep(2);
   };
 
-  const handleRemoveTag = (tagId: number) => {
+  // 处理上一步
+  const handlePrevStep = () => {
+    setToast(null);
+    setCurrentStep(1);
+  };
+
+  // 标签处理函数（通过 TagSelectionPanel）
+  const handleTagsChange = (tags: TagData[]) => {
     setFormState(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag.id !== tagId)
+      tags
     }));
-  };
-
-  const handleSearchTags = async (query: string): Promise<TagData[]> => {
-    try {
-      return await tagAPI.search(query);
-    } catch (error) {
-      console.error('搜索标签失败:', error);
-      return [];
-    }
-  };
-
-  const handleCreateTag = async (name: string): Promise<TagData> => {
-    try {
-      return await tagAPI.create(name);
-    } catch (error) {
-      console.error('创建标签失败:', error);
-      throw error;
-    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError(null);
-    setSuccess(null);
+
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成标签选择', type: 'error' });
+      return;
+    }
+
+    setToast(null);
     setSubmitting(true);
 
     try {
@@ -183,17 +197,17 @@ const ScheduleCreate = () => {
         payload.append('image', imageFile);
       }
 
-      const created = await scheduleAPI.create(payload, token);
-      setSuccess('行程发布成功！');
+      await scheduleAPI.create(payload, token);
+      setToast({ message: '行程已提交审核，等待审核通过后展示！', type: 'success' });
 
       setTimeout(() => {
-        navigate('/admin/schedules/list', {
-          replace: false,
-          state: { highlightId: created.id },
-        });
+        navigate('/admin/schedules/list');
       }, 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '行程发布失败，请稍后重试');
+      setToast({
+        message: err instanceof Error ? err.message : '行程提交失败，请稍后重试',
+        type: 'error'
+      });
     } finally {
       setSubmitting(false);
     }
@@ -230,21 +244,53 @@ const ScheduleCreate = () => {
             )}>
               <Calendar className="h-5 w-5 text-wangfeng-purple" />
               发布行程
+              <span className={cn(
+                "text-sm font-normal ml-2",
+                isLight ? "text-gray-500" : "text-gray-400"
+              )}>
+                步骤 {currentStep}/2
+              </span>
             </h1>
           </div>
 
           {/* 操作按钮 */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              const form = document.querySelector('form') as HTMLFormElement;
-              if (form) form.requestSubmit();
-            }}
-            disabled={submitting}
-            className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? '发布中...' : '发布行程'}
-          </button>
+          <div className="flex items-center gap-3">
+            {currentStep === 1 && (
+              <button
+                onClick={handleNextStep}
+                className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
+              >
+                下一步
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+            {currentStep === 2 && (
+              <>
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const form = document.querySelector('form') as HTMLFormElement;
+                    if (form) form.requestSubmit();
+                  }}
+                  disabled={submitting}
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? '提交中...' : '提交审核'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -252,31 +298,9 @@ const ScheduleCreate = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <form onSubmit={handleSubmit}>
-            {/* 错误和成功消息 */}
-            {error && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3 mb-6",
-                isLight
-                  ? "bg-red-50 border-red-200 text-red-800"
-                  : "bg-red-500/10 border-red-500/30 text-red-300"
-              )}>
-                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3 mb-6",
-                isLight
-                  ? "bg-green-50 border-green-200 text-green-800"
-                  : "bg-green-500/10 border-green-500/30 text-green-300"
-              )}>
-                <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{success}</span>
-              </div>
-            )}
-
+            {/* 步骤1: 基础信息 */}
+            {currentStep === 1 && (
+              <>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* 左侧：图片上传区域 (占1/3) */}
               <div className={cn(
@@ -573,31 +597,35 @@ const ScheduleCreate = () => {
                         placeholder="填写更多行程细节、嘉宾信息等"
                       />
                     </div>
-
-                    {/* 标签 */}
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isLight ? "text-gray-700" : "text-gray-300"
-                      )}>
-                        标签（可选）
-                      </label>
-                      <TagInputWithSearch
-                        selectedTags={formState.tags}
-                        onAddTag={handleAddTag}
-                        onRemoveTag={handleRemoveTag}
-                        onSearchTags={handleSearchTags}
-                        onCreateTag={handleCreateTag}
-                        placeholder="搜索或创建标签..."
-                      />
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
+              </>
+            )}
+
+            {/* 步骤2: 标签管理 */}
+            {currentStep === 2 && (
+              <TagSelectionPanel
+                contextText={tagContext}
+                selectedTags={formState.tags}
+                onChange={handleTagsChange}
+                isLight={isLight}
+                infoMessage="我们会根据行程主题、描述、分类等信息推荐相关标签，也可以搜索或直接创建新标签。"
+              />
+            )}
           </form>
         </div>
       </div>
+
+      {/* Toast 通知 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

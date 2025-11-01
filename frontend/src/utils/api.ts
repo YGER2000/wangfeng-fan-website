@@ -23,6 +23,7 @@ export interface Article extends ArticleData {
   cover_url?: string;           // 封面图片URL
   is_published: boolean;
   is_deleted: boolean;
+  review_status: 'pending' | 'approved' | 'rejected';  // 审核状态
   created_at: string;
   updated_at: string;
   published_at: string;
@@ -44,15 +45,19 @@ export interface VideoData {
   cover_url?: string;  // B站视频封面URL
   cover_local?: string;  // 本地缓存的封面路径(640x480, 4:3)
   cover_thumb?: string;  // 本地缓存的缩略图路径(480x360, 4:3)
+  tags: string[];  // 标签列表
 }
 
 export interface Video extends VideoData {
   id: string;
   created_at: string;
   updated_at: string;
+  review_status: 'pending' | 'approved' | 'rejected';  // 审核状态
+  is_published: number;  // 是否已发布: 0未发布/1已发布
   cover_url?: string;
   cover_local?: string;
   cover_thumb?: string;
+  tags: string[];  // 标签列表
 }
 
 export type ScheduleCategory = '演唱会' | 'livehouse' | '音乐节' | '商演拼盘' | '综艺晚会' | '直播' | '商业活动' | '其他';
@@ -106,18 +111,20 @@ export const articleAPI = {
     skip?: number;
     limit?: number;
     category?: string;
+    published_only?: boolean;
   }): Promise<Article[]> => {
     const searchParams = new URLSearchParams();
     if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
     if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
     if (params?.category) searchParams.append('category', params.category);
+    if (params?.published_only !== undefined) searchParams.append('published_only', params.published_only.toString());
 
     const response = await fetch(`${API_BASE_URL}/articles/?${searchParams}`);
-    
+
     if (!response.ok) {
       throw new Error('获取文章列表失败');
     }
-    
+
     return response.json();
   },
 
@@ -222,10 +229,70 @@ export const articleAPI = {
     const searchParams = new URLSearchParams();
     if (category) searchParams.append('category', category);
 
-    const response = await fetch(`${API_BASE_URL}/articles/count?${searchParams}`);
+    const url = category
+      ? `${API_BASE_URL}/articles/count?${searchParams}`
+      : `${API_BASE_URL}/articles/count`;
+
+    const response = await fetch(url);
 
     if (!response.ok) {
-      throw new Error('获取文章数量失败');
+      throw new Error('获取文章总数失败');
+    }
+
+    return response.json();
+  },
+
+  // 获取当前用户的文章（我的文章）
+  getMyArticles: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+  }, token?: string | null): Promise<Article[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/articles/my?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取我的文章失败');
+    }
+
+    return response.json();
+  },
+
+  // 获取所有文章（管理员）
+  getAllArticles: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+    review_status?: string;
+  }, token?: string | null): Promise<Article[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.review_status) searchParams.append('review_status', params.review_status);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/articles/all?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取所有文章失败');
     }
 
     return response.json();
@@ -356,11 +423,67 @@ export const videoAPI = {
     if (category) searchParams.append('category', category);
 
     const response = await fetch(`${API_BASE_URL}/videos/count?${searchParams}`);
-    
+
     if (!response.ok) {
       throw new Error('获取视频数量失败');
     }
-    
+
+    return response.json();
+  },
+
+  // 获取当前用户的视频（我的视频）
+  getMyVideos: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+  }, token?: string | null): Promise<Video[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/videos/my?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取我的视频失败');
+    }
+
+    return response.json();
+  },
+
+  // 获取所有视频（管理员）
+  getAllVideos: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+    review_status?: string;
+  }, token?: string | null): Promise<Video[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.review_status) searchParams.append('review_status', params.review_status);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/videos/all?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取所有视频失败');
+    }
+
     return response.json();
   },
 };
@@ -397,18 +520,54 @@ export const scheduleAPI = {
 };
 
 // 标签相关类型定义
+export interface TagCategoryData {
+  id: number;
+  name: string;
+  description?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface TagData {
   id: number;
   name: string;
-  description?: string;
+  display_name: string;
+  value: string;
+  category_id: number;
+  category_name?: string;
+  description?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface CreateTagPayload {
+  categoryId?: number;
+  categoryName?: string;
+  value: string;
+  description?: string;
+}
+
+export interface UpdateTagPayload {
+  categoryId?: number;
+  categoryName?: string;
+  value?: string;
+  description?: string;
+}
+
+export interface CreateTagCategoryPayload {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateTagCategoryPayload {
+  name?: string;
+  description?: string;
 }
 
 export interface ContentTagData {
   tag_id: number;
   content_type: 'video' | 'article' | 'gallery' | 'schedule' | 'music';
-  content_id: number;
+  content_id: string;
 }
 
 export interface ContentItem {
@@ -418,6 +577,75 @@ export interface ContentItem {
   url: string;
   thumbnail?: string;
 }
+
+const TAG_DEFAULT_CATEGORY_NAME = '其他';
+const TAG_VALUE_SEPARATORS = ['：', ':'];
+
+const parseTagStringInput = (input: string): CreateTagPayload => {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    throw new Error('标签内容不能为空');
+  }
+
+  for (const separator of TAG_VALUE_SEPARATORS) {
+    const index = trimmed.indexOf(separator);
+    if (index !== -1) {
+      const categoryPart = trimmed.slice(0, index).trim();
+      const valuePart = trimmed.slice(index + 1).trim();
+      if (categoryPart && valuePart) {
+        return {
+          categoryName: categoryPart,
+          value: valuePart,
+        };
+      }
+    }
+  }
+
+  return {
+    categoryName: TAG_DEFAULT_CATEGORY_NAME,
+    value: trimmed,
+  };
+};
+
+const normalizeCreateTagPayload = (input: CreateTagPayload | string): CreateTagPayload => {
+  if (typeof input === 'string') {
+    return parseTagStringInput(input);
+  }
+
+  const value = input.value?.trim();
+  if (!value) {
+    throw new Error('标签值不能为空');
+  }
+
+  const categoryId = input.categoryId;
+  const categoryName = input.categoryName?.trim() || undefined;
+  if (categoryId === undefined && !categoryName) {
+    throw new Error('请选择或填写标签种类');
+  }
+
+  return {
+    categoryId,
+    categoryName,
+    value,
+    description: input.description,
+  };
+};
+
+const normalizeUpdateTagPayload = (input: UpdateTagPayload): UpdateTagPayload => ({
+  categoryId: input.categoryId,
+  categoryName: input.categoryName?.trim() || undefined,
+  value: input.value !== undefined ? input.value.trim() : undefined,
+  description: input.description,
+});
+
+const buildTagRequestBody = (
+  payload: CreateTagPayload | UpdateTagPayload,
+): Record<string, unknown> => ({
+  category_id: payload.categoryId,
+  category_name: payload.categoryName,
+  value: payload.value,
+  description: payload.description,
+});
 
 // 标签相关 API
 export const tagAPI = {
@@ -439,14 +667,78 @@ export const tagAPI = {
     return response.json();
   },
 
+  // 获取标签种类
+  listCategories: async (): Promise<TagCategoryData[]> => {
+    const response = await fetch(`${API_BASE_URL}/tags/categories`);
+    if (!response.ok) {
+      throw new Error('获取标签种类失败');
+    }
+    return response.json();
+  },
+
+  // 创建标签种类
+  createCategory: async (payload: CreateTagCategoryPayload): Promise<TagCategoryData> => {
+    const name = payload.name.trim();
+    if (!name) {
+      throw new Error('标签种类名称不能为空');
+    }
+    const body = {
+      name,
+      description: payload.description,
+    };
+    const response = await fetch(`${API_BASE_URL}/tags/categories`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || '创建标签种类失败');
+    }
+    return response.json();
+  },
+
+  // 更新标签种类
+  updateCategory: async (categoryId: number, payload: UpdateTagCategoryPayload): Promise<TagCategoryData> => {
+    const response = await fetch(`${API_BASE_URL}/tags/categories/${categoryId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: payload.name?.trim(),
+        description: payload.description,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || '更新标签种类失败');
+    }
+    return response.json();
+  },
+
+  // 删除标签种类
+  deleteCategory: async (categoryId: number): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/tags/categories/${categoryId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.detail || '删除标签种类失败');
+    }
+  },
+
   // 创建标签
-  create: async (name: string, description?: string): Promise<TagData> => {
+  create: async (input: CreateTagPayload | string): Promise<TagData> => {
+    const payload = normalizeCreateTagPayload(input);
     const response = await fetch(`${API_BASE_URL}/tags`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(buildTagRequestBody(payload)),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -480,13 +772,14 @@ export const tagAPI = {
   },
 
   // 更新标签
-  update: async (tagId: number, name?: string, description?: string): Promise<TagData> => {
+  update: async (tagId: number, updates: UpdateTagPayload): Promise<TagData> => {
+    const payload = normalizeUpdateTagPayload(updates);
     const response = await fetch(`${API_BASE_URL}/tags/${tagId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(buildTagRequestBody(payload)),
     });
     if (!response.ok) {
       throw new Error('更新标签失败');
@@ -505,8 +798,8 @@ export const tagAPI = {
   },
 
   // 获取内容的标签
-  getContentTags: async (contentType: string, contentId: number): Promise<TagData[]> => {
-    const response = await fetch(`${API_BASE_URL}/tags/content/${contentType}/${contentId}`);
+  getContentTags: async (contentType: string, contentId: string): Promise<TagData[]> => {
+    const response = await fetch(`${API_BASE_URL}/tags/content/${contentType}/${encodeURIComponent(contentId)}`);
     if (!response.ok) {
       throw new Error('获取内容标签失败');
     }
@@ -514,8 +807,8 @@ export const tagAPI = {
   },
 
   // 设置内容的标签（替换）
-  setContentTags: async (contentType: string, contentId: number, tagIds: number[]): Promise<TagData[]> => {
-    const response = await fetch(`${API_BASE_URL}/tags/content/${contentType}/${contentId}`, {
+  setContentTags: async (contentType: string, contentId: string, tagIds: number[]): Promise<TagData[]> => {
+    const response = await fetch(`${API_BASE_URL}/tags/content/${contentType}/${encodeURIComponent(contentId)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -544,9 +837,9 @@ export const tagAPI = {
   },
 
   // 从内容中移除标签
-  removeTagFromContent: async (tagId: number, contentType: string, contentId: number): Promise<void> => {
+  removeTagFromContent: async (tagId: number, contentType: string, contentId: string): Promise<void> => {
     const response = await fetch(
-      `${API_BASE_URL}/tags/content?tag_id=${tagId}&content_type=${contentType}&content_id=${contentId}`,
+      `${API_BASE_URL}/tags/content?tag_id=${tagId}&content_type=${contentType}&content_id=${encodeURIComponent(String(contentId))}`,
       {
         method: 'DELETE',
       }
@@ -568,6 +861,90 @@ export const tagAPI = {
     if (!response.ok) {
       throw new Error('获取标签内容失败');
     }
+    return response.json();
+  },
+};
+
+// 图片画廊相关接口
+export interface PhotoGroupData {
+  id?: string;
+  title: string;
+  category: string;
+  date: string;
+  display_date: string;
+  year: string;
+  description?: string;
+  cover_image_url?: string;
+  cover_image_thumb_url?: string;
+  author_id?: string;
+}
+
+export interface PhotoGroup extends PhotoGroupData {
+  id: string;
+  is_published: boolean;
+  review_status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  updated_at: string;
+  photo_count?: number;
+  created_by?: string;
+  tags?: string[];
+}
+
+// 图片画廊 API
+export const galleryAPI = {
+  // 获取照片组列表（我的图组）
+  getMyPhotoGroups: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+  }, token?: string | null): Promise<PhotoGroup[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/gallery/groups/my?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取我的图组失败');
+    }
+
+    return response.json();
+  },
+
+  // 获取所有照片组（管理员）
+  getAllPhotoGroups: async (params?: {
+    skip?: number;
+    limit?: number;
+    category?: string;
+    review_status?: string;
+  }, token?: string | null): Promise<PhotoGroup[]> => {
+    const searchParams = new URLSearchParams();
+    if (params?.skip !== undefined) searchParams.append('skip', params.skip.toString());
+    if (params?.limit !== undefined) searchParams.append('limit', params.limit.toString());
+    if (params?.category) searchParams.append('category', params.category);
+    if (params?.review_status) searchParams.append('review_status', params.review_status);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/gallery/groups/all?${searchParams}`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('获取所有图组失败');
+    }
+
     return response.json();
   },
 };
@@ -623,6 +1000,46 @@ export const adminScheduleAPI = {
 
     const data = await response.json();
     return data.count;
+  },
+
+  // 获取单个行程详情
+  getById: async (scheduleId: number): Promise<ScheduleItemResponse> => {
+    const token = getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/schedules/${scheduleId}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('获取行程详情失败');
+    }
+
+    return response.json();
+  },
+
+  // 更新行程
+  update: async (scheduleId: number, formData: FormData, token?: string | null): Promise<ScheduleItemResponse> => {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/admin/schedules/${scheduleId}`, {
+      method: 'PUT',
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || '更新行程失败');
+    }
+
+    return response.json();
   },
 
   // 审核通过行程

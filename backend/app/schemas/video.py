@@ -13,6 +13,7 @@ class VideoBase(BaseModel):
     cover_url: Optional[str] = None  # B站视频封面URL
     cover_local: Optional[str] = None  # 本地缓存的封面路径(640x480, 4:3)
     cover_thumb: Optional[str] = None  # 本地缓存的缩略图路径(480x360, 4:3)
+    tags: List[str] = []  # 标签列表
 
     @field_validator('publish_date', mode='before')
     @classmethod
@@ -42,6 +43,7 @@ class VideoUpdate(BaseModel):
     cover_url: Optional[str] = None
     cover_local: Optional[str] = None
     cover_thumb: Optional[str] = None
+    tags: Optional[List[str]] = None  # 标签列表
 
     @field_validator('publish_date', mode='before')
     @classmethod
@@ -60,6 +62,12 @@ class VideoUpdate(BaseModel):
 
 class Video(VideoBase):
     id: str
+    author_id: Optional[str] = None
+    is_published: int
+    review_status: str
+    reviewer_id: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

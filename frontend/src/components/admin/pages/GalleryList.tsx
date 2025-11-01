@@ -9,7 +9,11 @@ import {
   Calendar,
   ChevronUp,
   ChevronDown,
-  Eye
+  Eye,
+  User,
+  Clock,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
@@ -25,7 +29,9 @@ interface PhotoGroup {
   cover_image_url?: string;
   cover_image_thumb_url?: string;
   is_published: boolean;
+  review_status?: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  author_id?: string;
 }
 
 type SortField = 'date' | 'created_at' | 'title';
@@ -38,6 +44,13 @@ const categoryOptions = [
   { value: '日常生活', label: '日常生活' }
 ];
 
+const statusOptions = [
+  { value: 'all', label: '全部状态' },
+  { value: 'published', label: '已发布' },
+  { value: 'approved', label: '已审核' },
+  { value: 'pending', label: '待审核' }
+];
+
 const GalleryList = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
@@ -47,6 +60,7 @@ const GalleryList = () => {
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -64,13 +78,13 @@ const GalleryList = () => {
       });
 
       if (!response.ok) {
-        throw new Error('加载照片组失败');
+        throw new Error('加载图组失败');
       }
 
       const data = await response.json();
       setPhotoGroups(data);
     } catch (error) {
-      console.error('加载照片组失败:', error);
+      console.error('加载图组失败:', error);
     } finally {
       setLoading(false);
     }
@@ -95,6 +109,16 @@ const GalleryList = () => {
       result = result.filter(group => group.category === selectedCategory);
     }
 
+    // 状态过滤
+    if (selectedStatus !== 'all') {
+      result = result.filter(group => {
+        if (selectedStatus === 'published') return group.is_published === true;
+        if (selectedStatus === 'approved') return group.review_status === 'approved' && !group.is_published;
+        if (selectedStatus === 'pending') return group.review_status === 'pending';
+        return true;
+      });
+    }
+
     // 排序
     result.sort((a, b) => {
       let compareResult = 0;
@@ -115,7 +139,7 @@ const GalleryList = () => {
     });
 
     return result;
-  }, [photoGroups, searchQuery, selectedCategory, sortField, sortOrder]);
+  }, [photoGroups, searchQuery, selectedCategory, selectedStatus, sortField, sortOrder]);
 
   // 切换排序
   const toggleSort = (field: SortField) => {
@@ -142,7 +166,7 @@ const GalleryList = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -156,7 +180,7 @@ const GalleryList = () => {
               "text-2xl font-bold",
               isLight ? "text-gray-900" : "text-white"
             )}>
-              照片组列表
+              图组列表
             </h1>
             <span className={cn(
               "px-2 py-0.5 rounded-full text-xs font-medium",
@@ -173,7 +197,7 @@ const GalleryList = () => {
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
           >
             <Plus className="h-4 w-4" />
-            上传照片组
+            上传图组
           </Link>
         </div>
       </div>
@@ -193,7 +217,7 @@ const GalleryList = () => {
               )} />
               <input
                 type="text"
-                placeholder="搜索照片组标题或描述..."
+                placeholder="搜索图组标题或描述..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={cn(
@@ -229,6 +253,24 @@ const GalleryList = () => {
               ))}
             </select>
           </div>
+
+          {/* 状态筛选 */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={cn(
+                "px-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2",
+                isLight
+                  ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                  : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+              )}
+            >
+              {statusOptions.map(status => (
+                <option key={status.value} value={status.value}>{status.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -248,7 +290,7 @@ const GalleryList = () => {
               "text-sm",
               isLight ? "text-gray-500" : "text-gray-400"
             )}>
-              {searchQuery || selectedCategory !== 'all' ? '未找到匹配的照片组' : '暂无照片组'}
+              {searchQuery || selectedCategory !== 'all' ? '未找到匹配的图组' : '暂无图组'}
             </p>
           </div>
         ) : (
@@ -281,11 +323,24 @@ const GalleryList = () => {
                   )}
 
                   {/* 状态标签 */}
-                  {!group.is_published && (
-                    <div className="absolute top-2 right-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
-                      未发布
-                    </div>
-                  )}
+                  <div className="absolute top-2 right-2">
+                    {group.is_published ? (
+                      <div className="flex items-center gap-1 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <CheckCircle className="h-3 w-3" />
+                        已发布
+                      </div>
+                    ) : group.review_status === 'approved' ? (
+                      <div className="flex items-center gap-1 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <Clock className="h-3 w-3" />
+                        已审核
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
+                        <Clock className="h-3 w-3" />
+                        待审核
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 信息 */}
@@ -321,6 +376,21 @@ const GalleryList = () => {
                         {group.display_date || new Date(group.date).toLocaleDateString('zh-CN')}
                       </span>
                     </div>
+
+                    {group.author_id && (
+                      <div className="flex items-center gap-1.5">
+                        <User className={cn(
+                          "h-3.5 w-3.5",
+                          isLight ? "text-gray-400" : "text-gray-500"
+                        )} />
+                        <span className={cn(
+                          "text-xs",
+                          isLight ? "text-gray-600" : "text-gray-400"
+                        )}>
+                          创建者ID: {group.author_id.slice(0, 8)}...
+                        </span>
+                      </div>
+                    )}
 
                     {group.description && (
                       <p className={cn(

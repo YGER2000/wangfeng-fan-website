@@ -434,6 +434,22 @@ def get_schedules_count_admin(
     return {"count": count}
 
 
+@router.get("/schedules/{schedule_id}")
+def get_schedule_by_id(
+    schedule_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """获取单个行程详情（管理员）"""
+    from ..models.schedule_db import Schedule
+
+    schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
+    if not schedule:
+        raise HTTPException(status_code=404, detail="行程不存在")
+
+    return schedule.to_dict()
+
+
 @router.put("/schedules/{schedule_id}/approve")
 def approve_schedule(
     schedule_id: int,

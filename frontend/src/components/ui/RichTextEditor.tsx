@@ -5,14 +5,14 @@ import 'react-quill/dist/quill.snow.css';
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
-  height?: number;
+  height?: number | string;
 }
 
 /**
  * 基于 Quill 的富文本编辑器
  * 完全所见即所得，像 Word 一样简单易用
  */
-const RichTextEditor = ({ value, onChange, height = undefined }: RichTextEditorProps) => {
+const RichTextEditor = ({ value, onChange, height }: RichTextEditorProps) => {
   const quillRef = useRef<ReactQuill>(null);
 
   // 上传图片到服务器
@@ -140,10 +140,103 @@ const RichTextEditor = ({ value, onChange, height = undefined }: RichTextEditorP
     'link', 'image'
   ];
 
+  useEffect(() => {
+    const editorInstance = quillRef.current?.getEditor();
+    if (!editorInstance) return;
+    const toolbarModule = editorInstance.getModule('toolbar') as { container?: HTMLElement } | undefined;
+    const toolbar = toolbarModule?.container;
+    if (!toolbar) return;
+
+    const baseTips: Record<string, string> = {
+      'ql-header': '标题级别',
+      'ql-size': '字号',
+      'ql-bold': '加粗',
+      'ql-italic': '斜体',
+      'ql-underline': '下划线',
+      'ql-strike': '删除线',
+      'ql-color': '文字颜色',
+      'ql-background': '背景颜色',
+      'ql-align': '对齐方式',
+      'ql-blockquote': '引用',
+      'ql-code-block': '代码块',
+      'ql-link': '插入链接',
+      'ql-image': '插入图片',
+      'ql-clean': '清除格式'
+    };
+
+    const applyTooltip = (element: HTMLElement) => {
+      let tooltip = '';
+
+      const classList = Array.from(element.classList);
+      for (const cls of classList) {
+        if (baseTips[cls]) {
+          tooltip = baseTips[cls];
+          break;
+        }
+      }
+
+      if (!tooltip && element.classList.contains('ql-list')) {
+        const value = (element as HTMLButtonElement).value || element.getAttribute('value');
+        tooltip = value === 'ordered' ? '有序列表' : '无序列表';
+      }
+
+      if (!tooltip && element.classList.contains('ql-indent')) {
+        const value = (element as HTMLButtonElement).value || element.getAttribute('value');
+        tooltip = value === '+1' ? '增加缩进' : '减少缩进';
+      }
+
+      if (!tooltip && element.classList.contains('ql-toolbar')) {
+        tooltip = '';
+      }
+
+      if (tooltip) {
+        element.setAttribute('title', tooltip);
+      }
+    };
+
+    toolbar.querySelectorAll('button, select').forEach((item) => {
+      applyTooltip(item as HTMLElement);
+    });
+
+    toolbar.querySelectorAll('.ql-picker').forEach((picker) => {
+      const pickerEl = picker as HTMLElement;
+      const label = pickerEl.querySelector('.ql-picker-label') as HTMLElement | null;
+      if (!label) return;
+
+      let tooltip = '';
+      const classList = Array.from(pickerEl.classList);
+      for (const cls of classList) {
+        if (baseTips[cls]) {
+          tooltip = baseTips[cls];
+          break;
+        }
+      }
+
+      if (!tooltip && pickerEl.classList.contains('ql-color')) {
+        tooltip = '文字颜色';
+      }
+
+      if (!tooltip && pickerEl.classList.contains('ql-background')) {
+        tooltip = '背景颜色';
+      }
+
+      if (tooltip) {
+        label.setAttribute('title', tooltip);
+      }
+    });
+  }, []);
+
+  const resolvedHeight = useMemo(() => {
+    if (height === undefined) {
+      return '40vh';
+    }
+    return typeof height === 'number' ? `${height}px` : height;
+  }, [height]);
+
   return (
     <div
       className="rich-text-editor-wrapper h-full"
-      style={height ? { height: `${height}px` } : {}}
+      style={{ height: resolvedHeight }}
     >
       <ReactQuill
         ref={quillRef}
@@ -266,6 +359,10 @@ const RichTextEditor = ({ value, onChange, height = undefined }: RichTextEditorP
           min-height: 100%;
         }
 
+        .rich-text-editor-wrapper .ql-editor * {
+          color: inherit;
+        }
+
         .rich-text-editor-wrapper .ql-editor.ql-blank::before {
           color: #9CA3AF;
           font-style: italic;
@@ -346,88 +443,88 @@ const RichTextEditor = ({ value, onChange, height = undefined }: RichTextEditorP
         }
 
         /* 深色模式 */
-        .dark .rich-text-editor-wrapper .ql-toolbar {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar {
           background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%) !important;
           border-color: rgba(139, 92, 246, 0.3) !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-toolbar.ql-snow {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar.ql-snow {
           border-bottom-color: rgba(139, 92, 246, 0.4) !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-toolbar .ql-stroke {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar .ql-stroke {
           stroke: #A78BFA !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-toolbar .ql-fill {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar .ql-fill {
           fill: #A78BFA !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-toolbar button:hover .ql-stroke {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar button:hover .ql-stroke {
           stroke: #C4B5FD !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-toolbar button:hover .ql-fill {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-toolbar button:hover .ql-fill {
           fill: #C4B5FD !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-picker-label {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-picker-label {
           color: #A78BFA !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-picker-options {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-picker-options {
           background: #1F2937 !important;
           border-color: rgba(139, 92, 246, 0.4) !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-picker-item {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-picker-item {
           color: #E5E7EB !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-picker-item:hover {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-picker-item:hover {
           background: rgba(139, 92, 246, 0.2) !important;
           color: #C4B5FD !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-container {
-          background: #111827;
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-container {
+          background: rgba(17, 24, 39, 0.75);
           border-color: rgba(139, 92, 246, 0.3) !important;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor {
-          color: #E5E7EB;
-        }
-
-        .dark .rich-text-editor-wrapper .ql-editor.ql-blank::before {
-          color: #6B7280;
-        }
-
-        .dark .rich-text-editor-wrapper .ql-editor h1,
-        .dark .rich-text-editor-wrapper .ql-editor h2,
-        .dark .rich-text-editor-wrapper .ql-editor h3 {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor {
           color: #F9FAFB;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor blockquote {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor.ql-blank::before {
+          color: rgba(248, 250, 252, 0.5);
+        }
+
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor h1,
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor h2,
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor h3 {
+          color: #F9FAFB;
+        }
+
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor blockquote {
           border-left-color: #A78BFA;
           color: #9CA3AF;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor code {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor code {
           background: rgba(139, 92, 246, 0.2);
           color: #C4B5FD;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor pre {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor pre {
           background: #0F172A;
           color: #F1F5F9;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor a {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor a {
           color: #A78BFA;
         }
 
-        .dark .rich-text-editor-wrapper .ql-editor a:hover {
+        :is(.dark, html.starry-fantasy, body.starry-fantasy) .rich-text-editor-wrapper .ql-editor a:hover {
           color: #C4B5FD;
         }
       `}</style>

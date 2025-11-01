@@ -10,7 +10,10 @@ import {
   ChevronUp,
   ChevronDown,
   ExternalLink,
-  Eye
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { videoAPI, Video } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -30,6 +33,13 @@ const categoryOptions = [
   { value: '其他', label: '其他' }
 ];
 
+const statusOptions = [
+  { value: 'all', label: '全部状态' },
+  { value: 'published', label: '已发布' },
+  { value: 'approved', label: '已审核' },
+  { value: 'pending', label: '待审核' }
+];
+
 const VideoList = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
@@ -39,6 +49,7 @@ const VideoList = () => {
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [sortField, setSortField] = useState<SortField>('publish_date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -54,6 +65,32 @@ const VideoList = () => {
       console.error('加载视频失败:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 获取发布状态
+  const getPublishStatus = (video: Video) => {
+    if (video.is_published === 1) {
+      return {
+        text: '已发布',
+        icon: CheckCircle,
+        color: 'text-green-500',
+        bgColor: isLight ? 'bg-green-50' : 'bg-green-500/10'
+      };
+    } else if (video.review_status === 'approved') {
+      return {
+        text: '已审核',
+        icon: Clock,
+        color: 'text-blue-500',
+        bgColor: isLight ? 'bg-blue-50' : 'bg-blue-500/10'
+      };
+    } else {
+      return {
+        text: '待审核',
+        icon: XCircle,
+        color: 'text-yellow-500',
+        bgColor: isLight ? 'bg-yellow-50' : 'bg-yellow-500/10'
+      };
     }
   };
 
@@ -77,6 +114,16 @@ const VideoList = () => {
       result = result.filter(video => video.category === selectedCategory);
     }
 
+    // 状态过滤
+    if (selectedStatus !== 'all') {
+      result = result.filter(video => {
+        if (selectedStatus === 'published') return video.is_published === 1;
+        if (selectedStatus === 'approved') return video.review_status === 'approved' && video.is_published !== 1;
+        if (selectedStatus === 'pending') return video.review_status === 'pending';
+        return true;
+      });
+    }
+
     // 排序
     result.sort((a, b) => {
       let compareResult = 0;
@@ -97,7 +144,7 @@ const VideoList = () => {
     });
 
     return result;
-  }, [videos, searchQuery, selectedCategory, sortField, sortOrder]);
+  }, [videos, searchQuery, selectedCategory, selectedStatus, sortField, sortOrder]);
 
   // 切换排序
   const toggleSort = (field: SortField) => {
@@ -129,7 +176,7 @@ const VideoList = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -210,9 +257,25 @@ const VideoList = () => {
               )}
             >
               {categoryOptions.map(category => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
-                </option>
+                <option key={category.value} value={category.value}>{category.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 状态筛选 */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              className={cn(
+                "px-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2",
+                isLight
+                  ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+                  : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
+              )}
+            >
+              {statusOptions.map(status => (
+                <option key={status.value} value={status.value}>{status.label}</option>
               ))}
             </select>
           </div>
@@ -281,6 +344,12 @@ const VideoList = () => {
                       isLight ? "text-gray-600" : "text-gray-400"
                     )}>
                       BVID
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
+                      状态
                     </th>
                     <th className={cn(
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
@@ -375,6 +444,23 @@ const VideoList = () => {
                           {video.bvid}
                           <ExternalLink className="h-3 w-3" />
                         </a>
+                      </td>
+                      <td className="px-6 py-4">
+                        {(() => {
+                          const status = getPublishStatus(video);
+                          const StatusIcon = status.icon;
+                          return (
+                            <div className="flex items-center gap-2">
+                              <StatusIcon className={cn("h-4 w-4", status.color)} />
+                              <span className={cn(
+                                "text-sm font-medium",
+                                status.color
+                              )}>
+                                {status.text}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5">

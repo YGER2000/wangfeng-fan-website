@@ -7,10 +7,11 @@ from datetime import datetime
 
 from ..database import get_db
 from ..core.permissions import require_admin
+from ..core.dependencies import get_current_user
 from ..models.user_db import User
 from ..models.video import VideoCategory
 from ..schemas.video import VideoCreate, VideoUpdate, Video as VideoSchema
-from ..crud.video import get_video, get_videos, get_videos_count, create_video, update_video, delete_video
+from ..crud.video import get_video, get_videos, get_videos_count, create_video, update_video, delete_video, get_videos_by_author, get_all_videos_admin
 from ..utils.bilibili import extract_bvid, get_video_info
 
 router = APIRouter(prefix="/api/videos", tags=["videos"])
@@ -25,6 +26,45 @@ def list_videos(
 ):
     """获取视频列表"""
     videos = get_videos(db=db, skip=skip, limit=limit, category=category)
+    return videos
+
+
+@router.get("/my", response_model=List[VideoSchema])
+def get_my_videos(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=1000),
+    category: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户的视频（包含所有状态）"""
+    videos = get_videos_by_author(
+        db=db,
+        author_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        category=category
+    )
+    return videos
+
+
+@router.get("/all", response_model=List[VideoSchema])
+def get_all_videos(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=1000),
+    category: Optional[str] = Query(None),
+    review_status: Optional[str] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """获取所有用户的视频（仅管理员,包含所有状态）"""
+    videos = get_all_videos_admin(
+        db=db,
+        skip=skip,
+        limit=limit,
+        category=category,
+        review_status=review_status
+    )
     return videos
 
 
@@ -118,6 +158,7 @@ def create_video_endpoint(
     # 使用B站信息补充数据
     video_data = video.dict()
     video_data['bvid'] = bvid  # 使用提取的BV号
+    video_data['author_id'] = str(current_user.id)  # 设置创建者ID
 
     if bilibili_info:
         # 如果成功获取B站信息，使用封面URL
@@ -133,7 +174,7 @@ def create_video_endpoint(
 
     # 创建Pydantic对象
     video_create = VideoCreate(**video_data)
-    db_video = create_video(db=db, video=video_create)
+    db_video = create_video(db=db, video=video_create, author_id=str(current_user.id))
     return db_video
 
 

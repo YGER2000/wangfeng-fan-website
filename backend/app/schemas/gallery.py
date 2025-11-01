@@ -72,6 +72,8 @@ class PhotoGroupCreate(PhotoGroupBase):
     cover_image_thumb_url: Optional[str] = None
     storage_type: str = "local"
     is_published: bool = True
+    author_id: Optional[str] = None
+    review_status: Optional[str] = 'pending'
 
 
 class PhotoGroupUpdate(BaseModel):
@@ -95,8 +97,16 @@ class PhotoGroup(PhotoGroupBase):
     storage_type: str
     is_published: bool
     is_deleted: bool
+    author_id: Optional[str]
+    review_status: str
+    reviewer_id: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    photo_count: int = 0  # 照片数量
+    created_by: Optional[str] = None  # 创建者名称
+    tags: List[str] = []  # 标签列表
 
     class Config:
         from_attributes = True

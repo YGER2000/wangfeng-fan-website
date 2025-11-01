@@ -13,8 +13,42 @@ from datetime import datetime
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+from sqlalchemy.orm import joinedload
+
 from app.database import SessionLocal
-from app.models.tag_db import Tag
+from app.models.tag_db import Tag, TagCategory
+
+DEFAULT_CATEGORY_NAME = "其他"
+SEPARATORS = ("：", ":")
+
+
+def split_tag_label(label: str):
+    """将标签字符串拆分为 (种类, 值)。"""
+    cleaned = (label or "").strip()
+    if not cleaned:
+        return DEFAULT_CATEGORY_NAME, ""
+
+    for separator in SEPARATORS:
+        index = cleaned.find(separator)
+        if index != -1:
+            category_part = cleaned[:index].strip()
+            value_part = cleaned[index + 1 :].strip()
+            if category_part and value_part:
+                return category_part, value_part
+
+    return DEFAULT_CATEGORY_NAME, cleaned
+
+
+def get_or_create_category(db, name: str) -> TagCategory:
+    """获取或创建标签种类。"""
+    category = db.query(TagCategory).filter(TagCategory.name == name).first()
+    if category:
+        return category
+
+    category = TagCategory(name=name)
+    db.add(category)
+    db.flush()
+    return category
 
 def import_music_tags():
     """导入音乐标签"""
@@ -57,12 +91,20 @@ def import_music_tags():
         
         for tag_name in tag_names:
             try:
-                # 创建新标签
+                category_name, value = split_tag_label(tag_name)
+                if not value:
+                    print(f"⚠️ 跳过空标签: {tag_name}")
+                    continue
+
+                category = get_or_create_category(db, category_name)
+
                 new_tag = Tag(
-                    name=tag_name,
+                    category_id=category.id,
+                    value=value,
                     created_at=datetime.utcnow()
                 )
-                
+                new_tag.sync_display_name(category.name)
+
                 db.add(new_tag)
                 success_count += 1
                 
@@ -86,8 +128,8 @@ def import_music_tags():
         print("=" * 60)
         
         total_tags = db.query(Tag).count()
-        album_tags = db.query(Tag).filter(Tag.name.like('专辑：%')).count()
-        song_tags = db.query(Tag).filter(Tag.name.like('单曲：%')).count()
+        album_tags = db.query(Tag).join(TagCategory).filter(TagCategory.name == '专辑').count()
+        song_tags = db.query(Tag).join(TagCategory).filter(TagCategory.name == '单曲').count()
         
         print(f"数据库中总标签数: {total_tags}")
         print(f"  - 专辑标签: {album_tags} 个")
@@ -95,9 +137,16 @@ def import_music_tags():
         
         # 显示前10个标签示例
         print("\n前10个标签示例:")
-        sample_tags = db.query(Tag).limit(10).all()
+        sample_tags = (
+            db.query(Tag)
+            .options(joinedload(Tag.category))
+            .order_by(Tag.created_at)
+            .limit(10)
+            .all()
+        )
         for tag in sample_tags:
-            print(f"  [{tag.id}] {tag.name}")
+            category = tag.category.name if hasattr(tag, 'category') and tag.category else '未知种类'
+            print(f"  [{tag.id}] {category} -> {tag.name}")
         
         print("\n" + "=" * 60)
         print("✅ 音乐标签导入完成！")

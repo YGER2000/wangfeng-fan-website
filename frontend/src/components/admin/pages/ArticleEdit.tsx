@@ -33,7 +33,7 @@ const ArticleEdit = () => {
       } catch (e) {
         console.error('加载文章失败', e);
         alert('加载文章失败');
-        navigate('/admin/articles/list');
+        navigate('/admin/articles/all');
       } finally {
         setLoading(false);
       }
@@ -45,9 +45,6 @@ const ArticleEdit = () => {
     if (!id) return;
 
     try {
-      // 判断是否为管理员
-      const isAdmin = currentRole === 'admin' || currentRole === 'super_admin';
-
       // 1. 如果有新的封面图片，先上传
       let coverUrl: string | undefined = undefined;
       if (coverImage) {
@@ -62,7 +59,7 @@ const ArticleEdit = () => {
         }
       }
 
-      // 2. 准备更新数据
+      // 2. 准备更新数据 - 所有编辑都需要重新审核
       const updateData = {
         title: article.title,
         content: article.content,
@@ -74,14 +71,16 @@ const ArticleEdit = () => {
         tags: article.tags || [],
         cover_url: coverUrl, // 如果有新封面则更新，否则保持原样
         published_at: article.date ? new Date(article.date).toISOString() : undefined,
-        // 普通用户修改后需要重新审核
-        review_status: isAdmin ? 'approved' : 'pending',
-        is_published: isAdmin, // 管理员直接发布，普通用户待审核
+        // 所有文章编辑后都需要重新审核，不管是谁编辑的
+        review_status: 'pending',
+        is_published: false,
       };
 
       // 3. 更新文章
       await articleAPI.update(id, updateData, token);
-      navigate('/admin/articles/list');
+
+      // 4. 不在这里跳转，让 ArticleEditor 处理跳转和提示
+      // navigate('/admin/articles/list');
     } catch (error) {
       console.error('更新文章失败:', error);
       throw error;
@@ -92,7 +91,7 @@ const ArticleEdit = () => {
     if (!confirm('确定删除该文章吗？')) return;
     try {
       await articleAPI.delete(articleId, token);
-      navigate('/admin/articles/list');
+      navigate('/admin/articles/all');
     } catch (error) {
       console.error('删除文章失败:', error);
       alert('删除失败');
@@ -116,5 +115,4 @@ const ArticleEdit = () => {
 };
 
 export default ArticleEdit;
-
 

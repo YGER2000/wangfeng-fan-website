@@ -28,6 +28,7 @@ const Header = () => {
     { name: '资料科普', path: '/shu-ju-ke-pu' },
     { name: '峰言峰语', path: '/feng-yan-feng-yu' },
     { name: '峰迷荟萃', path: '/feng-mi-liao-feng' },
+    { name: '游戏活动', path: '/game-activity' },
     { name: '关于本站', path: '/about-site' },
   ];
 

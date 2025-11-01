@@ -1,13 +1,20 @@
 """Tag API Routes"""
-from typing import List, Optional
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..services.tag_service import TagService
 from ..schemas.tag import (
-    TagCreate, TagUpdate, TagResponse,
-    ContentTagCreate, ContentType
+    TagCreate,
+    TagUpdate,
+    TagResponse,
+    ContentTagCreate,
+    ContentType,
+    TagCategoryCreate,
+    TagCategoryUpdate,
+    TagCategoryResponse,
 )
 
 router = APIRouter(prefix="/api/tags", tags=["标签"])
@@ -18,12 +25,58 @@ def get_tag_service(db: Session = Depends(get_db)) -> TagService:
     return TagService(db)
 
 
+# ==================== 标签种类 ====================
+
+@router.get("/categories", response_model=List[TagCategoryResponse], summary="获取标签种类列表")
+def list_categories(
+    tag_service: TagService = Depends(get_tag_service),
+):
+    """获取所有标签种类"""
+    categories = tag_service.list_categories()
+    return [category.to_dict() for category in categories]
+
+
+@router.post("/categories", response_model=TagCategoryResponse, summary="创建标签种类")
+def create_category(
+    category_data: TagCategoryCreate,
+    tag_service: TagService = Depends(get_tag_service),
+):
+    """创建标签种类"""
+    category = tag_service.create_category(category_data)
+    return category.to_dict()
+
+
+@router.put("/categories/{category_id}", response_model=TagCategoryResponse, summary="更新标签种类")
+def update_category(
+    category_id: int,
+    category_data: TagCategoryUpdate,
+    tag_service: TagService = Depends(get_tag_service),
+):
+    """更新标签种类"""
+    category = tag_service.update_category(category_id, category_data)
+    if not category:
+        raise HTTPException(status_code=404, detail=f"标签种类 ID {category_id} 不存在")
+    return category.to_dict()
+
+
+@router.delete("/categories/{category_id}", summary="删除标签种类")
+def delete_category(
+    category_id: int,
+    tag_service: TagService = Depends(get_tag_service),
+):
+    """删除标签种类"""
+    success = tag_service.delete_category(category_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"标签种类 ID {category_id} 不存在")
+    return {"message": "标签种类删除成功"}
+
+
 # ==================== 标签 CRUD ====================
 
 @router.post("", response_model=TagResponse, summary="创建标签")
 def create_tag(
     tag_data: TagCreate,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """创建新标签"""
     tag = tag_service.create_tag(tag_data)
@@ -34,7 +87,7 @@ def create_tag(
 def list_tags(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """获取所有标签列表"""
     tags = tag_service.list_tags(skip=skip, limit=limit)
@@ -43,16 +96,16 @@ def list_tags(
 
 @router.get("/search", response_model=List[TagResponse], summary="搜索标签")
 def search_tags(
-    q: str = Query(..., min_length=1, description="搜索关键词"),
+    q: str = Query(..., min_length=1, description="搜索关键词（支持标签值、种类或组合名称）"),
     limit: int = Query(20, ge=1, le=100),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     搜索标签（模糊搜索）
 
     示例：
     - /api/tags/search?q=花火
-    - /api/tags/search?q=花
+    - /api/tags/search?q=单曲
     """
     tags = tag_service.search_tags(query=q, limit=limit)
     return [tag.to_dict() for tag in tags]
@@ -61,7 +114,7 @@ def search_tags(
 @router.get("/{tag_id}", response_model=TagResponse, summary="获取单个标签")
 def get_tag(
     tag_id: int,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """获取指定ID的标签"""
     tag = tag_service.get_tag(tag_id)
@@ -74,7 +127,7 @@ def get_tag(
 def update_tag(
     tag_id: int,
     tag_data: TagUpdate,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """更新标签信息"""
     tag = tag_service.update_tag(tag_id, tag_data)
@@ -86,7 +139,7 @@ def update_tag(
 @router.delete("/{tag_id}", summary="删除标签")
 def delete_tag(
     tag_id: int,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """删除标签（会级联删除所有内容关联）"""
     success = tag_service.delete_tag(tag_id)
@@ -100,7 +153,7 @@ def delete_tag(
 @router.get("/{tag_id}/contents", summary="获取标签关联的所有内容ID")
 def get_tag_contents(
     tag_id: int,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     获取标签关联的所有内容ID（按类型分组）
@@ -124,13 +177,13 @@ def get_tag_contents(
 @router.post("/content", summary="为内容添加标签")
 def add_tag_to_content(
     data: ContentTagCreate,
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """为指定内容添加标签"""
     content_tag = tag_service.add_tag_to_content(
         tag_id=data.tag_id,
         content_type=data.content_type,
-        content_id=data.content_id
+        content_id=data.content_id,
     )
     return content_tag.to_dict()
 
@@ -140,13 +193,13 @@ def remove_tag_from_content(
     tag_id: int = Query(..., description="标签ID"),
     content_type: ContentType = Query(..., description="内容类型"),
     content_id: int = Query(..., description="内容ID"),
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """从指定内容中移除标签"""
     success = tag_service.remove_tag_from_content(
         tag_id=tag_id,
         content_type=content_type,
-        content_id=content_id
+        content_id=content_id,
     )
     if not success:
         raise HTTPException(status_code=404, detail="标签关联不存在")
@@ -156,8 +209,8 @@ def remove_tag_from_content(
 @router.get("/content/{content_type}/{content_id}", response_model=List[TagResponse], summary="获取内容的标签")
 def get_content_tags(
     content_type: ContentType,
-    content_id: int,
-    tag_service: TagService = Depends(get_tag_service)
+    content_id: str,
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """获取指定内容的所有标签"""
     tags = tag_service.get_content_tags(content_type, content_id)
@@ -167,9 +220,9 @@ def get_content_tags(
 @router.put("/content/{content_type}/{content_id}", response_model=List[TagResponse], summary="设置内容的标签")
 def set_content_tags(
     content_type: ContentType,
-    content_id: int,
+    content_id: str,
     tag_ids: List[int],
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """设置内容的标签（替换所有现有标签）"""
     tags = tag_service.set_content_tags(content_type, content_id, tag_ids)
@@ -181,15 +234,145 @@ def set_content_tags(
 @router.post("/batch", response_model=List[TagResponse], summary="批量创建标签")
 def batch_create_tags(
     tag_names: List[str],
-    tag_service: TagService = Depends(get_tag_service)
+    tag_service: TagService = Depends(get_tag_service),
 ):
     """
     批量创建标签（用于预构建标签库）
 
-    示例：
-    ```json
-    ["单曲《花火》", "专辑《花火》", "单曲《向阳花》"]
-    ```
+    支持格式：
+    - "单曲：花火"
+    - "专辑: 鲍家街43号"
+    - "直播活动"
     """
     tags = tag_service.batch_create_tags(tag_names)
     return [tag.to_dict() for tag in tags]
+
+
+# ==================== 标签内容查询 ====================
+
+@router.get("/by-name/{tag_name}/contents", summary="根据标签名获取所有相关内容")
+def get_contents_by_tag_name(
+    tag_name: str,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    """
+    根据标签名称获取所有相关内容（文章、视频、相册）
+
+    返回格式：
+    {
+        "tag_name": "花火",
+        "articles": [...],
+        "videos": [...],
+        "galleries": [...]
+    }
+    """
+    from ..models.tag_db import Tag, ContentTag
+    from ..models.article import Article
+    from ..models.video import Video
+    from ..models.gallery_db import PhotoGroup
+
+    # 查找标签(按显示名称匹配)
+    tag = db.query(Tag).filter(Tag.name == tag_name).first()
+    if not tag:
+        return {
+            "tag_name": tag_name,
+            "articles": [],
+            "videos": [],
+            "galleries": []
+        }
+
+    # 获取所有关联的内容ID
+    content_tags = db.query(ContentTag).filter(ContentTag.tag_id == tag.id).all()
+
+    # 分类存储ID
+    article_ids = []
+    video_ids = []
+    gallery_ids = []
+
+    for ct in content_tags:
+        if ct.content_type == "article":
+            article_ids.append(ct.content_id)
+        elif ct.content_type == "video":
+            video_ids.append(ct.content_id)
+        elif ct.content_type == "gallery":
+            gallery_ids.append(ct.content_id)
+
+    # 查询文章
+    articles = []
+    if article_ids:
+        articles_query = db.query(Article).filter(
+            Article.id.in_(article_ids),
+            Article.is_deleted == False,
+            Article.is_published == True
+        ).offset(skip).limit(limit).all()
+
+        articles = [{
+            "id": str(a.id),
+            "title": a.title,
+            "slug": a.slug,
+            "excerpt": a.excerpt,
+            "cover_url": a.cover_url,
+            "author": a.author,
+            "category_primary": a.category_primary,
+            "category_secondary": a.category_secondary,
+            "created_at": a.created_at.isoformat() if a.created_at else None,
+            "view_count": a.view_count or 0
+        } for a in articles_query]
+
+    # 查询视频
+    videos = []
+    if video_ids:
+        videos_query = db.query(Video).filter(
+            Video.id.in_(video_ids),
+            Video.is_deleted == False,
+            Video.is_published == True
+        ).offset(skip).limit(limit).all()
+
+        videos = [{
+            "id": str(v.id),
+            "title": v.title,
+            "description": v.description,
+            "cover_url": v.cover_url,
+            "video_url": v.video_url,
+            "author": v.author,
+            "category": v.category,
+            "created_at": v.created_at.isoformat() if v.created_at else None,
+            "view_count": v.view_count or 0
+        } for v in videos_query]
+
+    # 查询相册
+    galleries = []
+    if gallery_ids:
+        galleries_query = db.query(PhotoGroup).filter(
+            PhotoGroup.id.in_(gallery_ids),
+            PhotoGroup.is_deleted == False,
+            PhotoGroup.is_published == True
+        ).offset(skip).limit(limit).all()
+
+        from ..models.gallery_db import Photo
+        galleries = []
+        for g in galleries_query:
+            photo_count = db.query(Photo).filter(
+                Photo.photo_group_id == g.id,
+                Photo.is_deleted == False
+            ).count()
+
+            galleries.append({
+                "id": str(g.id),
+                "name": g.name,
+                "description": g.description,
+                "cover_image_url": g.cover_image_url,
+                "cover_image_thumb_url": g.cover_image_thumb_url,
+                "category": g.category,
+                "created_at": g.created_at.isoformat() if g.created_at else None,
+                "photo_count": photo_count
+            })
+
+    return {
+        "tag_name": tag_name,
+        "articles": articles,
+        "videos": videos,
+        "galleries": galleries
+    }

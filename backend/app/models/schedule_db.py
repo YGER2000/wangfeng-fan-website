@@ -19,9 +19,14 @@ class Schedule(Base):
     image_thumb = Column(String(500), nullable=True, comment='海报缩略图路径（压缩图）')
     tags = Column(Text, nullable=True, comment='标签，用逗号分隔')
     source = Column(String(20), default='custom', nullable=False, comment='数据来源：legacy/custom')
+    author_id = Column(String(36), nullable=True, index=True, comment='创建者用户ID')
 
-    # 审核状态字段
-    review_status = Column(String(20), default='pending', nullable=False, index=True, comment='审核状态: pending/approved')
+    # 审核状态字段（完整版）
+    review_status = Column(String(20), default='pending', nullable=False, index=True, comment='审核状态: pending/approved/rejected')
+    reviewer_id = Column(String(36), nullable=True, index=True, comment='审核人ID')
+    review_notes = Column(Text, nullable=True, comment='审核备注/拒绝原因')
+    reviewed_at = Column(DateTime, nullable=True, comment='审核时间')
+
     is_published = Column(Integer, default=0, nullable=False, comment='是否已发布: 0未发布/1已发布')
     article_id = Column(String(36), nullable=True, index=True, comment='关联的文章ID')
 
@@ -45,7 +50,11 @@ class Schedule(Base):
             'image_thumb': self.image_thumb,
             'tags': self.tags.split(',') if self.tags else [],
             'source': self.source,
+            'author_id': self.author_id,
             'review_status': self.review_status,
+            'reviewer_id': self.reviewer_id,
+            'review_notes': self.review_notes,
+            'reviewed_at': self.reviewed_at.isoformat() if self.reviewed_at else None,
             'is_published': self.is_published,
             'article_id': self.article_id,
             'created_at': self.created_at.isoformat() if self.created_at else None,

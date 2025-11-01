@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import asyncio
 
-from .routers import auth, articles, schedules, admin, verification, profile, upload, videos, tags, gallery
+from .routers import auth, articles, schedules, admin, verification, profile, upload, videos, tags, gallery, games, reviews
 from .models.article import Base as ArticleBase
 from .models.user_db import Base as UserBase
 from .models.admin_log import Base as AdminLogBase
@@ -13,6 +13,7 @@ from .models.verification_code import Base as VerificationCodeBase
 from .models.video import Base as VideoBase
 from .models.tag_db import Base as TagBase
 from .models.gallery_db import Base as GalleryBase
+from .models.game import Base as GameBase
 from .database import engine
 
 # 创建所有数据库表
@@ -24,6 +25,7 @@ VerificationCodeBase.metadata.create_all(bind=engine)
 VideoBase.metadata.create_all(bind=engine)
 TagBase.metadata.create_all(bind=engine)
 GalleryBase.metadata.create_all(bind=engine)
+GameBase.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="汪峰粉丝网站 API",
@@ -72,6 +74,8 @@ app.include_router(upload.router)  # 文件上传路由
 app.include_router(videos.router)  # 视频管理路由
 app.include_router(tags.router)  # 标签路由
 app.include_router(gallery.router)  # 图片画廊路由
+app.include_router(games.router)  # 游戏和投票路由
+app.include_router(reviews.router)  # 审核路由
 
 
 @app.get("/")

@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, Camera, Images, Shuffle, ArrowDownUp } from 'lucide-react';
-import { withBasePath } from '@/lib/utils';
+import { X, ChevronLeft, ChevronRight, Camera, Images, Shuffle, ArrowDownUp, Sparkles } from 'lucide-react';
 
 // API PhotoGroup 类型
 interface APIPhotoGroup {
@@ -80,9 +79,12 @@ const Gallery = () => {
         const response = await fetch('http://localhost:1994/api/gallery/groups');
         const data: APIPhotoGroup[] = await response.json();
 
+        // 只保留云端存储的照片组（过滤掉 legacy 类型）
+        const ossOnlyGroups = data.filter(apiGroup => apiGroup.storage_type !== 'legacy');
+
         // 转换API数据为前端格式
         const transformedGroups: PhotoGroup[] = await Promise.all(
-          data.map(async (apiGroup) => {
+          ossOnlyGroups.map(async (apiGroup) => {
             try {
               // 获取照片组的照片
               const photosResponse = await fetch(`http://localhost:1994/api/gallery/groups/${apiGroup.id}`);
@@ -122,8 +124,8 @@ const Gallery = () => {
 
         setPhotoGroups(transformedGroups);
 
-        // 提取所有分类
-        const uniqueCategories = ['全部', ...Array.from(new Set(data.map(g => g.category)))];
+        // 提取所有分类（只从云端存储的照片组中提取）
+        const uniqueCategories = ['全部', ...Array.from(new Set(ossOnlyGroups.map(g => g.category)))];
         setCategories(uniqueCategories);
       } catch (error) {
         console.error('获取照片组失败:', error);
@@ -135,27 +137,31 @@ const Gallery = () => {
     fetchPhotoGroups();
   }, []);
 
-  // 获取筛选后的照片组
-  const filteredPhotoGroups = selectedCategory === '全部'
-    ? photoGroups
-    : photoGroups.filter(group => group.category === selectedCategory);
+  // 获取筛选后的照片组，避免每次渲染都重新创建引用
+  const filteredPhotoGroups = useMemo(() => {
+    return selectedCategory === '全部'
+      ? photoGroups
+      : photoGroups.filter(group => group.category === selectedCategory);
+  }, [photoGroups, selectedCategory]);
 
   // 将所有照片展平成一个数组
-  const basePhotos: FlattenedPhoto[] = filteredPhotoGroups.flatMap(photoGroup =>
-    photoGroup.images.map((src, index) => ({
-      src,
-      photoGroup,
-      indexInGroup: index
-    }))
-  );
+  const basePhotos: FlattenedPhoto[] = useMemo(() => {
+    return filteredPhotoGroups.flatMap(photoGroup =>
+      photoGroup.images.map((src, index) => ({
+        src,
+        photoGroup,
+        indexInGroup: index
+      }))
+    );
+  }, [filteredPhotoGroups]);
 
   // 使用状态来存储当前的照片顺序
   const [allPhotos, setAllPhotos] = useState<FlattenedPhoto[]>(basePhotos);
 
-  // 当分类改变时，重置照片顺序
+  // 当分类或者后端数据变更时，重置照片顺序
   useEffect(() => {
     setAllPhotos(basePhotos);
-  }, [selectedCategory]);
+  }, [basePhotos]);
 
   // 随机打乱照片顺序
   const handleShuffle = () => {
@@ -205,18 +211,35 @@ const Gallery = () => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-white py-12">
+    <div className="min-h-screen bg-transparent text-white py-20">
       <div className="container mx-auto px-4">
-        {/* 头部标题 - 缩小间距 */}
+        {/* 页面标题 */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-8"
+          className="text-center mb-16"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary">
-            图片 <span className="text-wangfeng-purple animate-pulse-glow">画廊</span>
-          </h1>
+          <div className="relative inline-block">
+            <motion.h1
+              className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4 relative z-10"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              图片 <span className="text-wangfeng-purple">画廊</span>
+            </motion.h1>
+            <motion.div
+              className="absolute -top-4 -right-4 text-wangfeng-purple/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-12 h-12 md:w-16 md:h-16" />
+            </motion.div>
+          </div>
+          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
+            Photo Gallery of Wang Feng
+          </h2>
         </motion.div>
 
         {/* 分类筛选和控制按钮 */}
@@ -224,42 +247,40 @@ const Gallery = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mb-6"
+          className="flex justify-center gap-4 mb-12 flex-wrap"
         >
-          <div className="flex flex-wrap justify-center items-center gap-3">
-            {/* 随机按钮 */}
-            <button
-              onClick={handleShuffle}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-wangfeng-purple to-pink-600 theme-text-primary shadow-glow hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold"
-            >
-              <Shuffle className="w-4 h-4" />
-              <span>随机</span>
-            </button>
+          {/* 随机按钮 */}
+          <button
+            onClick={handleShuffle}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-wangfeng-purple to-pink-600 theme-text-primary shadow-glow hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold"
+          >
+            <Shuffle className="w-4 h-4" />
+            <span>随机</span>
+          </button>
 
-            {/* 顺序按钮 */}
-            <button
-              onClick={handleRestore}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 theme-text-primary shadow-glow hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold"
-            >
-              <ArrowDownUp className="w-4 h-4" />
-              <span>顺序</span>
-            </button>
+          {/* 顺序按钮 */}
+          <button
+            onClick={handleRestore}
+            className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 theme-text-primary shadow-glow hover:shadow-2xl hover:scale-105 transition-all duration-300 font-semibold"
+          >
+            <ArrowDownUp className="w-4 h-4" />
+            <span>顺序</span>
+          </button>
 
-            {/* 分类按钮 */}
-            {categories.map((category) => (
-              <button
-                key={`category-${category}`}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-5 py-2.5 rounded-full font-semibold transition-all duration-300 ${
-                  selectedCategory === category
-                    ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
-                    : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          {/* 分类按钮 */}
+          {categories.map((category) => (
+            <button
+              key={`category-${category}`}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 ${
+                selectedCategory === category
+                  ? 'bg-wangfeng-purple theme-text-primary shadow-glow animate-pulse-glow'
+                  : 'bg-transparent border theme-border-primary theme-text-secondary hover:border-wangfeng-purple hover:text-wangfeng-purple'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
         </motion.div>
 
         {/* 瀑布流图片展示 - 增大展示空间 */}
@@ -295,7 +316,7 @@ const Gallery = () => {
                     className="w-full h-full object-cover transition-all duration-300 group-hover:scale-110"
                     loading="lazy"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = withBasePath('images/main.jpg');
+                      (e.target as HTMLImageElement).src = '/images/main.jpg';
                     }}
                   />
 
@@ -406,7 +427,7 @@ const Gallery = () => {
                   alt={`${selectedPhotoGroup.title} - ${selectedImageIndex + 1}`}
                   className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-2xl"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = withBasePath('images/main.jpg');
+                    (e.target as HTMLImageElement).src = '/images/main.jpg';
                   }}
                 />
               </div>
@@ -452,7 +473,7 @@ const Gallery = () => {
                             alt={`缩略图 ${index + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = withBasePath('images/main.jpg');
+                              (e.target as HTMLImageElement).src = '/images/main.jpg';
                             }}
                           />
                         </button>

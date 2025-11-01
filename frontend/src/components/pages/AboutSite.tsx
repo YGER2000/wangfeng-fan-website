@@ -1,164 +1,366 @@
 import { motion } from 'framer-motion';
-import { Heart, Code, Users, Globe, Star, Coffee } from 'lucide-react';
+import { Heart, Code, Users, Globe, Star, Coffee, Sparkles, Rocket, Zap, Shield, Music2, Database, Layers } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
+import { cn } from '@/lib/utils';
 
 const AboutSite = () => {
+  const { theme } = useTheme();
+  const isLight = theme === 'white';
+
   return (
-    <div className="min-h-screen bg-transparent text-white py-20">
-      <div className="container mx-auto px-4">
-        {/* 头部标题 */}
+    <div className={cn(
+      "min-h-screen py-20 transition-colors duration-300",
+      isLight ? "bg-white text-gray-900" : "bg-transparent text-white"
+    )}>
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Hero Section - Bold Header */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          className="text-center mb-20"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            关于 <span className="text-wangfeng-purple animate-pulse-glow">本站</span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
+          <div className="relative inline-block">
+            <motion.h1
+              className={cn(
+                "text-5xl md:text-7xl font-bebas tracking-wider mb-6 relative z-10",
+                isLight ? "text-gray-900" : "text-white"
+              )}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              关于 <span className="text-wangfeng-purple">本站</span>
+            </motion.h1>
+            <motion.div
+              className="absolute -top-4 -right-4 text-wangfeng-purple/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-12 h-12 md:w-16 md:h-16" />
+            </motion.div>
+          </div>
+          <h2 className={cn(
+            "text-xl md:text-2xl font-light tracking-[0.3em] uppercase mb-4",
+            isLight ? "text-gray-600" : "text-gray-300"
+          )}>
             汪峰终极粉丝网站
           </h2>
-          <p className="theme-text-secondary text-lg max-w-2xl mx-auto">
+          <p className={cn(
+            "text-lg max-w-2xl mx-auto leading-relaxed",
+            isLight ? "text-gray-600" : "text-gray-400"
+          )}>
             一个由汪峰粉丝创建和维护的非官方网站，致力于记录和分享汪峰的音乐世界
           </p>
         </motion.div>
 
-        {/* 网站介绍 */}
+        {/* Stats Cards - Bold Numbers */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="theme-bg-card rounded-xl border theme-border-primary shadow-glow p-8 mb-12"
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-20"
         >
-          <div className="prose prose-invert max-w-none">
-            <h2 className="text-3xl font-bold theme-text-primary mb-6 flex items-center gap-3">
-              <Globe className="w-8 h-8 text-wangfeng-purple" />
-              网站简介
-            </h2>
-            
-            <p className="theme-text-secondary text-lg leading-relaxed mb-6">
-              欢迎来到汪峰终极粉丝网站！这是一个由热爱汪峰音乐的粉丝们自发创建和维护的非官方网站。
-              我们的目标是为所有喜欢汪峰音乐的朋友提供一个全面、专业、易于浏览的信息平台。
-            </p>
-            
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              <div>
-                <h3 className="text-xl font-bold theme-text-primary mb-4 flex items-center gap-2">
-                  <Star className="w-5 h-5 text-wangfeng-purple" />
-                  我们的使命
-                </h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">记录汪峰完整的音乐生涯和成就</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">分享最新的演出信息和新闻动态</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">建立一个活跃的粉丝社区</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">传播摇滚精神和音乐文化</span>
-                  </li>
-                </ul>
+          {[
+            { icon: Music2, number: "15+", label: "专辑收录", color: "text-wangfeng-purple" },
+            { icon: Globe, number: "500+", label: "演出记录", color: "text-blue-500" },
+            { icon: Users, number: "1000+", label: "活跃粉丝", color: "text-pink-500" },
+            { icon: Heart, number: "∞", label: "音乐热爱", color: "text-red-500" },
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
+              className={cn(
+                "rounded-2xl p-6 text-center border transition-all hover:scale-105",
+                isLight
+                  ? "bg-white border-gray-200 shadow-lg hover:shadow-xl"
+                  : "bg-black/40 border-wangfeng-purple/30 hover:border-wangfeng-purple/60"
+              )}
+            >
+              <stat.icon className={cn("w-10 h-10 mx-auto mb-3", stat.color)} />
+              <div className={cn(
+                "text-4xl font-bold mb-2",
+                isLight ? "text-gray-900" : "text-white"
+              )}>{stat.number}</div>
+              <div className={cn(
+                "text-sm font-medium",
+                isLight ? "text-gray-600" : "text-gray-400"
+              )}>{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Featured Intro Card - Modern Asymmetric Layout */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="mb-20"
+        >
+          <div className={cn(
+            "rounded-3xl overflow-hidden border transition-all",
+            isLight
+              ? "bg-gradient-to-br from-gray-50 to-white border-gray-200 shadow-xl"
+              : "bg-gradient-to-br from-black/60 to-black/40 border-wangfeng-purple/40 shadow-glow"
+          )}>
+            <div className="p-8 lg:p-12">
+              <div className="flex items-center gap-4 mb-8">
+                <Globe className="w-10 h-10 text-wangfeng-purple" />
+                <h3 className={cn(
+                  "text-4xl md:text-5xl font-bold",
+                  isLight ? "text-gray-900" : "text-white"
+                )}>网站简介</h3>
               </div>
-              
-              <div>
-                <h3 className="text-xl font-bold theme-text-primary mb-4 flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-wangfeng-purple" />
-                  我们的特色
-                </h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">全面的音乐作品数据库</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">详细的演出时间线和行程信息</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">丰富的图片和视频资源</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">粉丝互动和内容分享平台</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="bg-wangfeng-purple/10 border border-wangfeng-purple/30 rounded-lg p-6">
-              <h3 className="text-xl font-bold theme-text-primary mb-3 flex items-center gap-2">
-                <Coffee className="w-5 h-5 text-wangfeng-purple" />
-                网站声明
-              </h3>
-              <p className="theme-text-secondary">
-                本站为非官方粉丝网站，所有内容仅供学习和交流使用。我们尊重并支持正版音乐，
-                鼓励大家通过官方渠道支持汪峰的音乐作品。如有任何版权问题，请与我们联系。
+
+              <p className={cn(
+                "text-lg leading-relaxed mb-10",
+                isLight ? "text-gray-700" : "text-gray-300"
+              )}>
+                欢迎来到汪峰终极粉丝网站！这是一个由热爱汪峰音乐的粉丝们自发创建和维护的非官方网站。
+                我们的目标是为所有喜欢汪峰音乐的朋友提供一个全面、专业、易于浏览的信息平台。
               </p>
+
+              <div className="grid md:grid-cols-2 gap-10">
+                {/* Mission */}
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-wangfeng-purple/20 flex items-center justify-center">
+                      <Star className="w-6 h-6 text-wangfeng-purple" />
+                    </div>
+                    <h4 className={cn(
+                      "text-2xl font-bold",
+                      isLight ? "text-gray-900" : "text-white"
+                    )}>我们的使命</h4>
+                  </div>
+                  <ul className="space-y-4">
+                    {[
+                      "记录汪峰完整的音乐生涯和成就",
+                      "分享最新的演出信息和新闻动态",
+                      "建立一个活跃的粉丝社区",
+                      "传播摇滚精神和音乐文化"
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
+                        <span className={cn(
+                          "text-base",
+                          isLight ? "text-gray-700" : "text-gray-300"
+                        )}>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Features */}
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center">
+                      <Heart className="w-6 h-6 text-pink-500" />
+                    </div>
+                    <h4 className={cn(
+                      "text-2xl font-bold",
+                      isLight ? "text-gray-900" : "text-white"
+                    )}>我们的特色</h4>
+                  </div>
+                  <ul className="space-y-4">
+                    {[
+                      "全面的音乐作品数据库",
+                      "详细的演出时间线和行程信息",
+                      "丰富的图片和视频资源",
+                      "粉丝互动和内容分享平台"
+                    ].map((item, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <div className="w-2 h-2 bg-pink-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <span className={cn(
+                          "text-base",
+                          isLight ? "text-gray-700" : "text-gray-300"
+                        )}>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <div className={cn(
+                "mt-10 rounded-2xl p-6 border",
+                isLight
+                  ? "bg-purple-50 border-purple-200"
+                  : "bg-wangfeng-purple/10 border-wangfeng-purple/30"
+              )}>
+                <div className="flex items-start gap-4">
+                  <Shield className="w-6 h-6 text-wangfeng-purple flex-shrink-0 mt-1" />
+                  <div>
+                    <h5 className={cn(
+                      "text-lg font-bold mb-2",
+                      isLight ? "text-gray-900" : "text-white"
+                    )}>网站声明</h5>
+                    <p className={cn(
+                      "text-sm leading-relaxed",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>
+                      本站为非官方粉丝网站，所有内容仅供学习和交流使用。我们尊重并支持正版音乐，
+                      鼓励大家通过官方渠道支持汪峰的音乐作品。如有任何版权问题，请与我们联系。
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
 
-        {/* 开发团队 */}
+        {/* Tech Stack - Modern Split Screen */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="theme-bg-card rounded-xl border theme-border-primary shadow-glow p-8 mb-12"
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="mb-20"
         >
-          <h2 className="text-3xl font-bold theme-text-primary mb-6 flex items-center gap-3">
-            <Code className="w-8 h-8 text-wangfeng-purple" />
-            技术实现
-          </h2>
-          
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="text-center p-6 rounded-lg border theme-border-primary">
-              <div className="w-16 h-16 bg-wangfeng-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Code className="w-8 h-8 text-wangfeng-purple" />
+          <div className="flex items-center gap-4 mb-12">
+            <Code className="w-10 h-10 text-wangfeng-purple" />
+            <h3 className={cn(
+              "text-4xl md:text-5xl font-bold",
+              isLight ? "text-gray-900" : "text-white"
+            )}>技术实现</h3>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Frontend */}
+            <div className={cn(
+              "rounded-3xl p-8 md:p-10 border transition-all",
+              isLight
+                ? "bg-gradient-to-br from-blue-50 to-white border-blue-200"
+                : "bg-gradient-to-br from-blue-500/10 to-black/40 border-blue-500/40"
+            )}>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-blue-500/20 flex items-center justify-center">
+                  <Layers className="w-8 h-8 text-blue-500" />
+                </div>
+                <div>
+                  <h4 className={cn(
+                    "text-2xl font-bold",
+                    isLight ? "text-gray-900" : "text-white"
+                  )}>前端技术</h4>
+                  <p className={cn(
+                    "text-sm",
+                    isLight ? "text-gray-600" : "text-gray-400"
+                  )}>Modern Frontend Stack</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold theme-text-primary mb-2">前端技术</h3>
-              <p className="theme-text-secondary text-sm">
-                使用React、TypeScript和Tailwind CSS构建，确保流畅的用户体验
-              </p>
+
+              <div className="space-y-4">
+                {[
+                  { label: "React 18", desc: "现代化的用户界面框架" },
+                  { label: "TypeScript", desc: "类型安全的开发体验" },
+                  { label: "Tailwind CSS", desc: "快速构建精美界面" },
+                  { label: "Framer Motion", desc: "流畅的动画效果" },
+                  { label: "Vite", desc: "极速的开发构建工具" }
+                ].map((tech, idx) => (
+                  <div key={idx} className={cn(
+                    "p-4 rounded-xl border transition-all hover:scale-[1.02]",
+                    isLight
+                      ? "bg-white border-blue-200 hover:border-blue-400"
+                      : "bg-black/30 border-blue-500/30 hover:border-blue-500/60"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      <Zap className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                      <div>
+                        <h5 className={cn(
+                          "font-bold text-sm",
+                          isLight ? "text-gray-900" : "text-white"
+                        )}>{tech.label}</h5>
+                        <p className={cn(
+                          "text-xs",
+                          isLight ? "text-gray-600" : "text-gray-400"
+                        )}>{tech.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            
-            <div className="text-center p-6 rounded-lg border theme-border-primary">
-              <div className="w-16 h-16 bg-wangfeng-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-8 h-8 text-wangfeng-purple" />
+
+            {/* Backend */}
+            <div className={cn(
+              "rounded-3xl p-8 md:p-10 border transition-all",
+              isLight
+                ? "bg-gradient-to-br from-green-50 to-white border-green-200"
+                : "bg-gradient-to-br from-green-500/10 to-black/40 border-green-500/40"
+            )}>
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-green-500/20 flex items-center justify-center">
+                  <Database className="w-8 h-8 text-green-500" />
+                </div>
+                <div>
+                  <h4 className={cn(
+                    "text-2xl font-bold",
+                    isLight ? "text-gray-900" : "text-white"
+                  )}>后端技术</h4>
+                  <p className={cn(
+                    "text-sm",
+                    isLight ? "text-gray-600" : "text-gray-400"
+                  )}>Robust Backend Stack</p>
+                </div>
               </div>
-              <h3 className="text-xl font-bold theme-text-primary mb-2">后端技术</h3>
-              <p className="theme-text-secondary text-sm">
-                基于Python Flask框架构建RESTful API，提供稳定的数据服务
-              </p>
-            </div>
-            
-            <div className="text-center p-6 rounded-lg border theme-border-primary">
-              <div className="w-16 h-16 bg-wangfeng-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-wangfeng-purple" />
+
+              <div className="space-y-4">
+                {[
+                  { label: "FastAPI", desc: "高性能的 Python API 框架" },
+                  { label: "MySQL", desc: "可靠的关系型数据库" },
+                  { label: "SQLAlchemy", desc: "强大的 ORM 工具" },
+                  { label: "Pydantic", desc: "数据验证与类型检查" },
+                  { label: "JWT Auth", desc: "安全的身份认证系统" }
+                ].map((tech, idx) => (
+                  <div key={idx} className={cn(
+                    "p-4 rounded-xl border transition-all hover:scale-[1.02]",
+                    isLight
+                      ? "bg-white border-green-200 hover:border-green-400"
+                      : "bg-black/30 border-green-500/30 hover:border-green-500/60"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      <Rocket className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <div>
+                        <h5 className={cn(
+                          "font-bold text-sm",
+                          isLight ? "text-gray-900" : "text-white"
+                        )}>{tech.label}</h5>
+                        <p className={cn(
+                          "text-xs",
+                          isLight ? "text-gray-600" : "text-gray-400"
+                        )}>{tech.desc}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-xl font-bold theme-text-primary mb-2">社区驱动</h3>
-              <p className="theme-text-secondary text-sm">
-                开源项目，欢迎更多粉丝贡献内容和代码
-              </p>
             </div>
           </div>
-          
-          <div className="text-center">
-            <p className="theme-text-secondary mb-4">
-              如果您对网站开发感兴趣，欢迎访问我们的GitHub仓库参与开发
+
+          {/* Open Source CTA */}
+          <div className={cn(
+            "mt-8 rounded-2xl p-8 border text-center transition-all",
+            isLight
+              ? "bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200"
+              : "bg-gradient-to-r from-wangfeng-purple/10 to-pink-500/10 border-wangfeng-purple/30"
+          )}>
+            <Users className="w-12 h-12 mx-auto mb-4 text-wangfeng-purple" />
+            <h4 className={cn(
+              "text-2xl font-bold mb-3",
+              isLight ? "text-gray-900" : "text-white"
+            )}>开源社区驱动</h4>
+            <p className={cn(
+              "text-base mb-6 max-w-2xl mx-auto",
+              isLight ? "text-gray-700" : "text-gray-300"
+            )}>
+              本项目采用开源方式开发，欢迎所有热爱汪峰音乐的粉丝和开发者参与贡献。
+              一起打造更好的粉丝社区平台！
             </p>
-            <a 
-              href="https://github.com/YGER2000/wangfeng-fan-website" 
-              target="_blank" 
+            <a
+              href="https://github.com/YGER2000/wangfeng-fan-website"
+              target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-wangfeng-purple text-white rounded-lg font-semibold hover:bg-wangfeng-purple/80 transition-colors"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-wangfeng-purple text-white rounded-xl font-semibold hover:bg-wangfeng-purple/80 transition-all hover:scale-105 shadow-lg"
             >
               <Code className="w-5 h-5" />
               查看源代码
@@ -166,66 +368,124 @@ const AboutSite = () => {
           </div>
         </motion.div>
 
-        {/* 致谢 */}
+        {/* Acknowledgments - Full Width Feature */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="theme-bg-card rounded-xl border theme-border-primary shadow-glow p-8"
+          transition={{ duration: 0.8, delay: 0.9 }}
+          className={cn(
+            "rounded-3xl p-10 md:p-12 border",
+            isLight
+              ? "bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 border-pink-200"
+              : "bg-gradient-to-br from-pink-500/10 via-wangfeng-purple/10 to-blue-500/10 border-wangfeng-purple/40"
+          )}
         >
-          <h2 className="text-3xl font-bold theme-text-primary mb-6 flex items-center gap-3">
-            <Users className="w-8 h-8 text-wangfeng-purple" />
-            致谢
-          </h2>
-          
-          <div className="prose prose-invert max-w-none">
-            <p className="theme-text-secondary text-lg mb-6">
-              感谢所有为这个网站贡献内容、提出建议和报告问题的粉丝朋友们。
-              正是有了大家的支持和参与，这个网站才能不断完善和发展。
-            </p>
-            
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-xl font-bold theme-text-primary mb-4">特别感谢</h3>
-                <ul className="space-y-3">
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">所有贡献内容的粉丝作者</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">提供技术支持的开发者</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="w-2 h-2 bg-wangfeng-purple rounded-full mt-2 flex-shrink-0"></div>
-                    <span className="theme-text-secondary">积极反馈和建议的用户</span>
-                  </li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-bold theme-text-primary mb-4">联系我们</h3>
-                <p className="theme-text-secondary mb-4">
-                  如果您有任何建议、意见或想参与网站建设，欢迎通过以下方式联系我们：
-                </p>
-                <div className="space-y-2">
-                  <p className="theme-text-secondary flex items-center gap-2">
-                    <span className="text-wangfeng-purple">📧</span>
-                    <span>admin@wangfengfans.com</span>
-                  </p>
-                  <p className="theme-text-secondary flex items-center gap-2">
-                    <span className="text-wangfeng-purple">💬</span>
-                    <span>通过网站反馈功能提交</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="text-center mt-8 pt-6 border-t theme-border-primary">
-              <p className="theme-text-secondary italic">
-                "摇滚精神永不灭!" - 让我们一起感受峰，感受存在！
+          <div className="flex items-center gap-4 mb-12">
+            <Heart className="w-10 h-10 text-pink-500" />
+            <h3 className={cn(
+              "text-4xl md:text-5xl font-bold",
+              isLight ? "text-gray-900" : "text-white"
+            )}>致谢与联系</h3>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-10 mb-10">
+            {/* Thanks */}
+            <div>
+              <h4 className={cn(
+                "text-2xl font-bold mb-6",
+                isLight ? "text-gray-900" : "text-white"
+              )}>特别感谢</h4>
+              <p className={cn(
+                "text-base mb-6 leading-relaxed",
+                isLight ? "text-gray-700" : "text-gray-300"
+              )}>
+                感谢所有为这个网站贡献内容、提出建议和报告问题的粉丝朋友们。
+                正是有了大家的支持和参与，这个网站才能不断完善和发展。
               </p>
+              <ul className="space-y-4">
+                {[
+                  { icon: Star, text: "所有贡献内容的粉丝作者" },
+                  { icon: Code, text: "提供技术支持的开发者" },
+                  { icon: Heart, text: "积极反馈和建议的用户" },
+                  { icon: Music2, text: "分享资源的音乐爱好者" }
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-4">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
+                      isLight ? "bg-purple-100" : "bg-wangfeng-purple/20"
+                    )}>
+                      <item.icon className="w-5 h-5 text-wangfeng-purple" />
+                    </div>
+                    <span className={cn(
+                      "text-base mt-2",
+                      isLight ? "text-gray-700" : "text-gray-300"
+                    )}>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className={cn(
+                "text-2xl font-bold mb-6",
+                isLight ? "text-gray-900" : "text-white"
+              )}>联系我们</h4>
+              <p className={cn(
+                "text-base mb-6 leading-relaxed",
+                isLight ? "text-gray-700" : "text-gray-300"
+              )}>
+                如果您有任何建议、意见或想参与网站建设，欢迎通过以下方式联系我们：
+              </p>
+              <div className="space-y-4">
+                {[
+                  { emoji: "📧", label: "邮箱", value: "admin@wangfengfans.com" },
+                  { emoji: "💬", label: "反馈", value: "通过网站反馈功能提交" },
+                  { emoji: "🐙", label: "GitHub", value: "提交 Issue 或 PR" },
+                  { emoji: "🎸", label: "社区", value: "加入粉丝社区讨论" }
+                ].map((contact, idx) => (
+                  <div key={idx} className={cn(
+                    "p-4 rounded-xl border",
+                    isLight
+                      ? "bg-white border-pink-200"
+                      : "bg-black/30 border-pink-500/30"
+                  )}>
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{contact.emoji}</span>
+                      <div>
+                        <p className={cn(
+                          "text-xs font-semibold mb-1",
+                          isLight ? "text-gray-500" : "text-gray-400"
+                        )}>{contact.label}</p>
+                        <p className={cn(
+                          "text-sm font-medium",
+                          isLight ? "text-gray-900" : "text-white"
+                        )}>{contact.value}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quote */}
+          <div className={cn(
+            "text-center pt-8 border-t",
+            isLight ? "border-gray-200" : "border-wangfeng-purple/20"
+          )}>
+            <p className={cn(
+              "text-2xl md:text-3xl font-bold italic mb-3",
+              isLight ? "text-gray-900" : "text-wangfeng-purple"
+            )}>
+              "摇滚精神永不灭!"
+            </p>
+            <p className={cn(
+              "text-base",
+              isLight ? "text-gray-600" : "text-gray-400"
+            )}>
+              让我们一起感受峰，感受存在！
+            </p>
           </div>
         </motion.div>
       </div>

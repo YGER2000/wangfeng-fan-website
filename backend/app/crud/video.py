@@ -4,7 +4,7 @@ from typing import List, Optional
 from uuid import uuid4
 from datetime import datetime
 
-from ..models.video import Video as VideoModel, VideoCategory
+from ..models.video import Video as VideoModel
 from ..schemas.video import VideoCreate, VideoUpdate
 
 
@@ -19,11 +19,14 @@ def get_videos(
     limit: int = 100,
     category: Optional[str] = None
 ) -> List[VideoModel]:
-    """获取视频列表"""
-    query = db.query(VideoModel)
+    """获取视频列表（公开接口，只返回已审核通过且已发布的视频）"""
+    query = db.query(VideoModel).filter(
+        VideoModel.review_status == 'approved',
+        VideoModel.is_published == True
+    )
     if category:
         query = query.filter(VideoModel.category == category)
-    return query.offset(skip).limit(limit).all()
+    return query.order_by(VideoModel.created_at.desc()).offset(skip).limit(limit).all()
 
 
 def get_videos_count(db: Session, category: Optional[str] = None) -> int:
@@ -34,7 +37,7 @@ def get_videos_count(db: Session, category: Optional[str] = None) -> int:
     return query.count()
 
 
-def create_video(db: Session, video: VideoCreate) -> VideoModel:
+def create_video(db: Session, video: VideoCreate, author_id: str) -> VideoModel:
     """创建视频"""
     db_video = VideoModel(
         id=str(uuid4()),
@@ -47,6 +50,9 @@ def create_video(db: Session, video: VideoCreate) -> VideoModel:
         cover_url=video.cover_url,  # 保存B站封面URL
         cover_local=video.cover_local,  # 保存本地封面路径
         cover_thumb=video.cover_thumb,  # 保存缩略图路径
+        author_id=str(author_id),
+        review_status='pending',
+        is_published=0,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
@@ -78,7 +84,45 @@ def delete_video(db: Session, video_id: str) -> bool:
     db_video = get_video(db, video_id)
     if not db_video:
         return False
-    
+
     db.delete(db_video)
     db.commit()
     return True
+
+
+def get_videos_by_author(
+    db: Session,
+    author_id: str,
+    skip: int = 0,
+    limit: int = 500,
+    category: Optional[str] = None
+) -> List[VideoModel]:
+    """获取指定作者的所有视频（包含所有状态）"""
+    # author_id可能是数字ID，转换为字符串
+    author_id_str = str(author_id)
+
+    query = db.query(VideoModel).filter(VideoModel.author_id == author_id_str)
+
+    if category:
+        query = query.filter(VideoModel.category == category)
+
+    return query.order_by(VideoModel.updated_at.desc()).offset(skip).limit(limit).all()
+
+
+def get_all_videos_admin(
+    db: Session,
+    skip: int = 0,
+    limit: int = 500,
+    category: Optional[str] = None,
+    review_status: Optional[str] = None
+) -> List[VideoModel]:
+    """获取所有视频（管理员用,包含所有状态）"""
+    query = db.query(VideoModel)
+
+    if category:
+        query = query.filter(VideoModel.category == category)
+
+    if review_status:
+        query = query.filter(VideoModel.review_status == review_status)
+
+    return query.order_by(VideoModel.updated_at.desc()).offset(skip).limit(limit).all()

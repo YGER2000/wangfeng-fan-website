@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
 import ArticleCard from '@/components/ui/ArticleCard';
 
@@ -46,9 +47,23 @@ const FengYanFengYu = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            峰言 <span className="text-wangfeng-purple animate-pulse-glow">峰语</span>
-          </h1>
+          <div className="relative inline-block">
+            <motion.h1
+              className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4 relative z-10"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              峰言 <span className="text-wangfeng-purple">峰语</span>
+            </motion.h1>
+            <motion.div
+              className="absolute -top-4 -right-4 text-wangfeng-purple/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-12 h-12 md:w-16 md:h-16" />
+            </motion.div>
+          </div>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple">
             Wang Feng's Words
           </h2>

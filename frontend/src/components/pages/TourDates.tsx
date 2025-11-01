@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { cn, withBasePath } from '@/lib/utils';
 import {
   scheduleAPI,
@@ -118,9 +118,23 @@ const TourDates = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <h1 className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4">
-            汪峰 <span className="text-wangfeng-purple animate-pulse-glow">行程信息</span>
-          </h1>
+          <div className="relative inline-block">
+            <motion.h1
+              className="text-5xl md:text-7xl font-bebas tracking-wider theme-text-primary mb-4 relative z-10"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              汪峰 <span className="text-wangfeng-purple">行程信息</span>
+            </motion.h1>
+            <motion.div
+              className="absolute -top-4 -right-4 text-wangfeng-purple/20"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            >
+              <Sparkles className="w-12 h-12 md:w-16 md:h-16" />
+            </motion.div>
+          </div>
           <h2 className="text-2xl md:text-3xl font-bebas tracking-wider text-wangfeng-purple mb-6">
             从巡演到综艺，全景记录汪峰的每一步脚印
           </h2>

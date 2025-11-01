@@ -15,6 +15,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 1997,
+    strictPort: true,
     allowedHosts: true // 最简单的方式：允许所有主机
   },
   build: {

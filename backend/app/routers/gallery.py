@@ -10,7 +10,9 @@ from pathlib import Path
 
 from ..database import get_db
 from ..core.permissions import require_admin
+from ..core.dependencies import get_current_user
 from ..models.user_db import User
+from ..models.gallery_db import Photo
 from ..schemas.gallery import (
     PhotoGroupCreate,
     PhotoGroupUpdate,
@@ -33,7 +35,9 @@ from ..crud.gallery import (
     get_photos_by_group,
     update_photo,
     delete_photo,
-    batch_create_photos
+    batch_create_photos,
+    get_photo_groups_by_author,
+    get_all_photo_groups_admin
 )
 from ..services.image_processing import ImageProcessor
 from ..services.storage_service import (
@@ -63,6 +67,84 @@ def list_photo_groups(
         published_only=True
     )
     return photo_groups
+
+
+@router.get("/groups/my", response_model=List[PhotoGroupSchema])
+def get_my_photo_groups(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=1000),
+    category: Optional[str] = Query(None),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """获取当前用户的照片组（包含所有状态）"""
+    photo_groups = get_photo_groups_by_author(
+        db=db,
+        author_id=str(current_user.id),
+        skip=skip,
+        limit=limit,
+        category=category
+    )
+
+    # 为每个照片组添加照片数量和创建者名称
+    from ..models.user_db import User as UserModel
+    result = []
+    for group in photo_groups:
+        group_dict = {
+            **group.__dict__,
+            'photo_count': db.query(Photo).filter(
+                Photo.photo_group_id == group.id,
+                Photo.is_deleted == False
+            ).count(),
+            'created_by': current_user.username,
+            'tags': []
+        }
+        result.append(group_dict)
+
+    return result
+
+
+@router.get("/groups/all", response_model=List[PhotoGroupSchema])
+def get_all_photo_groups(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(500, ge=1, le=1000),
+    category: Optional[str] = Query(None),
+    review_status: Optional[str] = Query(None),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db)
+):
+    """获取所有用户的照片组（仅管理员,包含所有状态）"""
+    photo_groups = get_all_photo_groups_admin(
+        db=db,
+        skip=skip,
+        limit=limit,
+        category=category,
+        review_status=review_status
+    )
+
+    # 为每个照片组添加照片数量和创建者名称
+    from ..models.user_db import User as UserModel
+    result = []
+    for group in photo_groups:
+        group_dict = {
+            **group.__dict__,
+            'photo_count': db.query(Photo).filter(
+                Photo.photo_group_id == group.id,
+                Photo.is_deleted == False
+            ).count(),
+            'created_by': None,
+            'tags': []
+        }
+
+        # 获取创建者名称
+        if group.author_id:
+            author = db.query(UserModel).filter(UserModel.id == int(group.author_id)).first()
+            if author:
+                group_dict['created_by'] = author.username
+
+        result.append(group_dict)
+
+    return result
 
 
 @router.get("/groups/{group_id}", response_model=PhotoGroupWithPhotos)
@@ -121,7 +203,10 @@ def admin_create_photo_group(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
-    """创建照片组（管理员）"""
+    """创建照片组（管理员）- 自动设置创建者ID"""
+    # 设置创建者ID
+    photo_group.author_id = str(current_user.id)
+
     db_photo_group = create_photo_group(db=db, photo_group=photo_group)
     return db_photo_group
 

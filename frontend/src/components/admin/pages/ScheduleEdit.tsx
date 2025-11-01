@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { FormEvent, useEffect, useState, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { adminScheduleAPI, ScheduleCategory, ScheduleItemResponse, tagAPI, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -14,9 +14,16 @@ import {
   MapPin,
   Tag as TagIcon,
   FileText,
-  Loader2
+  Loader2,
+  ArrowRight,
+  ThumbsUp,
+  XCircle,
+  Check,
+  Loader,
+  Trash2
 } from 'lucide-react';
-import TagInputWithSearch from '@/components/ui/TagInputWithSearch';
+import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
+import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 
 const categoryOptions: ScheduleCategory[] = [
   '演唱会',
@@ -52,18 +59,28 @@ const defaultState: FormState = {
 const ScheduleEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const { token } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'white';
 
+  // 检查是否从审核中心来的
+  const fromReview = location.state?.fromReview;
+  const backPath = fromReview ? '/admin/reviews' : '/admin/schedules/list';
+
+  // 步骤管理
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
   const [loading, setLoading] = useState(true);
+  const [schedule, setSchedule] = useState<ScheduleItemResponse | null>(null);
   const [formState, setFormState] = useState<FormState>(defaultState);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const [selectedDate, setSelectedDate] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -81,31 +98,44 @@ const ScheduleEdit = () => {
 
   const days = Array.from({ length: getDaysInMonth(selectedDate.year, selectedDate.month) }, (_, i) => i + 1);
 
+  // 生成标签上下文文本
+  const tagContext = useMemo(
+    () => [
+      formState.theme,
+      formState.description,
+      formState.city,
+      formState.venue,
+      formState.category
+    ].filter(Boolean).join(' '),
+    [formState.theme, formState.description, formState.city, formState.venue, formState.category]
+  );
+
   // 加载行程数据
   useEffect(() => {
     if (!id) {
-      setError('缺少行程ID');
+      setToast({ message: '缺少行程ID', type: 'error' });
       setLoading(false);
       return;
     }
 
     const loadSchedule = async () => {
       try {
-        const schedule = await adminScheduleAPI.getById(parseInt(id));
+        const scheduleData = await adminScheduleAPI.getById(parseInt(id));
+        setSchedule(scheduleData);
 
         // 设置表单状态
         setFormState({
-          category: schedule.category as ScheduleCategory,
-          date: schedule.date,
-          city: schedule.city,
-          venue: schedule.venue || '',
-          theme: schedule.theme,
-          description: schedule.description || '',
-          tags: schedule.tags || [],
+          category: scheduleData.category as ScheduleCategory,
+          date: scheduleData.date,
+          city: scheduleData.city,
+          venue: scheduleData.venue || '',
+          theme: scheduleData.theme,
+          description: scheduleData.description || '',
+          tags: scheduleData.tags || [],
         });
 
         // 设置日期选择器
-        const dateObj = new Date(schedule.date);
+        const dateObj = new Date(scheduleData.date);
         setSelectedDate({
           year: dateObj.getFullYear(),
           month: dateObj.getMonth() + 1,
@@ -113,12 +143,12 @@ const ScheduleEdit = () => {
         });
 
         // 设置现有图片
-        if (schedule.image_url) {
-          setExistingImageUrl(schedule.image_url);
+        if (scheduleData.image_url) {
+          setExistingImageUrl(scheduleData.image_url);
         }
       } catch (err) {
         console.error('加载行程失败:', err);
-        setError('加载行程数据失败，请稍后重试');
+        setToast({ message: '加载行程数据失败，请稍后重试', type: 'error' });
       } finally {
         setLoading(false);
       }
@@ -175,47 +205,44 @@ const ScheduleEdit = () => {
     });
   };
 
-  // 标签处理函数
-  const handleAddTag = (tag: TagData) => {
-    if (!formState.tags.some(t => t.id === tag.id)) {
-      setFormState(prev => ({
-        ...prev,
-        tags: [...prev.tags, tag]
-      }));
+  // 处理下一步
+  const handleNextStep = () => {
+    if (!formState.theme.trim()) {
+      setToast({ message: '请输入行程主题', type: 'error' });
+      return;
     }
+    if (!formState.city.trim()) {
+      setToast({ message: '请输入所在城市', type: 'error' });
+      return;
+    }
+    setToast(null);
+    setCurrentStep(2);
   };
 
-  const handleRemoveTag = (tagId: number) => {
+  // 处理上一步
+  const handlePrevStep = () => {
+    setToast(null);
+    setCurrentStep(1);
+  };
+
+  // 标签处理函数（通过 TagSelectionPanel）
+  const handleTagsChange = (tags: TagData[]) => {
     setFormState(prev => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag.id !== tagId)
+      tags
     }));
-  };
-
-  const handleSearchTags = async (query: string): Promise<TagData[]> => {
-    try {
-      return await tagAPI.search(query);
-    } catch (error) {
-      console.error('搜索标签失败:', error);
-      return [];
-    }
-  };
-
-  const handleCreateTag = async (name: string): Promise<TagData> => {
-    try {
-      return await tagAPI.create(name);
-    } catch (error) {
-      console.error('创建标签失败:', error);
-      throw error;
-    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!id) return;
 
-    setError(null);
-    setSuccess(null);
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成标签选择', type: 'error' });
+      return;
+    }
+
+    setToast(null);
     setSubmitting(true);
 
     try {
@@ -236,18 +263,97 @@ const ScheduleEdit = () => {
       }
 
       await adminScheduleAPI.update(parseInt(id), payload, token);
-      setSuccess('行程更新成功！');
+      setToast({ message: '行程更新成功！', type: 'success' });
 
       setTimeout(() => {
-        navigate('/admin/schedules/list', {
+        navigate(backPath, {
           replace: false,
           state: { highlightId: parseInt(id) },
         });
       }, 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '行程更新失败，请稍后重试');
+      setToast({
+        message: err instanceof Error ? err.message : '行程更新失败，请稍后重试',
+        type: 'error'
+      });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // 审核通过
+  const handleApprove = async () => {
+    if (!id || !schedule) return;
+
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成标签选择', type: 'error' });
+      return;
+    }
+
+    setIsApproving(true);
+    setToast(null);
+
+    try {
+      // 先保存修改
+      const payload = new FormData();
+      payload.append('category', formState.category);
+      payload.append('date', formState.date);
+      payload.append('city', formState.city);
+      payload.append('venue', formState.venue);
+      payload.append('theme', formState.theme);
+      payload.append('description', formState.description);
+
+      if (formState.tags.length > 0) {
+        payload.append('tags', formState.tags.map(t => t.name).join(','));
+      }
+
+      if (imageFile) {
+        payload.append('image', imageFile);
+      }
+
+      await adminScheduleAPI.update(parseInt(id), payload, token);
+
+      // 再审核通过
+      await adminScheduleAPI.approve(parseInt(id));
+
+      setToast({ message: '审核通过成功！', type: 'success' });
+      setTimeout(() => {
+        navigate('/admin/reviews');
+      }, 1500);
+    } catch (err) {
+      setToast({
+        message: err instanceof Error ? err.message : '审核通过失败，请稍后重试',
+        type: 'error'
+      });
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  // 审核驳回
+  const handleReject = async () => {
+    if (!id || !schedule) return;
+
+    if (!window.confirm('确定要驳回这个行程吗？')) {
+      return;
+    }
+
+    setIsRejecting(true);
+    setToast(null);
+
+    try {
+      await adminScheduleAPI.reject(parseInt(id));
+      setToast({ message: '已驳回该行程', type: 'success' });
+      setTimeout(() => {
+        navigate('/admin/reviews');
+      }, 1500);
+    } catch (err) {
+      setToast({
+        message: err instanceof Error ? err.message : '驳回失败，请稍后重试',
+        type: 'error'
+      });
+    } finally {
+      setIsRejecting(false);
     }
   };
 
@@ -255,7 +361,7 @@ const ScheduleEdit = () => {
     return (
       <div className={cn(
         "h-full flex items-center justify-center",
-        isLight ? "bg-gray-50" : "bg-black"
+        isLight ? "bg-gray-50" : "bg-transparent"
       )}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-12 w-12 animate-spin text-wangfeng-purple" />
@@ -273,7 +379,7 @@ const ScheduleEdit = () => {
   return (
     <div className={cn(
       "h-full flex flex-col",
-      isLight ? "bg-gray-50" : "bg-black"
+      isLight ? "bg-gray-50" : "bg-transparent"
     )}>
       {/* 顶部标题栏 */}
       <div className={cn(
@@ -283,7 +389,7 @@ const ScheduleEdit = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate('/admin/schedules/list')}
+              onClick={() => navigate(backPath)}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 isLight
@@ -292,7 +398,7 @@ const ScheduleEdit = () => {
               )}
             >
               <ArrowLeft className="h-4 w-4" />
-              返回列表
+              {fromReview ? '返回审核中心' : '返回列表'}
             </button>
             <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
             <h1 className={cn(
@@ -301,21 +407,84 @@ const ScheduleEdit = () => {
             )}>
               <Calendar className="h-5 w-5 text-wangfeng-purple" />
               编辑行程
+              <span className={cn(
+                "text-sm font-normal ml-2",
+                isLight ? "text-gray-500" : "text-gray-400"
+              )}>
+                步骤 {currentStep}/2
+              </span>
             </h1>
           </div>
 
           {/* 操作按钮 */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              const form = document.querySelector('form') as HTMLFormElement;
-              if (form) form.requestSubmit();
-            }}
-            disabled={submitting}
-            className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {submitting ? '保存中...' : '保存更改'}
-          </button>
+          <div className="flex items-center gap-3">
+            {fromReview && schedule?.review_status === 'pending' && currentStep === 2 && (
+              <>
+                <button
+                  onClick={handleReject}
+                  disabled={isRejecting || isApproving || submitting}
+                  className={cn(
+                    "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                    "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
+                    (isRejecting || isApproving || submitting) && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  <XCircle className="h-4 w-4" />
+                  {isRejecting ? '驳回中...' : '驳回'}
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving || isRejecting || submitting}
+                  className={cn(
+                    "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
+                    "bg-green-600 text-white hover:bg-green-700",
+                    (isApproving || isRejecting || submitting) && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {(isApproving || submitting) && <Loader className="h-4 w-4 animate-spin" />}
+                  <Check className="h-4 w-4" />
+                  {isApproving ? '审核中...' : '审核通过'}
+                </button>
+              </>
+            )}
+            {currentStep === 1 && (
+              <button
+                onClick={handleNextStep}
+                className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
+              >
+                下一步
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            )}
+            {currentStep === 2 && (
+              <>
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+                {!fromReview && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const form = document.querySelector('form') as HTMLFormElement;
+                      if (form) form.requestSubmit();
+                    }}
+                    disabled={submitting || isApproving || isRejecting}
+                    className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? '保存中...' : '保存更改'}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -323,32 +492,10 @@ const ScheduleEdit = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <form onSubmit={handleSubmit}>
-            {/* 错误和成功消息 */}
-            {error && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3 mb-6",
-                isLight
-                  ? "bg-red-50 border-red-200 text-red-800"
-                  : "bg-red-500/10 border-red-500/30 text-red-300"
-              )}>
-                <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className={cn(
-                "rounded-lg border p-4 flex items-start gap-3 mb-6",
-                isLight
-                  ? "bg-green-50 border-green-200 text-green-800"
-                  : "bg-green-500/10 border-green-500/30 text-green-300"
-              )}>
-                <CheckCircle2 className="h-5 w-5 flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{success}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* 步骤1: 基础信息 */}
+            {currentStep === 1 && (
+              <>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* 左侧：图片上传区域 (占1/3) */}
               <div className={cn(
                 "rounded-lg border p-6",
@@ -649,31 +796,35 @@ const ScheduleEdit = () => {
                         placeholder="填写更多行程细节、嘉宾信息等"
                       />
                     </div>
-
-                    {/* 标签 */}
-                    <div>
-                      <label className={cn(
-                        "block text-sm font-medium mb-2",
-                        isLight ? "text-gray-700" : "text-gray-300"
-                      )}>
-                        标签（可选）
-                      </label>
-                      <TagInputWithSearch
-                        selectedTags={formState.tags}
-                        onAddTag={handleAddTag}
-                        onRemoveTag={handleRemoveTag}
-                        onSearchTags={handleSearchTags}
-                        onCreateTag={handleCreateTag}
-                        placeholder="搜索或创建标签..."
-                      />
-                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </form>
+              </>
+          )}
+
+          {/* 步骤2: 标签管理 */}
+          {currentStep === 2 && (
+            <TagSelectionPanel
+              contextText={tagContext}
+              selectedTags={formState.tags}
+              onChange={handleTagsChange}
+              isLight={isLight}
+              infoMessage="我们会根据行程主题、描述、分类等信息推荐相关标签，也可以搜索或直接创建新标签。"
+            />
+          )}
+        </form>
         </div>
       </div>
+
+      {/* Toast 通知 */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 };

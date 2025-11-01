@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Eye, Tag } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
+import TagContentModal from '@/components/ui/TagContentModal';
 import 'react-quill/dist/quill.snow.css';
 
 const normalizeArticle = (raw: any): Article => {
@@ -27,14 +28,29 @@ const ArticleDetailPage = () => {
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string>('');
+
+  // 使用 ref 防止 StrictMode 导致的重复请求
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     const loadArticle = async () => {
       if (!slug) return;
 
+      // 防止重复加载（StrictMode 会导致 useEffect 执行两次）
+      if (hasLoadedRef.current) return;
+      hasLoadedRef.current = true;
+
       try {
         setLoading(true);
-        const data = await articleAPI.getBySlug(slug);
+        // 判断 slug 是否是 UUID 格式（文章 ID）
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+        // 如果是 UUID，使用 getById，否则使用 getBySlug
+        const data = isUUID
+          ? await articleAPI.getById(slug)
+          : await articleAPI.getBySlug(slug);
         setArticle(normalizeArticle(data));
       } catch (err) {
         console.error('加载文章失败:', err);
@@ -45,6 +61,11 @@ const ArticleDetailPage = () => {
     };
 
     loadArticle();
+
+    // 清理函数：当 slug 变化时重置标记
+    return () => {
+      hasLoadedRef.current = false;
+    };
   }, [slug]);
 
   if (loading) {
@@ -82,6 +103,11 @@ const ArticleDetailPage = () => {
   const excerptText = article.excerpt
     ? getPlainTextFromHtml(article.excerpt).substring(0, 200)
     : '';
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(tag);
+    setIsTagModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-white text-black py-24">
@@ -329,12 +355,13 @@ const ArticleDetailPage = () => {
           >
             <Tag className="w-5 h-5 text-gray-500" />
             {safeTags.map((tag, index) => (
-              <span
+              <button
                 key={index}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition-colors cursor-pointer"
+                onClick={() => handleTagClick(tag)}
+                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-wangfeng-purple hover:text-white transition-colors cursor-pointer"
               >
                 {tag}
-              </span>
+              </button>
             ))}
           </motion.div>
         )}
@@ -357,6 +384,13 @@ const ArticleDetailPage = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* 标签内容模态框 */}
+      <TagContentModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        tagName={selectedTag}
+      />
     </div>
   );
 };

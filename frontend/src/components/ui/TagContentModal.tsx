@@ -1,194 +1,440 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag as TagIcon, Video, Image as ImageIcon, FileText } from 'lucide-react';
-
-export interface TagData {
-  id: number;
-  name: string;
-}
-
-export interface ContentItem {
-  id: number;
-  type: 'video' | 'article' | 'gallery';
-  title: string;
-  url: string;
-  thumbnail?: string;
-}
+import { X, FileText, Video, Image, Calendar, User, Eye } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 
 interface TagContentModalProps {
-  tag: TagData | null;
   isOpen: boolean;
   onClose: () => void;
-  onLoadContents: (tagId: number) => Promise<ContentItem[]>;
+  tagName: string;
 }
 
-const TagContentModal = ({ tag, isOpen, onClose, onLoadContents }: TagContentModalProps) => {
-  const [contents, setContents] = useState<ContentItem[]>([]);
+interface ArticleItem {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  cover_url: string | null;
+  author: string;
+  category_primary: string;
+  category_secondary: string | null;
+  created_at: string;
+  view_count: number;
+}
+
+interface VideoItem {
+  id: string;
+  title: string;
+  description: string;
+  cover_url: string | null;
+  video_url: string;
+  author: string;
+  category: string;
+  created_at: string;
+  view_count: number;
+}
+
+interface GalleryItem {
+  id: string;
+  name: string;
+  description: string;
+  cover_image_url: string | null;
+  cover_image_thumb_url: string | null;
+  category: string;
+  created_at: string;
+  photo_count: number;
+}
+
+interface TagContents {
+  tag_name: string;
+  articles: ArticleItem[];
+  videos: VideoItem[];
+  galleries: GalleryItem[];
+}
+
+const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => {
+  const { theme } = useTheme();
+  const isLight = theme === 'white';
+  const navigate = useNavigate();
+  const [contents, setContents] = useState<TagContents | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'articles' | 'videos' | 'galleries'>('articles');
 
   useEffect(() => {
-    if (isOpen && tag) {
+    if (isOpen && tagName) {
       loadContents();
-    } else {
-      setContents([]);
-      setError(null);
     }
-  }, [isOpen, tag]);
+  }, [isOpen, tagName]);
 
   const loadContents = async () => {
-    if (!tag) return;
-
     setLoading(true);
-    setError(null);
     try {
-      const data = await onLoadContents(tag.id);
+      const response = await fetch(`http://localhost:1994/api/tags/by-name/${encodeURIComponent(tagName)}/contents`);
+      const data = await response.json();
       setContents(data);
-    } catch (err) {
-      console.error('加载标签内容失败:', err);
-      setError('加载内容失败，请稍后重试');
+
+      // 自动切换到有内容的标签页
+      if (data.articles.length > 0) {
+        setActiveTab('articles');
+      } else if (data.videos.length > 0) {
+        setActiveTab('videos');
+      } else if (data.galleries.length > 0) {
+        setActiveTab('galleries');
+      }
+    } catch (error) {
+      console.error('加载标签内容失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'video':
-        return <Video className="h-5 w-5" />;
-      case 'gallery':
-        return <ImageIcon className="h-5 w-5" />;
-      case 'article':
-        return <FileText className="h-5 w-5" />;
-      default:
-        return <FileText className="h-5 w-5" />;
+  const handleItemClick = (type: 'article' | 'video' | 'gallery', item: any) => {
+    onClose();
+    if (type === 'article') {
+      navigate(`/article/${item.slug || item.id}`);
+    } else if (type === 'video') {
+      navigate(`/videos`);
+    } else if (type === 'gallery') {
+      navigate(`/gallery`);
     }
   };
 
-  const getTypeName = (type: string) => {
-    switch (type) {
-      case 'video':
-        return '视频';
-      case 'gallery':
-        return '图片';
-      case 'article':
-        return '文章';
-      default:
-        return '内容';
-    }
+  const stripHtml = (html: string | undefined): string => {
+    if (!html) return '暂无描述';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '暂无描述';
   };
 
-  const groupedContents = contents.reduce((acc, item) => {
-    if (!acc[item.type]) {
-      acc[item.type] = [];
-    }
-    acc[item.type].push(item);
-    return acc;
-  }, {} as Record<string, ContentItem[]>);
+  const totalCount = (contents?.articles.length || 0) + (contents?.videos.length || 0) + (contents?.galleries.length || 0);
 
   return (
     <AnimatePresence>
-      {isOpen && tag && (
-        <>
+      {isOpen && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
           {/* 背景遮罩 */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
           />
 
-          {/* 弹窗内容 */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              transition={{ duration: 0.3 }}
-              className="relative w-full max-w-4xl bg-black/95 border border-wangfeng-purple/40 rounded-2xl shadow-2xl my-8"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 头部 */}
-              <div className="flex items-center justify-between p-6 border-b border-wangfeng-purple/20">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-wangfeng-purple/20">
-                    <TagIcon className="h-5 w-5 text-wangfeng-purple" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{tag.name}</h2>
-                    <p className="text-sm text-wangfeng-purple/70">
-                      共 {contents.length} 项相关内容
-                    </p>
+          {/* 模态框 */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className={cn(
+              "relative z-10 w-full max-w-4xl max-h-[85vh] rounded-2xl shadow-2xl overflow-hidden",
+              isLight ? "bg-white" : "bg-gray-900 border border-gray-800"
+            )}
+          >
+            {/* 头部 */}
+            <div className={cn(
+              "flex items-center justify-between p-6 border-b",
+              isLight ? "bg-gray-50 border-gray-200" : "bg-gray-800/50 border-gray-700"
+            )}>
+              <div>
+                <h2 className={cn(
+                  "text-2xl font-bold flex items-center gap-2",
+                  isLight ? "text-gray-900" : "text-white"
+                )}>
+                  <span className="text-wangfeng-purple">#</span>
+                  {tagName}
+                </h2>
+                <p className={cn(
+                  "text-sm mt-1",
+                  isLight ? "text-gray-600" : "text-gray-400"
+                )}>
+                  共找到 {totalCount} 条相关内容
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  isLight
+                    ? "hover:bg-gray-200 text-gray-600"
+                    : "hover:bg-gray-700 text-gray-400"
+                )}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* 标签页 */}
+            <div className={cn(
+              "flex border-b",
+              isLight ? "bg-white border-gray-200" : "bg-gray-900 border-gray-700"
+            )}>
+              <button
+                onClick={() => setActiveTab('articles')}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+                  activeTab === 'articles'
+                    ? "text-wangfeng-purple"
+                    : isLight
+                      ? "text-gray-600 hover:text-gray-900"
+                      : "text-gray-400 hover:text-white"
+                )}
+              >
+                <FileText className="w-4 h-4 inline mr-2" />
+                文章 ({contents?.articles.length || 0})
+                {activeTab === 'articles' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wangfeng-purple"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('videos')}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+                  activeTab === 'videos'
+                    ? "text-wangfeng-purple"
+                    : isLight
+                      ? "text-gray-600 hover:text-gray-900"
+                      : "text-gray-400 hover:text-white"
+                )}
+              >
+                <Video className="w-4 h-4 inline mr-2" />
+                视频 ({contents?.videos.length || 0})
+                {activeTab === 'videos' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wangfeng-purple"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('galleries')}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+                  activeTab === 'galleries'
+                    ? "text-wangfeng-purple"
+                    : isLight
+                      ? "text-gray-600 hover:text-gray-900"
+                      : "text-gray-400 hover:text-white"
+                )}
+              >
+                <Image className="w-4 h-4 inline mr-2" />
+                相册 ({contents?.galleries.length || 0})
+                {activeTab === 'galleries' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wangfeng-purple"
+                  />
+                )}
+              </button>
+            </div>
+
+            {/* 内容区域 */}
+            <div className="overflow-y-auto p-6" style={{ maxHeight: 'calc(85vh - 180px)' }}>
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className={cn(
+                    "text-lg",
+                    isLight ? "text-gray-600" : "text-gray-400"
+                  )}>
+                    加载中...
                   </div>
                 </div>
-                <button
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-wangfeng-purple/40 text-wangfeng-purple transition-colors hover:bg-wangfeng-purple/20"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
+              ) : (
+                <AnimatePresence mode="wait">
+                  {/* 文章列表 */}
+                  {activeTab === 'articles' && (
+                    <motion.div
+                      key="articles"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                      {contents?.articles && contents.articles.length > 0 ? (
+                        contents.articles.map((article) => (
+                          <div
+                            key={article.id}
+                            onClick={() => handleItemClick('article', article)}
+                            className={cn(
+                              "p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                              isLight
+                                ? "bg-white border-gray-200 hover:border-wangfeng-purple/50 hover:shadow-md"
+                                : "bg-gray-800/50 border-gray-700 hover:border-wangfeng-purple/50"
+                            )}
+                          >
+                            <h3 className={cn(
+                              "text-lg font-semibold mb-2",
+                              isLight ? "text-gray-900" : "text-white"
+                            )}>
+                              {article.title}
+                            </h3>
+                            <p className={cn(
+                              "text-sm mb-3 line-clamp-2",
+                              isLight ? "text-gray-600" : "text-gray-400"
+                            )}>
+                              {stripHtml(article.excerpt)}
+                            </p>
+                            <div className={cn(
+                              "flex items-center gap-4 text-xs",
+                              isLight ? "text-gray-500" : "text-gray-500"
+                            )}>
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {article.author}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(article.created_at).toLocaleDateString('zh-CN')}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {article.view_count}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={cn(
+                          "text-center py-12",
+                          isLight ? "text-gray-500" : "text-gray-400"
+                        )}>
+                          暂无文章
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
 
-              {/* 内容区域 */}
-              <div className="p-6 max-h-[calc(100vh-12rem)] overflow-y-auto">
-                {loading ? (
-                  <div className="flex items-center justify-center py-12">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-wangfeng-purple border-t-transparent" />
-                  </div>
-                ) : error ? (
-                  <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-center text-red-300">
-                    {error}
-                  </div>
-                ) : contents.length === 0 ? (
-                  <div className="rounded-lg border border-wangfeng-purple/20 bg-wangfeng-purple/5 p-12 text-center">
-                    <TagIcon className="mx-auto h-12 w-12 text-wangfeng-purple/40 mb-4" />
-                    <p className="text-wangfeng-purple/70">暂无相关内容</p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {Object.entries(groupedContents).map(([type, items]) => (
-                      <div key={type}>
-                        <div className="flex items-center gap-2 mb-3">
-                          {getTypeIcon(type)}
-                          <h3 className="text-lg font-semibold text-white">
-                            {getTypeName(type)} ({items.length})
-                          </h3>
+                  {/* 视频列表 */}
+                  {activeTab === 'videos' && (
+                    <motion.div
+                      key="videos"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                      {contents?.videos && contents.videos.length > 0 ? (
+                        contents.videos.map((video) => (
+                          <div
+                            key={video.id}
+                            onClick={() => handleItemClick('video', video)}
+                            className={cn(
+                              "p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                              isLight
+                                ? "bg-white border-gray-200 hover:border-wangfeng-purple/50 hover:shadow-md"
+                                : "bg-gray-800/50 border-gray-700 hover:border-wangfeng-purple/50"
+                            )}
+                          >
+                            <h3 className={cn(
+                              "text-lg font-semibold mb-2",
+                              isLight ? "text-gray-900" : "text-white"
+                            )}>
+                              {video.title}
+                            </h3>
+                            <p className={cn(
+                              "text-sm mb-3 line-clamp-2",
+                              isLight ? "text-gray-600" : "text-gray-400"
+                            )}>
+                              {stripHtml(video.description)}
+                            </p>
+                            <div className={cn(
+                              "flex items-center gap-4 text-xs",
+                              isLight ? "text-gray-500" : "text-gray-500"
+                            )}>
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {video.author}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(video.created_at).toLocaleDateString('zh-CN')}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Eye className="w-3 h-3" />
+                                {video.view_count}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={cn(
+                          "text-center py-12",
+                          isLight ? "text-gray-500" : "text-gray-400"
+                        )}>
+                          暂无视频
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {items.map((item) => (
-                            <a
-                              key={item.id}
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group flex gap-3 rounded-lg border border-wangfeng-purple/20 bg-black/40 p-4 transition-all hover:border-wangfeng-purple/60 hover:bg-wangfeng-purple/10"
-                            >
-                              {item.thumbnail && (
-                                <div className="flex-shrink-0 w-24 h-16 rounded overflow-hidden bg-black/60">
-                                  <img
-                                    src={item.thumbnail}
-                                    alt={item.title}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                  />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-white font-medium line-clamp-2 group-hover:text-wangfeng-purple transition-colors">
-                                  {item.title}
-                                </p>
-                              </div>
-                            </a>
-                          ))}
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* 相册列表 */}
+                  {activeTab === 'galleries' && (
+                    <motion.div
+                      key="galleries"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                      {contents?.galleries && contents.galleries.length > 0 ? (
+                        contents.galleries.map((gallery) => (
+                          <div
+                            key={gallery.id}
+                            onClick={() => handleItemClick('gallery', gallery)}
+                            className={cn(
+                              "p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                              isLight
+                                ? "bg-white border-gray-200 hover:border-wangfeng-purple/50 hover:shadow-md"
+                                : "bg-gray-800/50 border-gray-700 hover:border-wangfeng-purple/50"
+                            )}
+                          >
+                            <h3 className={cn(
+                              "text-lg font-semibold mb-2",
+                              isLight ? "text-gray-900" : "text-white"
+                            )}>
+                              {gallery.name}
+                            </h3>
+                            <p className={cn(
+                              "text-sm mb-3 line-clamp-2",
+                              isLight ? "text-gray-600" : "text-gray-400"
+                            )}>
+                              {stripHtml(gallery.description)}
+                            </p>
+                            <div className={cn(
+                              "flex items-center gap-4 text-xs",
+                              isLight ? "text-gray-500" : "text-gray-500"
+                            )}>
+                              <span className="flex items-center gap-1">
+                                <Image className="w-3 h-3" />
+                                {gallery.photo_count} 张照片
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(gallery.created_at).toLocaleDateString('zh-CN')}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={cn(
+                          "text-center py-12",
+                          isLight ? "text-gray-500" : "text-gray-400"
+                        )}>
+                          暂无相册
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        </>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+            </div>
+          </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

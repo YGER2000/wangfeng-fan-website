@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import { videoAPI, Video } from '@/utils/api';
+import TagContentModal from '@/components/ui/TagContentModal';
 
 const VideoDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,8 @@ const VideoDetail = () => {
   const [relatedVideos, setRelatedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string>('');
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -24,12 +27,12 @@ const VideoDetail = () => {
         const videoData = await videoAPI.getById(id);
         setVideo(videoData);
 
-        // 获取相关推荐（同分类的其他视频）
+        // 获取相关推荐(同分类的其他视频)
         const allVideos = await videoAPI.getList({
           limit: 10,
           category: videoData.category
         });
-        // 过滤掉当前视频，只保留3个
+        // 过滤掉当前视频,只保留3个
         const related = allVideos
           .filter(v => v.id !== id)
           .slice(0, 3);
@@ -44,6 +47,11 @@ const VideoDetail = () => {
 
     loadVideo();
   }, [id]);
+
+  const handleTagClick = (tag: string) => {
+    setSelectedTag(tag);
+    setIsTagModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -119,6 +127,27 @@ const VideoDetail = () => {
               {video.description}
             </div>
           )}
+
+          {/* 标签 */}
+          {video.tags && video.tags.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Tag className="w-4 h-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-500">标签</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {video.tags.map((tag, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleTagClick(tag)}
+                    className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-wangfeng-purple hover:text-white transition-colors cursor-pointer"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* B站播放器 */}
@@ -185,6 +214,13 @@ const VideoDetail = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Tag Content Modal */}
+      <TagContentModal
+        isOpen={isTagModalOpen}
+        onClose={() => setIsTagModalOpen(false)}
+        tagName={selectedTag}
+      />
     </div>
   );
 };

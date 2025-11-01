@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Article } from '@/utils/contentManager';
@@ -32,19 +33,9 @@ const extractFirstImageFromHtml = (html: string): string | null => {
   return null;
 };
 
-// 获取默认封面图
-const getDefaultCoverImage = (category: string): string => {
-  const defaultImages: Record<string, string> = {
-    '峰言峰语': '/images/defaults/fengyan.jpg',
-    '峰迷荟萃': '/images/defaults/fengmi.jpg',
-    '资料科普': '/images/defaults/kepu.jpg',
-  };
-
-  return defaultImages[category] || '/images/defaults/article-default.jpg';
-};
-
 const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
   const navigate = useNavigate();
+  const [imageFailed, setImageFailed] = useState(false);
 
   const handleClick = () => {
     if (onClick) {
@@ -82,21 +73,36 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
   };
 
   // 获取封面图 - 优先级：设置的封面 > 正文第一张图 > null（显示纯文字卡片）
-  let coverImage: string | null = null;
-  let hasImage = false;
+  const resolveExplicitCover = () => {
+    const anyArticle = article as any;
+    return (
+      article.coverImage ||
+      anyArticle.coverUrl ||
+      anyArticle.cover_url ||
+      anyArticle.cover ||
+      null
+    );
+  };
 
-  if (article.coverImage) {
-    // 1. 如果设置了封面，使用设置的封面
-    coverImage = withBasePath(article.coverImage);
-    hasImage = true;
+  const explicitCover = resolveExplicitCover();
+
+  let coverImage: string | null = null;
+
+  if (explicitCover) {
+    coverImage = withBasePath(explicitCover);
   } else {
-    // 2. 尝试从正文或摘要中提取第一张图片
-    const contentImage = extractFirstImageFromHtml(article.content) || extractFirstImageFromHtml(article.excerpt);
+    const contentImage =
+      extractFirstImageFromHtml(article.content) ||
+      extractFirstImageFromHtml(article.excerpt);
+
     if (contentImage) {
-      coverImage = contentImage.startsWith('http') ? contentImage : withBasePath(contentImage);
-      hasImage = true;
+      coverImage = withBasePath(contentImage);
     }
   }
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [coverImage]);
 
   // 生成随机渐变色（基于文章标题，保证同一文章颜色一致）
   const getGradientColors = (title: string): string => {
@@ -143,15 +149,13 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
       <div className="relative overflow-hidden rounded-xl theme-bg-card border theme-border-primary group-hover:border-wangfeng-purple/50 transition-all duration-300 w-full">
         {/* 封面区域 - 固定 16:9 比例 */}
         <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-          {hasImage && coverImage ? (
+          {coverImage && !imageFailed ? (
             // 有图片时显示图片
             <img
               src={coverImage}
               alt={article.title}
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = withBasePath(getDefaultCoverImage(article.category));
-              }}
+              onError={() => setImageFailed(true)}
             />
           ) : (
             // 无图片时显示纯文字渐变背景

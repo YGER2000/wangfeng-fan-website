@@ -1,0 +1,79 @@
+export default {
+  kind: 'collectionType',
+  collectionName: 'photo_groups',
+  displayName: 'Photo Group',
+  singularName: 'photo-group',
+  pluralName: 'photo-groups',
+  description: '图组管理',
+  attributes: {
+    // 基础信息
+    title: {
+      type: 'string',
+      required: true,
+      minLength: 1,
+      maxLength: 255,
+    },
+    slug: {
+      type: 'uid',
+      targetField: 'title',
+      unique: true,
+    },
+    description: {
+      type: 'text',
+      maxLength: 1000,
+    },
+
+    // 分类
+    category: {
+      type: 'relation',
+      relation: 'manyToOne',
+      target: 'api::category-secondary.category-secondary',
+      inversedBy: 'photoGroups',
+    },
+
+    // 日期
+    date: {
+      type: 'date',
+    },
+
+    // 封面
+    coverImage: {
+      type: 'media',
+      allowedTypes: ['images'],
+      multiple: false,
+    },
+
+    // 图片关系
+    photos: {
+      type: 'relation',
+      relation: 'oneToMany',
+      target: 'api::photo.photo',
+      mappedBy: 'photoGroup',
+    },
+
+    // 工作流相关
+    workflowState: {
+      type: 'enumeration',
+      enum: ['draft', 'pending', 'approved', 'rejected', 'published'],
+      default: 'draft',
+    },
+    reviewNotes: {
+      type: 'text',
+    },
+    isPublished: {
+      type: 'boolean',
+      default: false,
+    },
+    publishedAt: {
+      type: 'datetime',
+    },
+
+    // 作者信息
+    author: {
+      type: 'relation',
+      relation: 'manyToOne',
+      target: 'plugin::users-permissions.user',
+      inversedBy: 'photoGroups',
+    },
+  },
+};
