@@ -38,6 +38,7 @@ interface ArticleEditorProps {
   onSave?: (article: Article, coverImage?: File) => void;
   onPreview?: (article: Article) => void;
   onDelete?: (articleId: string) => void;
+  isReviewMode?: boolean;
 }
 
 interface NewTagFormState {
@@ -46,7 +47,7 @@ interface NewTagFormState {
   description: string;
 }
 
-const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleEditorProps) => {
+const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isReviewMode = false }: ArticleEditorProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationState = location.state as { fromReview?: boolean; backPath?: string } | null;
@@ -55,13 +56,13 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
   const isLight = theme === 'white';
 
   // 检查来源信息并确定返回路径
-  const fromReview = Boolean(navigationState?.fromReview);
+  const fromReview = Boolean(navigationState?.fromReview) || isReviewMode;
   const defaultBackPath =
     currentRole === 'admin' || currentRole === 'super_admin'
       ? '/admin/articles/all'
       : '/admin/my-articles';
   const backPath =
-    navigationState?.backPath || (fromReview ? '/admin/reviews' : defaultBackPath);
+    navigationState?.backPath || (fromReview ? (isReviewMode ? '/admin/review/articles' : '/admin/reviews') : defaultBackPath);
   const backButtonLabel = fromReview
     ? '返回审核中心'
     : backPath === '/admin/my-articles'
@@ -543,13 +544,42 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/approve`, {
+
+      // 如果是审核模式，需要先保存编辑
+      if (isReviewMode && onSave) {
+        const articleData: Article = {
+          id: initialArticle.id as string,
+          title: article.title,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          author: article.author,
+          date: article.date,
+          category: article.category,
+          category_primary: categoryPrimary,
+          category_secondary: categorySecondary,
+          tags: article.tags || [],
+          coverUrl: article.coverUrl,
+          slug: initialArticle.slug || '',
+          review_status: 'pending',
+          is_published: false,
+          created_at: initialArticle.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await onSave(articleData, undefined);
+      }
+
+      // 调用新的 approve API
+      const approveUrl = isReviewMode
+        ? `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/approve`
+        : `http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/approve`;
+
+      const response = await fetch(approveUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: JSON.stringify(isReviewMode ? {} : {
           reviewNotes: reviewNotes || '内容优质,通过审核',
         }),
       });
@@ -565,7 +595,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
 
       setTimeout(() => {
         navigate(backPath);
-      }, 2000);
+      }, isReviewMode ? 1500 : 2000);
     } catch (error) {
       console.error('审核通过失败:', error);
       setToast({
@@ -585,7 +615,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
     }
 
     if (!reviewNotes || reviewNotes.trim() === '') {
-      setToast({ message: '驳回时必须填写审核备注', type: 'error' });
+      setToast({ message: isReviewMode ? '拒绝时必须填写原因' : '驳回时必须填写审核备注', type: 'error' });
       return;
     }
 
@@ -594,13 +624,19 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/reject`, {
+
+      // 调用新的 reject API
+      const rejectUrl = isReviewMode
+        ? `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/reject`
+        : `http://localhost:1994/api/admin/reviews/article/${initialArticle.id}/reject`;
+
+      const response = await fetch(rejectUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
+        body: JSON.stringify(isReviewMode ? { reason: reviewNotes } : {
           reviewNotes: reviewNotes,
         }),
       });
@@ -613,10 +649,11 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
       setSaveSuccess(true);
       setReviewStatus('rejected');
       setToast({ message: '已驳回！', type: 'success' });
+      setShowRejectModal(false);
 
       setTimeout(() => {
         navigate(backPath);
-      }, 2000);
+      }, isReviewMode ? 1500 : 2000);
     } catch (error) {
       console.error('审核驳回失败:', error);
       setToast({
