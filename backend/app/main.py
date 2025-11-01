@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import asyncio
 
-from .routers import auth, articles, schedules, admin, verification, profile, upload, videos, tags, gallery, games, reviews
+from .routers import auth, articles, schedules, admin, verification, profile, upload, videos, tags, gallery, games, reviews, content_workflow
 from .models.article import Base as ArticleBase
 from .models.user_db import Base as UserBase
 from .models.admin_log import Base as AdminLogBase
@@ -76,6 +76,7 @@ app.include_router(tags.router)  # 标签路由
 app.include_router(gallery.router)  # 图片画廊路由
 app.include_router(games.router)  # 游戏和投票路由
 app.include_router(reviews.router)  # 审核路由
+app.include_router(content_workflow.router)  # 内容工作流路由（权限感知版本）
 
 
 @app.get("/")

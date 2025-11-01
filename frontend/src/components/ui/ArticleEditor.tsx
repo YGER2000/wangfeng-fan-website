@@ -116,7 +116,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete }: ArticleE
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   // 审核相关状态
-  const [reviewStatus, setReviewStatus] = useState<string>(initialArticle?.review_status || 'pending');
+  const [reviewStatus, setReviewStatus] = useState<string>((initialArticle as any)?.review_status || 'pending');
   const [reviewNotes, setReviewNotes] = useState<string>('');
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);

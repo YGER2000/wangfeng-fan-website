@@ -14,6 +14,8 @@ import {
   Tag,
   List,
   Users,
+  CheckCircle,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -59,6 +61,18 @@ const userNavItems: NavItem[] = [
 // 管理员额外菜单
 const adminNavItems: NavItem[] = [
   {
+    label: '审核中心',
+    to: '/admin/review/articles',
+    icon: ClipboardCheck,
+    adminOnly: true,
+  },
+  {
+    label: '管理中心',
+    to: '/admin/manage/articles',
+    icon: List,
+    adminOnly: true,
+  },
+  {
     label: '行程管理',
     to: '/admin/schedules',
     icon: CalendarDays,
@@ -68,24 +82,6 @@ const adminNavItems: NavItem[] = [
     label: '标签管理',
     to: '/admin/tags',
     icon: Tag,
-    adminOnly: true,
-  },
-  {
-    label: '文章列表',
-    to: '/admin/articles/all',
-    icon: List,
-    adminOnly: true,
-  },
-  {
-    label: '视频列表',
-    to: '/admin/videos/all',
-    icon: List,
-    adminOnly: true,
-  },
-  {
-    label: '图片列表',
-    to: '/admin/gallery/all',
-    icon: List,
     adminOnly: true,
   },
 ];

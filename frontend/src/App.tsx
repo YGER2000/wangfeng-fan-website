@@ -58,6 +58,10 @@ import GalleryUpload from './components/admin/pages/GalleryUpload';
 import GalleryEdit from './components/admin/pages/GalleryEdit';
 import TagManager from './components/admin/pages/TagManager';
 import PlaceholderPage from './components/admin/pages/PlaceholderPage';
+import ReviewPanel from './components/admin/pages/ReviewPanel';
+import ReviewArticleList from './components/admin/pages/ReviewArticleList';
+import ArticleReview from './components/admin/pages/ArticleReview';
+import ManageArticleList from './components/admin/pages/ManageArticleList';
 
 const AppContent = () => {
   const { theme } = useTheme();
@@ -134,6 +138,14 @@ const AppContent = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <ArticleEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="articles/review/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ArticleReview />
                 </ProtectedRoute>
               }
             />
@@ -218,6 +230,36 @@ const AppContent = () => {
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <TagManager />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 审核中心 - 文章审核 */}
+            <Route
+              path="review/articles"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ReviewArticleList />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 管理中心 - 文章管理 */}
+            <Route
+              path="manage/articles"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ManageArticleList />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 审核面板 (保留兼容性) */}
+            <Route
+              path="review-panel"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ReviewPanel />
                 </ProtectedRoute>
               }
             />
