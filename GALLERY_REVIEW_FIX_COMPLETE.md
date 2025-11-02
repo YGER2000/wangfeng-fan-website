@@ -201,9 +201,39 @@ if published_only:
 3. 两个字段必须同时更新
 
 ### 验证结果
-✅ 数据库修复完成
-✅ 所有14个图组现在都能在前台显示
+✅ 数据库修复完成 - 所有14个图组现在都有正确的 review_status='approved'
+✅ **前台显示6个OSS图组** - 这是设计正确的（Legacy图组被intentionally过滤）
+✅ **管理后台显示14个图组** - 包括所有状态和存储类型
 ✅ 新审核通过的图组会正确显示
+
+### 说明：为什么前台只显示6个而管理后台显示14个？
+
+**这是设计正确的行为**，原因如下：
+
+| 存储类型 | 数量 | 前台显示 | 后台显示 | 说明 |
+|---------|------|--------|--------|------|
+| **OSS** (新图片服务) | 6 | ✅ 显示 | ✅ 显示 | 新上传的图组，使用云存储 |
+| **Legacy** (旧数据) | 8 | ❌ 隐藏 | ✅ 显示 | 历史数据，使用本地存储 |
+
+**前台API过滤逻辑：**
+```python
+def get_photo_groups(published_only=True):
+    query = db.query(PhotoGroup).filter(
+        PhotoGroup.is_deleted == False,
+        PhotoGroup.storage_type != 'legacy'  # ← 前台不显示legacy
+    )
+    if published_only:
+        query = query.filter(
+            PhotoGroup.is_published == True,
+            PhotoGroup.review_status == 'approved'
+        )
+    return query
+```
+
+**管理后台查询：**
+- 不过滤 `storage_type`
+- 显示所有状态（pending, approved, rejected）
+- 方便管理员管理所有图组
 
 ---
 
@@ -304,7 +334,9 @@ WHERE is_deleted = 0
 
 **修复后：**
 - ✅ 審核中心仅显示"拒绝"和"批准发布"两个按钮
-- ✅ 后台和前台都显示全部14个已发布的图组
+- ✅ 数据库修复完成 - 所有14个图组都有正确的review_status
+- ✅ 前台显示6个OSS图组（Legacy图组被intentionally过滤）
+- ✅ 管理后台显示所有14个图组
 - ✅ 新审核通过的图组会正确显示
 
 ---
