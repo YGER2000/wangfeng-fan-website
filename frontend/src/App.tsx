@@ -41,10 +41,11 @@ import MyArticleList from './components/admin/pages/MyArticleList';
 import MyVideoList from './components/admin/pages/MyVideoList';
 import MyGalleryList from './components/admin/pages/MyGalleryList';
 
-// 管理员页面 - 列表式
-import AllArticleList from './components/admin/pages/AllArticleList';
-import AllVideoList from './components/admin/pages/AllVideoList';
-import AllGalleryList from './components/admin/pages/AllGalleryList';
+// Note: AllArticleList, AllVideoList, AllGalleryList are deprecated
+// They have been replaced by unified management interfaces:
+// - ManageArticleList for articles
+// - ReviewVideoList for video reviews
+// - ReviewGalleryList for gallery reviews
 
 // 编辑器和创建页面
 import ArticleCreate from './components/admin/pages/ArticleCreate';
@@ -59,8 +60,12 @@ import GalleryEdit from './components/admin/pages/GalleryEdit';
 import TagManager from './components/admin/pages/TagManager';
 import PlaceholderPage from './components/admin/pages/PlaceholderPage';
 import ReviewPanel from './components/admin/pages/ReviewPanel';
-import ReviewArticleList from './components/admin/pages/ReviewArticleList';
 import ArticleReview from './components/admin/pages/ArticleReview';
+import ArticleEditPublish from './components/admin/pages/ArticleEditPublish';
+import ReviewVideoList from './components/admin/pages/ReviewVideoList';
+import VideoReview from './components/admin/pages/VideoReview';
+import ReviewGalleryList from './components/admin/pages/ReviewGalleryList';
+import GalleryReview from './components/admin/pages/GalleryReview';
 import ManageArticleList from './components/admin/pages/ManageArticleList';
 
 const AppContent = () => {
@@ -166,6 +171,14 @@ const AppContent = () => {
               }
             />
             <Route
+              path="videos/edit-publish/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <VideoEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="gallery/upload"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
@@ -181,37 +194,15 @@ const AppContent = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="gallery/edit-publish/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <GalleryEdit />
+                </ProtectedRoute>
+              }
+            />
 
-            {/* 路由重定向 - 将旧的 /list 路径重定向到新的 /all 路径 */}
-            <Route path="articles/list" element={<Navigate to="/admin/articles/all" replace />} />
-            <Route path="videos/list" element={<Navigate to="/admin/videos/all" replace />} />
-            <Route path="gallery/list" element={<Navigate to="/admin/gallery/all" replace />} />
-
-            {/* 管理员专属 - 全部内容(列表式) */}
-            <Route
-              path="articles/all"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <AllArticleList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="videos/all"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <AllVideoList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="gallery/all"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <AllGalleryList />
-                </ProtectedRoute>
-              }
-            />
 
             {/* 管理员专属 - 行程和标签 */}
             <Route path="schedules" element={<Navigate to="/admin/schedules/list" replace />} />
@@ -234,22 +225,54 @@ const AppContent = () => {
               }
             />
 
-            {/* 审核中心 - 文章审核 */}
-            <Route
-              path="review/articles"
-              element={
-                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
-                  <ReviewArticleList />
-                </ProtectedRoute>
-              }
-            />
-
             {/* 管理中心 - 文章管理 */}
             <Route
               path="manage/articles"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <ManageArticleList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="articles/edit-publish/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ArticleEditPublish />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manage/videos"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ReviewVideoList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="videos/review/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <VideoReview />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* 管理中心 - 图片审核列表 */}
+            <Route
+              path="manage/gallery"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ReviewGalleryList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="gallery/review/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <GalleryReview />
                 </ProtectedRoute>
               }
             />

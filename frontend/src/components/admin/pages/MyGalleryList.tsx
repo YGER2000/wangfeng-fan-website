@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Image as ImageIcon } from 'lucide-react';
+import { Plus, Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { galleryAPI, PhotoGroup } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -122,15 +122,30 @@ const MyGalleryList = () => {
             </span>
           </div>
 
-          {canManage && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
+              onClick={loadPhotoGroups}
+              disabled={loading}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
+                isLight
+                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50'
+                  : 'bg-white/10 text-white hover:bg-white/20 disabled:opacity-50'
+              )}
+              title="刷新图片列表"
             >
-              <Plus className="h-4 w-4" />
-              上传图组
+              <RefreshCw className="h-4 w-4" />
             </button>
-          )}
+            {canManage && (
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                上传图组
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

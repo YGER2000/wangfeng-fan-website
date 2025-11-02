@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 图片存储服务
-支持 MinIO、Cloudflare R2、阿里云 OSS（S3 兼容）
+使用阿里云 OSS (oss2) 官方 SDK
 """
 import os
 import io
@@ -9,24 +9,15 @@ import uuid
 from datetime import datetime
 from typing import Literal
 from PIL import Image
-from minio import Minio
-from minio.error import S3Error
+
+# 尝试导入 oss2，如果不存在则使用 None
+try:
+    import oss2
+except ImportError:
+    oss2 = None
 
 # 存储配置
-STORAGE_TYPE: Literal["minio", "r2", "oss", "local"] = os.getenv("STORAGE_TYPE", "minio")
-
-# MinIO 配置（默认本地）
-MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin")
-MINIO_BUCKET = os.getenv("MINIO_BUCKET", "wangfeng-images")
-MINIO_SECURE = os.getenv("MINIO_SECURE", "false").lower() == "true"
-
-# Cloudflare R2 配置
-R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID", "")
-R2_ACCESS_KEY = os.getenv("R2_ACCESS_KEY", "")
-R2_SECRET_KEY = os.getenv("R2_SECRET_KEY", "")
-R2_BUCKET = os.getenv("R2_BUCKET", "wangfeng-images")
+STORAGE_TYPE: Literal["oss"] = os.getenv("STORAGE_TYPE", "oss")
 
 # 阿里云 OSS 配置
 OSS_ENDPOINT = os.getenv("OSS_ENDPOINT", "")  # 例如：oss-cn-hangzhou.aliyuncs.com
@@ -35,12 +26,9 @@ OSS_SECRET_KEY = os.getenv("OSS_SECRET_KEY", "")
 OSS_BUCKET = os.getenv("OSS_BUCKET", "wangfeng-images")
 OSS_CUSTOM_DOMAIN = os.getenv("OSS_CUSTOM_DOMAIN", "")  # 可选：自定义域名
 
-# 本地存储配置
-LOCAL_STORAGE_PATH = os.getenv("LOCAL_STORAGE_PATH", "./uploads")
-
 
 class ImageStorage:
-    """图片存储类，支持多种存储后端"""
+    """图片存储类，仅支持阿里云 OSS"""
 
     def __init__(self):
         self.storage_type = STORAGE_TYPE
@@ -53,100 +41,45 @@ class ImageStorage:
             return
 
         try:
-            if self.storage_type == "minio":
-                self._init_minio()
-            elif self.storage_type == "r2":
-                self._init_r2()
-            elif self.storage_type == "oss":
-                self._init_oss()
-            elif self.storage_type == "local":
-                self._init_local()
+            self._init_oss()
             self._initialized = True
         except Exception as e:
             print(f"⚠️ 存储初始化失败: {e}")
             print("💡 将在首次使用时重试...")
 
     def _init_minio(self):
-        """初始化 MinIO 客户端"""
-        try:
-            self.client = Minio(
-                MINIO_ENDPOINT,
-                access_key=MINIO_ACCESS_KEY,
-                secret_key=MINIO_SECRET_KEY,
-                secure=MINIO_SECURE
-            )
-
-            # 确保 bucket 存在
-            if not self.client.bucket_exists(MINIO_BUCKET):
-                self.client.make_bucket(MINIO_BUCKET)
-                print(f"✅ 创建 MinIO bucket: {MINIO_BUCKET}")
-
-            # 设置 bucket 为公开读取
-            policy = f'''{{
-                "Version": "2012-10-17",
-                "Statement": [
-                    {{
-                        "Effect": "Allow",
-                        "Principal": {{"AWS": ["*"]}},
-                        "Action": ["s3:GetObject"],
-                        "Resource": ["arn:aws:s3:::{MINIO_BUCKET}/*"]
-                    }}
-                ]
-            }}'''
-            self.client.set_bucket_policy(MINIO_BUCKET, policy)
-
-        except Exception as e:
-            print(f"❌ MinIO 初始化失败: {e}")
-            raise
+        """已移除 MinIO 支持，请使用 oss 存储类型"""
+        raise NotImplementedError("MinIO 已移除，请使用 STORAGE_TYPE=oss")
 
     def _init_r2(self):
-        """初始化 Cloudflare R2 客户端（S3 兼容）"""
-        try:
-            # R2 使用 S3 兼容 API
-            endpoint = f"{R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-            self.client = Minio(
-                endpoint,
-                access_key=R2_ACCESS_KEY,
-                secret_key=R2_SECRET_KEY,
-                secure=True
-            )
-
-            # 确保 bucket 存在
-            if not self.client.bucket_exists(R2_BUCKET):
-                self.client.make_bucket(R2_BUCKET)
-                print(f"✅ 创建 R2 bucket: {R2_BUCKET}")
-
-        except Exception as e:
-            print(f"❌ R2 初始化失败: {e}")
-            raise
+        """已移除 Cloudflare R2 支持，请使用 oss 存储类型"""
+        raise NotImplementedError("R2 已移除，请使用 STORAGE_TYPE=oss")
 
     def _init_oss(self):
-        """初始化阿里云 OSS 客户端（S3 兼容）"""
+        """初始化阿里云 OSS 客户端（使用官方 oss2 SDK）"""
         try:
-            # 阿里云 OSS 使用 S3 兼容 API
-            self.client = Minio(
-                OSS_ENDPOINT,
-                access_key=OSS_ACCESS_KEY,
-                secret_key=OSS_SECRET_KEY,
-                secure=True,  # 阿里云 OSS 强制使用 HTTPS
-                region=None  # OSS endpoint 已包含区域信息
-            )
+            if not oss2:
+                raise ImportError("oss2 library not installed. 请运行: pip install oss2")
 
-            # 确保 bucket 存在（如果不存在会抛出异常，说明需要手动创建）
-            if not self.client.bucket_exists(OSS_BUCKET):
-                print(f"⚠️ Bucket {OSS_BUCKET} 不存在，请在阿里云控制台创建")
-                raise Exception(f"Bucket {OSS_BUCKET} 不存在")
+            if not OSS_ENDPOINT or not OSS_ACCESS_KEY or not OSS_SECRET_KEY or not OSS_BUCKET:
+                raise ValueError("⚠️ 阿里云 OSS 配置不完整。请检查环境变量: OSS_ENDPOINT, OSS_ACCESS_KEY, OSS_SECRET_KEY, OSS_BUCKET")
 
-            print(f"✅ 阿里云 OSS 已连接: {OSS_BUCKET}")
+            # 创建 OSS 认证对象
+            auth = oss2.Auth(OSS_ACCESS_KEY, OSS_SECRET_KEY)
+
+            # 创建 Bucket 对象
+            # endpoint 不包含 bucket 名称，oss2 会自动添加
+            # 最终 URL 格式: https://{bucket}.{endpoint}/{object}
+            oss_endpoint_url = f"https://{OSS_ENDPOINT}"
+            self.client = oss2.Bucket(auth, oss_endpoint_url, OSS_BUCKET)
+
+            # 测试连接
+            self.client.head_bucket()
+            print(f"✅ 阿里云 OSS 已连接: {oss_endpoint_url}")
 
         except Exception as e:
             print(f"❌ 阿里云 OSS 初始化失败: {e}")
             raise
-
-    def _init_local(self):
-        """初始化本地存储"""
-        os.makedirs(LOCAL_STORAGE_PATH, exist_ok=True)
-        print(f"✅ 本地存储目录: {LOCAL_STORAGE_PATH}")
 
     def compress_image(self, image_data: bytes, max_size_mb: float = 1.0) -> tuple[bytes, str]:
         """
@@ -235,7 +168,7 @@ class ImageStorage:
 
     def upload_image(self, image_data: bytes, filename: str) -> str:
         """
-        上传图片
+        上传图片到阿里云 OSS
 
         Args:
             image_data: 图片数据
@@ -253,76 +186,32 @@ class ImageStorage:
         # 生成唯一文件名
         object_name = self.generate_filename(filename, extension)
 
-        # 根据存储类型上传
-        if self.storage_type in ["minio", "r2", "oss"]:
-            return self._upload_to_s3(compressed_data, object_name)
-        elif self.storage_type == "local":
-            return self._upload_to_local(compressed_data, object_name)
-        else:
-            raise ValueError(f"不支持的存储类型: {self.storage_type}")
+        # 上传到 OSS
+        return self._upload_to_oss(compressed_data, object_name)
 
-    def _upload_to_s3(self, image_data: bytes, object_name: str) -> str:
-        """上传到 S3 兼容存储（MinIO/R2/OSS）"""
+    def _upload_to_oss(self, image_data: bytes, object_name: str) -> str:
+        """上传到阿里云 OSS（使用官方 oss2 SDK）"""
         try:
-            # 根据存储类型选择 bucket
-            if self.storage_type == "minio":
-                bucket = MINIO_BUCKET
-            elif self.storage_type == "r2":
-                bucket = R2_BUCKET
-            elif self.storage_type == "oss":
-                bucket = OSS_BUCKET
-            else:
-                bucket = MINIO_BUCKET
-
-            self.client.put_object(
-                bucket,
-                object_name,
-                io.BytesIO(image_data),
-                length=len(image_data),
-                content_type='image/jpeg'
-            )
+            # 使用 oss2 的 put_object 方法上传
+            self.client.put_object(object_name, image_data)
 
             # 生成访问 URL
-            if self.storage_type == "minio":
-                protocol = "https" if MINIO_SECURE else "http"
-                url = f"{protocol}://{MINIO_ENDPOINT}/{bucket}/{object_name}"
-            elif self.storage_type == "r2":
-                # R2 使用自定义域名或公共 URL
-                url = f"https://pub-{R2_ACCOUNT_ID}.r2.dev/{object_name}"
-            elif self.storage_type == "oss":
-                # 阿里云 OSS URL
-                if OSS_CUSTOM_DOMAIN:
-                    # 使用自定义域名（如果配置了）
-                    url = f"https://{OSS_CUSTOM_DOMAIN}/{object_name}"
-                else:
-                    # 使用默认 OSS 域名
-                    url = f"https://{bucket}.{OSS_ENDPOINT}/{object_name}"
+            if OSS_CUSTOM_DOMAIN:
+                # 使用自定义域名（如果配置了）
+                url = f"https://{OSS_CUSTOM_DOMAIN}/{object_name}"
             else:
-                url = ""
+                # 使用虚拟主机式 URL（virtual hosted-style）
+                url = f"https://{OSS_BUCKET}.{OSS_ENDPOINT}/{object_name}"
 
             return url
 
-        except S3Error as e:
-            print(f"❌ 上传失败: {e}")
+        except Exception as e:
+            print(f"❌ 上传到 OSS 失败: {e}")
             raise
-
-    def _upload_to_local(self, image_data: bytes, object_name: str) -> str:
-        """上传到本地存储"""
-        file_path = os.path.join(LOCAL_STORAGE_PATH, object_name)
-
-        # 创建目录
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        # 保存文件
-        with open(file_path, 'wb') as f:
-            f.write(image_data)
-
-        # 返回相对 URL（需要配合静态文件服务）
-        return f"/uploads/{object_name}"
 
     def delete_image(self, url: str) -> bool:
         """
-        删除图片
+        删除图片（从阿里云 OSS）
 
         Args:
             url: 图片 URL
@@ -334,36 +223,20 @@ class ImageStorage:
         self._ensure_initialized()
 
         try:
-            if self.storage_type in ["minio", "r2", "oss"]:
-                # 根据存储类型选择 bucket
-                if self.storage_type == "minio":
-                    bucket = MINIO_BUCKET
-                elif self.storage_type == "r2":
-                    bucket = R2_BUCKET
-                elif self.storage_type == "oss":
-                    bucket = OSS_BUCKET
-                else:
-                    bucket = MINIO_BUCKET
+            # 从 URL 提取 object_name
+            # 支持两种 URL 格式：
+            # 1. https://{bucket}.{endpoint}/{object_name}
+            # 2. https://{custom_domain}/{object_name}
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
 
-                # 从 URL 提取 object_name
-                # 支持多种 URL 格式
-                if f"/{bucket}/" in url:
-                    object_name = url.split(f"/{bucket}/")[-1]
-                else:
-                    # 对于自定义域名，提取路径部分
-                    from urllib.parse import urlparse
-                    parsed = urlparse(url)
-                    object_name = parsed.path.lstrip('/')
+            # 移除开头的 /
+            object_name = parsed.path.lstrip('/')
 
-                self.client.remove_object(bucket, object_name)
-            elif self.storage_type == "local":
-                # 从 URL 提取文件路径
-                file_path = url.replace("/uploads/", "")
-                full_path = os.path.join(LOCAL_STORAGE_PATH, file_path)
-                if os.path.exists(full_path):
-                    os.remove(full_path)
-
+            # 删除对象
+            self.client.delete_object(object_name)
             return True
+
         except Exception as e:
             print(f"❌ 删除图片失败: {e}")
             return False

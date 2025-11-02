@@ -16,17 +16,25 @@ import {
   Users,
   CheckCircle,
   ClipboardCheck,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import BackgroundManager from '@/components/ui/backgrounds/BackgroundManager';
 
-interface NavItem {
+interface NavSubItem {
   label: string;
   to: string;
   icon: React.ElementType;
-  adminOnly?: boolean; // 仅管理员可见
+}
+
+interface NavItem {
+  label: string;
+  to?: string;
+  icon: React.ElementType;
+  adminOnly?: boolean;
+  subItems?: NavSubItem[];
 }
 
 // 普通用户菜单
@@ -61,16 +69,26 @@ const userNavItems: NavItem[] = [
 // 管理员额外菜单
 const adminNavItems: NavItem[] = [
   {
-    label: '审核中心',
-    to: '/admin/review/articles',
-    icon: ClipboardCheck,
-    adminOnly: true,
-  },
-  {
     label: '管理中心',
-    to: '/admin/manage/articles',
     icon: List,
     adminOnly: true,
+    subItems: [
+      {
+        label: '文章管理',
+        to: '/admin/manage/articles',
+        icon: FileText,
+      },
+      {
+        label: '视频管理',
+        to: '/admin/manage/videos',
+        icon: Video,
+      },
+      {
+        label: '图片管理',
+        to: '/admin/manage/gallery',
+        icon: Image,
+      },
+    ],
   },
   {
     label: '行程管理',
@@ -88,6 +106,7 @@ const adminNavItems: NavItem[] = [
 
 const NewAdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
@@ -95,6 +114,10 @@ const NewAdminLayout = () => {
   const isLight = theme === 'white';
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+  const toggleExpandMenu = (label: string) => {
+    setExpandedMenu(expandedMenu === label ? null : label);
+  };
 
   const handleLogout = () => {
     logout();
@@ -111,7 +134,24 @@ const NewAdminLayout = () => {
   // 检查当前路径是否匹配导航项
   const isNavItemActive = (navPath: string) => {
     // 精确匹配或前缀匹配（包含子路由）
-    return location.pathname === navPath || location.pathname.startsWith(navPath + '/');
+    if (location.pathname === navPath || location.pathname.startsWith(navPath + '/')) {
+      return true;
+    }
+
+    // 特殊情况：当用户编辑自己的内容时，应该高亮对应的"我的xxx"菜单
+    // 例如：在 /admin/videos/edit/:id 时高亮 /admin/my-videos
+    if (navPath === '/admin/my-videos' && /^\/admin\/videos\/edit\//.test(location.pathname)) {
+      // 检查是否从我的视频导航过来（通过检查 location.state）
+      return true;
+    }
+    if (navPath === '/admin/my-articles' && /^\/admin\/articles\/edit\//.test(location.pathname)) {
+      return true;
+    }
+    if (navPath === '/admin/my-gallery' && /^\/admin\/gallery\/edit\//.test(location.pathname)) {
+      return true;
+    }
+
+    return false;
   };
 
   return (
@@ -181,26 +221,91 @@ const NewAdminLayout = () => {
           <div className="flex flex-col h-full">
             {/* 导航菜单 */}
             <div className="flex-1 p-4 space-y-2 overflow-y-auto">
-              {allNavItems.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
-                    isNavItemActive(item.to)
-                      ? isLight
-                        ? 'bg-wangfeng-purple/10 text-wangfeng-purple border border-wangfeng-purple/30'
-                        : 'bg-wangfeng-purple/20 text-wangfeng-light border border-wangfeng-purple/40'
-                      : isLight
-                        ? 'text-gray-700 hover:bg-gray-100 hover:text-wangfeng-purple'
-                        : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
-                  )}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
+              {allNavItems.map((item) => {
+                const hasSubItems = item.subItems && item.subItems.length > 0;
+                const isExpanded = expandedMenu === item.label;
+                const isMenuActive = hasSubItems
+                  ? item.subItems.some(sub => isNavItemActive(sub.to))
+                  : isNavItemActive(item.to || '');
+
+                if (hasSubItems) {
+                  return (
+                    <div key={item.label}>
+                      {/* 父菜单项 */}
+                      <button
+                        onClick={() => toggleExpandMenu(item.label)}
+                        className={cn(
+                          'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
+                          isMenuActive || isExpanded
+                            ? isLight
+                              ? 'bg-wangfeng-purple/10 text-wangfeng-purple border border-wangfeng-purple/30'
+                              : 'bg-wangfeng-purple/20 text-wangfeng-light border border-wangfeng-purple/40'
+                            : isLight
+                              ? 'text-gray-700 hover:bg-gray-100 hover:text-wangfeng-purple'
+                              : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
+                        )}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ChevronDown
+                          className={cn(
+                            'w-4 h-4 transition-transform',
+                            isExpanded && 'rotate-180'
+                          )}
+                        />
+                      </button>
+
+                      {/* 子菜单项 */}
+                      {isExpanded && (
+                        <div className="mt-1 ml-4 pl-4 border-l border-wangfeng-purple/30 space-y-1">
+                          {item.subItems?.map((subItem) => (
+                            <Link
+                              key={subItem.to}
+                              to={subItem.to}
+                              onClick={() => setSidebarOpen(false)}
+                              className={cn(
+                                'w-full flex items-center gap-3 px-4 py-2 rounded-lg text-xs font-medium transition-all',
+                                isNavItemActive(subItem.to)
+                                  ? isLight
+                                    ? 'bg-wangfeng-purple/10 text-wangfeng-purple border border-wangfeng-purple/30'
+                                    : 'bg-wangfeng-purple/20 text-wangfeng-light border border-wangfeng-purple/40'
+                                  : isLight
+                                    ? 'text-gray-600 hover:bg-gray-100 hover:text-wangfeng-purple'
+                                    : 'text-gray-400 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
+                              )}
+                            >
+                              <subItem.icon className="w-4 h-4" />
+                              <span>{subItem.label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                // 普通菜单项（没有子菜单）
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to || '#'}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all',
+                      isNavItemActive(item.to || '')
+                        ? isLight
+                          ? 'bg-wangfeng-purple/10 text-wangfeng-purple border border-wangfeng-purple/30'
+                          : 'bg-wangfeng-purple/20 text-wangfeng-light border border-wangfeng-purple/40'
+                        : isLight
+                          ? 'text-gray-700 hover:bg-gray-100 hover:text-wangfeng-purple'
+                          : 'text-gray-300 hover:bg-wangfeng-purple/10 hover:text-wangfeng-light'
+                    )}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
 
             {/* 底部退出按钮 */}

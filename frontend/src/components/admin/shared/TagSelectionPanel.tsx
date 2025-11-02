@@ -148,7 +148,8 @@ const TagSelectionPanel = ({
       setIsSearchingTags(true);
       try {
         const results = await tagAPI.search(tagSearchQuery.trim());
-        setTagSearchResults(results.filter(tag => !selectedTagIds.has(tag.id)));
+        const selectedIds = new Set(selectedTags.map(tag => tag.id));
+        setTagSearchResults(results.filter(tag => !selectedIds.has(tag.id)));
       } catch (error) {
         console.error('搜索标签失败:', error);
         setTagSearchResults([]);
@@ -158,7 +159,7 @@ const TagSelectionPanel = ({
     }, 350);
 
     return () => clearTimeout(handler);
-  }, [tagSearchQuery, selectedTagIds]);
+  }, [tagSearchQuery, selectedTags]);
 
   const handleAddTag = (tag: TagData) => {
     if (selectedTagIds.has(tag.id)) {

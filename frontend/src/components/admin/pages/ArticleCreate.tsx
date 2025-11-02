@@ -8,7 +8,7 @@ const ArticleCreate = () => {
   const navigate = useNavigate();
   const { token, currentRole } = useAuth();
 
-  const handleSave = async (article: Article, coverImage?: File) => {
+  const handleSave = async (article: Article, coverImage?: File, isDraft: boolean = false) => {
     try {
       // 1. 如果有封面图片，先上传
       let coverUrl: string | undefined = undefined;
@@ -24,7 +24,7 @@ const ArticleCreate = () => {
         }
       }
 
-      // 2. 准备文章数据 - 所有文章都需要审核
+      // 2. 准备文章数据
       const articleData = {
         title: article.title,
         content: article.content,
@@ -35,14 +35,14 @@ const ArticleCreate = () => {
         category_secondary: article.category_secondary,
         tags: article.tags || [],
         cover_url: coverUrl, // 添加封面URL
-        // 所有文章都提交审核，不管是谁创建的
-        review_status: 'pending',
+        // 根据是否保存草稿来设置状态
+        review_status: isDraft ? 'draft' : 'pending',
         is_published: false,
       };
 
       // 3. 创建文章
       const savedArticle = await articleAPI.create(articleData, token);
-      console.log('文章已提交审核:', savedArticle);
+      console.log(isDraft ? '文章已保存为草稿:' : '文章已提交审核:', savedArticle);
 
       // 4. 不在这里跳转，让 ArticleEditor 处理跳转和提示
       // navigate('/admin/articles/list');

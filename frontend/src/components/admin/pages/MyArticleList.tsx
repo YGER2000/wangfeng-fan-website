@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, FileText } from 'lucide-react';
+import { Plus, FileText, RefreshCw } from 'lucide-react';
 import { articleAPI, Article } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,7 +23,7 @@ const MyArticleList = () => {
   // 筛选状态
   const [searchValue, setSearchValue] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedStatus, setSelectedStatus] = useState<ReviewStatus | 'published' | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<ReviewStatus | 'published' | 'draft' | null>(null);
 
   // 获取分类列表
   const primaryCategories = getPrimaryCategories();
@@ -70,6 +70,8 @@ const MyArticleList = () => {
     // 状态过滤
     if (selectedStatus === 'published') {
       return article.is_published;
+    } else if (selectedStatus === 'draft') {
+      return article.review_status === 'draft';
     } else if (selectedStatus) {
       return article.review_status === selectedStatus;
     }
@@ -127,15 +129,30 @@ const MyArticleList = () => {
             </span>
           </div>
 
-          {canManage && (
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleCreate}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
+              onClick={loadArticles}
+              disabled={loading}
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
+                isLight
+                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50'
+                  : 'bg-white/10 text-white hover:bg-white/20 disabled:opacity-50'
+              )}
+              title="刷新文章列表"
             >
-              <Plus className="h-4 w-4" />
-              创建文章
+              <RefreshCw className="h-4 w-4" />
             </button>
-          )}
+            {canManage && (
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
+              >
+                <Plus className="h-4 w-4" />
+                创建文章
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

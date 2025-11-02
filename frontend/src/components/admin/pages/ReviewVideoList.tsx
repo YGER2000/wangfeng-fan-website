@@ -1,19 +1,17 @@
 // -*- coding: utf-8 -*-
 /**
- * 文章管理列表（集审核和管理于一体）
- * 用途: 管理员审核待审核的文章，编辑已发布的文章
- * 显示: 所有审核状态的文章（pending、approved、rejected）
+ * 视频管理列表（集审核和管理于一体）
+ * 用途: 管理员审核待审核的视频，编辑已发布的视频
+ * 显示: 所有审核状态的视频（pending、approved、rejected）
  * 功能:
  *   - 待审核(pending): 显示"审核"按钮
  *   - 已发布(approved): 显示"编辑"按钮
  *   - 已拒绝(rejected): 显示"重新审核"按钮
- *   - 删除功能已移至编辑界面第三步
  */
 
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Search,
   ChevronUp,
   ChevronDown,
   Edit2,
@@ -21,26 +19,35 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  FileText,
+  Video as VideoIcon,
   RefreshCw,
 } from 'lucide-react';
-import { articleAPI, Article } from '@/utils/api';
+import { videoAPI, Video } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
-import { getPrimaryCategories } from '@/config/categories';
 import FilterBar from '@/components/ui/FilterBar';
+
+const videoCategories = [
+  { label: '演出现场', value: '演出现场' },
+  { label: '单曲现场', value: '单曲现场' },
+  { label: '综艺节目', value: '综艺节目' },
+  { label: '歌曲mv', value: '歌曲mv' },
+  { label: '访谈节目', value: '访谈节目' },
+  { label: '纪录片', value: '纪录片' },
+  { label: '其他', value: '其他' },
+];
 
 type SortField = 'created_at' | 'title' | 'author';
 type SortOrder = 'asc' | 'desc';
 
-const ManageArticleList = () => {
+const ReviewVideoList = () => {
   const { theme } = useTheme();
   const { currentRole: role } = useAuth();
   const navigate = useNavigate();
   const isLight = theme === 'white';
 
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +58,6 @@ const ManageArticleList = () => {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
-  const primaryCategories = getPrimaryCategories();
-
   // 权限检查 - 只有ADMIN+可以访问
   useEffect(() => {
     if (role !== 'admin' && role !== 'super_admin') {
@@ -60,20 +65,20 @@ const ManageArticleList = () => {
     }
   }, [role, navigate]);
 
-  // 加载所有文章
+  // 加载所有视频
   useEffect(() => {
-    loadArticles();
+    loadVideos();
   }, []);
 
-  const loadArticles = async () => {
+  const loadVideos = async () => {
     try {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('access_token');
-      const data = await articleAPI.getAllArticles({ limit: 500 }, token);
-      setArticles(data);
+      const data = await videoAPI.getAllVideos({ limit: 500 }, token);
+      setVideos(data);
     } catch (err) {
-      console.error('加载文章失败:', err);
+      console.error('加载视频失败:', err);
       setError('加载失败，请重试');
     } finally {
       setLoading(false);
@@ -81,30 +86,27 @@ const ManageArticleList = () => {
   };
 
   // 筛选和排序
-  const filteredAndSortedArticles = useMemo(() => {
-    let result = [...articles];
-
-    // 【重要】过滤掉草稿 - 管理页面不应显示草稿
-    result = result.filter(article => article.review_status !== 'draft');
+  const filteredAndSortedVideos = useMemo(() => {
+    let result = [...videos];
 
     // 搜索过滤
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        article =>
-          article.title.toLowerCase().includes(query) ||
-          article.author.toLowerCase().includes(query)
+        video =>
+          video.title.toLowerCase().includes(query) ||
+          video.author.toLowerCase().includes(query)
       );
     }
 
     // 分类过滤
     if (selectedCategory !== 'all') {
-      result = result.filter(article => article.category_primary === selectedCategory);
+      result = result.filter(video => video.category === selectedCategory);
     }
 
     // 审核状态过滤
     if (statusFilter !== null) {
-      result = result.filter(article => article.review_status === statusFilter);
+      result = result.filter(video => video.review_status === statusFilter);
     }
 
     // 排序
@@ -135,7 +137,7 @@ const ManageArticleList = () => {
     });
 
     return result;
-  }, [articles, searchQuery, selectedCategory, statusFilter, sortField, sortOrder]);
+  }, [videos, searchQuery, selectedCategory, statusFilter, sortField, sortOrder]);
 
   const handleToggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -146,14 +148,12 @@ const ManageArticleList = () => {
     }
   };
 
-  const handleReview = (articleId: string) => {
-    // 待审核文章进入审核页面
-    navigate(`/admin/articles/review/${articleId}`);
+  const handleReview = (videoId: string) => {
+    navigate(`/admin/videos/review/${videoId}`);
   };
 
-  const handleEditPublish = (articleId: string) => {
-    // 已发布文章进入编辑发布页面
-    navigate(`/admin/articles/edit-publish/${articleId}`);
+  const handleEditPublish = (videoId: string) => {
+    navigate(`/admin/videos/edit-publish/${videoId}`);
   };
 
   const getStatusBadge = (status: string) => {
@@ -189,11 +189,11 @@ const ManageArticleList = () => {
     }
   };
 
-  const getActionButton = (article: Article) => {
-    if (article.review_status === 'pending') {
+  const getActionButton = (video: Video) => {
+    if (video.review_status === 'pending') {
       return (
         <button
-          onClick={() => handleReview(article.id)}
+          onClick={() => handleReview(video.id)}
           className={cn(
             'inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-all',
             isLight
@@ -205,10 +205,10 @@ const ManageArticleList = () => {
           审核
         </button>
       );
-    } else if (article.review_status === 'approved') {
+    } else if (video.review_status === 'approved') {
       return (
         <button
-          onClick={() => handleEditPublish(article.id)}
+          onClick={() => handleEditPublish(video.id)}
           className={cn(
             'inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-all',
             isLight
@@ -220,10 +220,10 @@ const ManageArticleList = () => {
           编辑
         </button>
       );
-    } else if (article.review_status === 'rejected') {
+    } else if (video.review_status === 'rejected') {
       return (
         <button
-          onClick={() => handleReview(article.id)}
+          onClick={() => handleReview(video.id)}
           className={cn(
             'inline-flex items-center gap-2 px-3 py-1.5 rounded text-sm font-medium transition-all',
             isLight
@@ -256,14 +256,14 @@ const ManageArticleList = () => {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <FileText className="h-6 w-6 text-wangfeng-purple" />
+            <VideoIcon className="h-6 w-6 text-wangfeng-purple" />
             <h1
               className={cn(
                 'text-2xl font-bold',
                 isLight ? 'text-gray-900' : 'text-white'
               )}
             >
-              文章管理
+              视频管理
             </h1>
             <span
               className={cn(
@@ -273,13 +273,13 @@ const ManageArticleList = () => {
                   : 'bg-wangfeng-purple/20 text-wangfeng-purple'
               )}
             >
-              {filteredAndSortedArticles.length} 篇
+              {filteredAndSortedVideos.length} 个
             </span>
           </div>
 
           <div className="flex items-center gap-2">
             <button
-              onClick={loadArticles}
+              onClick={loadVideos}
               disabled={loading}
               className={cn(
                 'flex items-center gap-2 px-3 py-2 rounded-lg transition-colors',
@@ -287,7 +287,7 @@ const ManageArticleList = () => {
                   ? 'bg-gray-200 text-gray-700 hover:bg-gray-300 disabled:opacity-50'
                   : 'bg-white/10 text-white hover:bg-white/20 disabled:opacity-50'
               )}
-              title="刷新文章列表"
+              title="刷新视频列表"
             >
               <RefreshCw className="h-4 w-4" />
             </button>
@@ -299,12 +299,9 @@ const ManageArticleList = () => {
       <div className="flex-shrink-0 px-6 py-4">
         <FilterBar
           searchValue={searchQuery}
-          searchPlaceholder="搜索文章标题或作者..."
+          searchPlaceholder="搜索视频标题或作者..."
           onSearchChange={setSearchQuery}
-          categories={primaryCategories.map(cat => ({
-            label: cat,
-            value: cat,
-          }))}
+          categories={videoCategories}
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
           showStatusFilter={true}
@@ -337,7 +334,7 @@ const ManageArticleList = () => {
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
             <p>{error}</p>
           </div>
-        ) : filteredAndSortedArticles.length === 0 ? (
+        ) : filteredAndSortedVideos.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64">
             <AlertCircle className={cn(
               'w-16 h-16 mx-auto mb-4',
@@ -347,7 +344,7 @@ const ManageArticleList = () => {
               'text-lg font-medium',
               isLight ? 'text-gray-600' : 'text-gray-400'
             )}>
-              没有文章
+              没有视频
             </p>
           </div>
         ) : (
@@ -411,13 +408,13 @@ const ManageArticleList = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedArticles.map((article) => {
-                  const statusInfo = getStatusBadge(article.review_status);
+                {filteredAndSortedVideos.map((video) => {
+                  const statusInfo = getStatusBadge(video.review_status);
                   const StatusIcon = statusInfo.icon;
 
                   return (
                     <tr
-                      key={article.id}
+                      key={video.id}
                       className={cn(
                         'border-b transition-colors',
                         isLight
@@ -430,17 +427,17 @@ const ManageArticleList = () => {
                           'font-medium truncate',
                           isLight ? 'text-gray-900' : 'text-white'
                         )}>
-                          {article.title}
+                          {video.title}
                         </p>
                       </td>
                       <td className="px-6 py-4">
                         <p className={isLight ? 'text-gray-700' : 'text-gray-300'}>
-                          {article.category_primary}
+                          {video.category}
                         </p>
                       </td>
                       <td className="px-6 py-4">
                         <p className={isLight ? 'text-gray-700' : 'text-gray-300'}>
-                          {article.author}
+                          {video.author}
                         </p>
                       </td>
                       <td className="px-6 py-4">
@@ -448,7 +445,7 @@ const ManageArticleList = () => {
                           'text-xs',
                           isLight ? 'text-gray-600' : 'text-gray-400'
                         )}>
-                          {new Date(article.created_at).toLocaleDateString('zh-CN')}
+                          {new Date(video.created_at).toLocaleDateString('zh-CN')}
                         </p>
                       </td>
                       <td className="px-6 py-4">
@@ -463,7 +460,7 @@ const ManageArticleList = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          {getActionButton(article)}
+                          {getActionButton(video)}
                         </div>
                       </td>
                     </tr>
@@ -478,4 +475,4 @@ const ManageArticleList = () => {
   );
 };
 
-export default ManageArticleList;
+export default ReviewVideoList;

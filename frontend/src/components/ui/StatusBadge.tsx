@@ -2,7 +2,7 @@ import { CheckCircle, Clock, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
-export type ReviewStatus = 'approved' | 'pending' | 'rejected';
+export type ReviewStatus = 'approved' | 'pending' | 'rejected' | 'draft';
 
 interface StatusBadgeProps {
   status: ReviewStatus;
@@ -50,6 +50,13 @@ const StatusBadge = ({
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
+    },
+    draft: {
+      icon: Clock,
+      text: '草稿',
+      color: 'text-gray-600',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200',
     },
     approved: {
       icon: Clock,

@@ -372,6 +372,17 @@ const ArticleList = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
+                          {article.review_status === 'draft' && (
+                            <>
+                              <Clock className="h-4 w-4 text-gray-500" />
+                              <span className={cn(
+                                "text-sm font-medium",
+                                isLight ? "text-gray-700" : "text-gray-400"
+                              )}>
+                                草稿
+                              </span>
+                            </>
+                          )}
                           {article.review_status === 'pending' && (
                             <>
                               <Clock className="h-4 w-4 text-yellow-500" />

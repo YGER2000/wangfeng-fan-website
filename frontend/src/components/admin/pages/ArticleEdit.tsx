@@ -33,7 +33,7 @@ const ArticleEdit = () => {
       } catch (e) {
         console.error('加载文章失败', e);
         alert('加载文章失败');
-        navigate('/admin/articles/all');
+        navigate('/admin/manage/articles');
       } finally {
         setLoading(false);
       }
@@ -91,7 +91,7 @@ const ArticleEdit = () => {
     if (!confirm('确定删除该文章吗？')) return;
     try {
       await articleAPI.delete(articleId, token);
-      navigate('/admin/articles/all');
+      navigate('/admin/manage/articles');
     } catch (error) {
       console.error('删除文章失败:', error);
       alert('删除失败');

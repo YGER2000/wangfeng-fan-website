@@ -173,6 +173,7 @@ const VideoCreate = () => {
   };
 
   // 提交表单
+  // 提交视频（发送审核）
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -186,24 +187,80 @@ const VideoCreate = () => {
     setSubmitting(true);
 
     try {
-      // 准备视频数据，包含标签
+      // 准备视频数据，包含标签和审核状态
       const videoData = {
         ...formData,
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
+        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean),
+        review_status: 'pending',
+        is_published: false
       };
 
       await videoAPI.create(videoData, token);
-      setToast({ message: '视频创建成功！', type: 'success' });
+      setToast({ message: '✅ 视频已提交审核，等待管理员批准！', type: 'success' });
 
       // 3秒后跳转到视频列表
       setTimeout(() => {
-        navigate('/admin/videos/list');
+        navigate('/admin/my-videos');
       }, 3000);
     } catch (err: any) {
-      console.error('创建视频失败:', err);
+      console.error('提交视频失败:', err);
 
       // 更好的错误处理
-      let errorMessage = '创建视频失败';
+      let errorMessage = '提交视频失败';
+
+      if (err.message) {
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err.detail) {
+        // FastAPI validation errors
+        if (Array.isArray(err.detail)) {
+          errorMessage = err.detail.map((e: any) => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+        } else {
+          errorMessage = err.detail;
+        }
+      }
+
+      setToast({ message: errorMessage, type: 'error' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // 暂存为草稿
+  const handleSaveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (currentStep !== 2) {
+      setToast({ message: '请先完成基础信息填写', type: 'error' });
+      return;
+    }
+
+    if (!validateForm()) return;
+
+    setSubmitting(true);
+
+    try {
+      // 准备视频数据，包含标签和草稿状态
+      const videoData = {
+        ...formData,
+        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean),
+        review_status: 'draft',
+        is_published: false
+      };
+
+      await videoAPI.create(videoData, token);
+      setToast({ message: '✅ 视频已保存为草稿！', type: 'success' });
+
+      // 1.5秒后跳转到视频列表
+      setTimeout(() => {
+        navigate('/admin/my-videos');
+      }, 1500);
+    } catch (err: any) {
+      console.error('保存草稿失败:', err);
+
+      // 更好的错误处理
+      let errorMessage = '保存草稿失败';
 
       if (err.message) {
         errorMessage = err.message;
@@ -379,11 +436,24 @@ const VideoCreate = () => {
                   上一步
                 </button>
                 <button
+                  onClick={handleSaveDraft}
+                  disabled={submitting}
+                  className={cn(
+                    "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                    "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
+                    submitting && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  暂存草稿
+                </button>
+                <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  {submitting ? '发布中...' : '发布视频'}
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  提交审核
                 </button>
               </>
             )}

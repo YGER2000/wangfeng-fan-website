@@ -35,9 +35,8 @@ const categoryOptions = [
 
 const statusOptions = [
   { value: 'all', label: '全部状态' },
-  { value: 'published', label: '已发布' },
-  { value: 'approved', label: '已审核' },
-  { value: 'pending', label: '待审核' }
+  { value: 'pending', label: '待审核' },
+  { value: 'published', label: '已发布' }
 ];
 
 const VideoList = () => {
@@ -77,19 +76,12 @@ const VideoList = () => {
         color: 'text-green-500',
         bgColor: isLight ? 'bg-green-50' : 'bg-green-500/10'
       };
-    } else if (video.review_status === 'approved') {
-      return {
-        text: '已审核',
-        icon: Clock,
-        color: 'text-blue-500',
-        bgColor: isLight ? 'bg-blue-50' : 'bg-blue-500/10'
-      };
     } else {
       return {
         text: '待审核',
-        icon: XCircle,
-        color: 'text-yellow-500',
-        bgColor: isLight ? 'bg-yellow-50' : 'bg-yellow-500/10'
+        icon: Clock,
+        color: 'text-orange-500',
+        bgColor: isLight ? 'bg-orange-50' : 'bg-orange-500/10'
       };
     }
   };
@@ -97,6 +89,9 @@ const VideoList = () => {
   // 筛选和排序逻辑
   const filteredAndSortedVideos = useMemo(() => {
     let result = [...videos];
+
+    // 【重要】过滤掉草稿和已驳回 - 管理页面不应显示草稿和已驳回的视频
+    result = result.filter(video => video.review_status !== 'draft' && video.review_status !== 'rejected');
 
     // 搜索过滤
     if (searchQuery) {
@@ -117,9 +112,8 @@ const VideoList = () => {
     // 状态过滤
     if (selectedStatus !== 'all') {
       result = result.filter(video => {
-        if (selectedStatus === 'published') return video.is_published === 1;
-        if (selectedStatus === 'approved') return video.review_status === 'approved' && video.is_published !== 1;
         if (selectedStatus === 'pending') return video.review_status === 'pending';
+        if (selectedStatus === 'published') return video.is_published === 1;
         return true;
       });
     }
@@ -504,7 +498,7 @@ const VideoList = () => {
                             查看
                           </a>
                           <Link
-                            to={`/admin/videos/edit/${video.id}`}
+                            to={video.is_published === 1 ? `/admin/videos/edit-publish/${video.id}` : `/admin/videos/edit/${video.id}`}
                             className={cn(
                               "text-sm font-medium hover:underline",
                               isLight ? "text-wangfeng-purple" : "text-wangfeng-purple"

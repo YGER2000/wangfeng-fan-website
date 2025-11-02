@@ -22,8 +22,7 @@ import {
   Search,
   Loader2,
   Check,
-  XCircle,
-  Trash2
+  XCircle
 } from 'lucide-react';
 import { Article } from '@/utils/contentManager';
 import { getSecondaryCategories } from '@/config/categories';
@@ -39,7 +38,7 @@ interface ArticleEditorProps {
   onSave?: (article: Article, coverImage?: File) => void;
   onPreview?: (article: Article) => void;
   onDelete?: (articleId: string) => void;
-  isPublishMode?: boolean;
+  isReviewMode?: boolean;
 }
 
 interface NewTagFormState {
@@ -48,7 +47,7 @@ interface NewTagFormState {
   description: string;
 }
 
-const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishMode = false }: ArticleEditorProps) => {
+const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isReviewMode = false }: ArticleEditorProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const navigationState = location.state as { fromReview?: boolean; backPath?: string } | null;
@@ -57,15 +56,15 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
   const isLight = theme === 'white';
 
   // 检查来源信息并确定返回路径
-  const fromReview = Boolean(navigationState?.fromReview);
+  const fromReview = Boolean(navigationState?.fromReview) || isReviewMode;
   const defaultBackPath =
     currentRole === 'admin' || currentRole === 'super_admin'
-      ? '/admin/articles/all'
+      ? '/admin/manage/articles'
       : '/admin/my-articles';
   const backPath =
-    navigationState?.backPath || (fromReview ? '/admin/reviews' : defaultBackPath);
+    navigationState?.backPath || (fromReview ? '/admin/manage/articles' : defaultBackPath);
   const backButtonLabel = fromReview
-    ? '返回审核中心'
+    ? '返回管理中心'
     : backPath === '/admin/my-articles'
     ? '返回我的文章'
     : '返回文章列表';
@@ -481,7 +480,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
     });
   };
 
-  // 提交审核或更新文章
+  // 提交审核 - 新建文章或重新提交审核
   const handlePublish = async () => {
     console.log('=== handlePublish 被调用 ===');
     if (!article.title || !article.content) {
@@ -490,7 +489,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
       return;
     }
 
-    console.log('开始' + (isPublishMode ? '更新' : '提交') + '文章...');
+    console.log('开始保存文章...');
     setIsSaving(true);
     setToast(null);
     setSaveSuccess(false);
@@ -508,23 +507,19 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
         category_secondary: categorySecondary,
         tags: article.tags || [],
         excerpt: article.excerpt || generateExcerpt(article.content || '', 150) || '',
-        // isPublishMode: 编辑已发布文章，保持发布状态
-        // 否则：新建或编辑草稿，提交为待审核
-        review_status: isPublishMode ? 'approved' : 'pending',
-        is_published: isPublishMode ? true : false,
+        review_status: 'pending',
+        is_published: false,
       };
 
       if (onSave) {
-        await onSave(fullArticle, coverImageFile || undefined, false);
+        await onSave(fullArticle, coverImageFile || undefined);
       }
 
       setSaveSuccess(true);
+      // 所有文章（新建和编辑）都需要审核
       console.log('设置 toast 消息');
-      const message = isPublishMode
-        ? '文章已更新！'
-        : '文章已提交审核，等待审核通过后发布！';
-      setToast({ message, type: 'success' });
-      console.log('toast 已设置:', { message, type: 'success' });
+      setToast({ message: '文章已提交审核，等待审核通过后发布！', type: 'success' });
+      console.log('toast 已设置:', { message: '文章已提交审核，等待审核通过后发布！', type: 'success' });
 
       // 显示成功消息后跳转(3秒延迟,让用户看到提示)
       setTimeout(() => {
@@ -567,7 +562,7 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
       };
 
       if (onSave) {
-        await onSave(fullArticle, coverImageFile || undefined, true);
+        await onSave(fullArticle, coverImageFile || undefined);
       }
 
       setSaveSuccess(true);
@@ -584,16 +579,151 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
     }
   };
 
-  // 审核通过 (已弃用 - 仅保留以防兼容性)
+  // 批准发布 - 先保存编辑，再发布
   const handleApprove = async () => {
-    console.warn('handleApprove called on ArticleEditor - this should not happen');
-    return;
+    if (!initialArticle?.id) {
+      setToast({ message: '文章ID不存在', type: 'error' });
+      return;
+    }
+
+    setIsApproving(true);
+    setToast(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+
+      // 1. 先保存编辑
+      if (onSave) {
+        const articleData: Article = {
+          id: initialArticle.id as string,
+          title: article.title,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          author: article.author,
+          date: article.date,
+          category: article.category,
+          category_primary: categoryPrimary,
+          category_secondary: categorySecondary,
+          tags: article.tags || [],
+          coverUrl: article.coverUrl,
+          slug: initialArticle.slug || '',
+          review_status: 'pending',
+          is_published: false,
+          created_at: initialArticle.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await onSave(articleData, undefined);
+      }
+
+      // 2. 再调用批准发布 API
+      const approveUrl = `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/approve`;
+
+      const response = await fetch(approveUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || '批准发布失败');
+      }
+
+      setSaveSuccess(true);
+      setReviewStatus('approved');
+      setToast({ message: '✅ 已批准发布！', type: 'success' });
+
+      setTimeout(() => {
+        navigate(backPath);
+      }, 1500);
+    } catch (error) {
+      console.error('批准发布失败:', error);
+      setToast({
+        message: '操作失败: ' + (error instanceof Error ? error.message : '请重试'),
+        type: 'error'
+      });
+    } finally {
+      setIsApproving(false);
+    }
   };
 
-  // 审核驳回 (已弃用 - 仅保留以防兼容性)
+  // 拒绝发布 - 先保存编辑，再拒绝
   const handleReject = async () => {
-    console.warn('handleReject called on ArticleEditor - this should not happen');
-    return;
+    if (!initialArticle?.id) {
+      setToast({ message: '文章ID不存在', type: 'error' });
+      return;
+    }
+
+    if (!reviewNotes || reviewNotes.trim() === '') {
+      setToast({ message: '拒绝时必须填写原因', type: 'error' });
+      return;
+    }
+
+    setIsRejecting(true);
+    setToast(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+
+      // 1. 先保存编辑
+      if (onSave) {
+        const articleData: Article = {
+          id: initialArticle.id as string,
+          title: article.title,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          author: article.author,
+          date: article.date,
+          category: article.category,
+          category_primary: categoryPrimary,
+          category_secondary: categorySecondary,
+          tags: article.tags || [],
+          coverUrl: article.coverUrl,
+          slug: initialArticle.slug || '',
+          review_status: 'pending',
+          is_published: false,
+          created_at: initialArticle.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await onSave(articleData, undefined);
+      }
+
+      // 2. 再调用拒绝 API
+      const rejectUrl = `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/reject?reason=${encodeURIComponent(reviewNotes)}`;
+
+      const response = await fetch(rejectUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || '拒绝失败');
+      }
+
+      setSaveSuccess(true);
+      setReviewStatus('rejected');
+      setToast({ message: '✅ 已拒绝！', type: 'success' });
+      setShowRejectModal(false);
+
+      setTimeout(() => {
+        navigate(backPath);
+      }, 1500);
+    } catch (error) {
+      console.error('拒绝失败:', error);
+      setToast({
+        message: '操作失败: ' + (error instanceof Error ? error.message : '请重试'),
+        type: 'error'
+      });
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   // 权限检查
@@ -658,20 +788,6 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
 
           {/* 操作按钮 */}
           <div className="flex items-center gap-2">
-            {/* 只在非审核模式下显示删除按钮 */}
-            {currentStep > 1 && onDelete && initialArticle?.id && reviewStatus !== 'pending' && (
-              <button
-                onClick={() => onDelete(initialArticle.id as string)}
-                className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isLight
-                    ? "bg-red-50 text-red-600 hover:bg-red-100"
-                    : "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                )}
-              >
-                删除文章
-              </button>
-            )}
 
             {currentStep === 1 && (
               <button
@@ -709,122 +825,110 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isPublishM
             {/* 步骤3的按钮 */}
             {currentStep === 3 && (
               <>
-                {/* 从审核中心进入且是待审核状态 - 显示审核按钮 */}
-                {fromReview && reviewStatus === 'pending' && initialArticle?.id && (currentRole === 'admin' || currentRole === 'super_admin') ? (
+                <button
+                  onClick={handlePrevStep}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isLight
+                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-gray-300 hover:bg-white/20"
+                  )}
+                >
+                  上一步
+                </button>
+
+                {/* 根据是否是新建文章显示不同的按钮 */}
+                {!initialArticle?.id ? (
+                  // 新建文章：显示"暂存"和"提交审核"
                   <>
                     <button
-                      onClick={handlePrevStep}
-                      className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                        isLight
-                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          : "bg-white/10 text-gray-300 hover:bg-white/20"
-                      )}
-                    >
-                      上一步
-                    </button>
-                    <button
-                      onClick={() => onDelete && onDelete(initialArticle.id as string)}
-                      disabled={isApproving || isRejecting}
+                      type="button"
+                      onClick={handleSaveDraft}
+                      disabled={isSaving}
                       className={cn(
                         "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                        "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
-                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                        "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
+                        isSaving && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      <Trash2 className="h-4 w-4" />
-                      删除
+                      {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                      暂存
                     </button>
                     <button
                       type="button"
-                      onClick={() => setShowRejectModal(true)}
-                      disabled={isApproving || isRejecting}
-                      className={cn(
-                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                        "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
-                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      <X className="h-4 w-4" />
-                      驳回
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleApprove}
-                      disabled={isApproving || isRejecting}
+                      onClick={handlePublish}
+                      disabled={isSaving}
                       className={cn(
                         "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
-                        "bg-green-600 text-white hover:bg-green-700",
-                        (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                        "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90",
+                        isSaving && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      {isApproving && <Loader2 className="h-4 w-4 animate-spin" />}
-                      <CheckCircle2 className="h-4 w-4" />
-                      {isApproving ? '发布中...' : '审核通过并发布'}
+                      {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
+                      提交审核
                     </button>
                   </>
                 ) : (
-                  /* 用户创建或编辑 - 显示暂存和提交审核按钮 */
+                  // 编辑现有文章：显示不同的按钮组合
                   <>
-                    <button
-                      onClick={handlePrevStep}
-                      className={cn(
-                        "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                        isLight
-                          ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          : "bg-white/10 text-gray-300 hover:bg-white/20"
-                      )}
-                    >
-                      上一步
-                    </button>
-                    {/* 编辑文章时显示删除按钮 */}
-                    {onDelete && initialArticle?.id && (
-                      <button
-                        onClick={() => onDelete(initialArticle.id as string)}
-                        className={cn(
-                          "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                          isLight
-                            ? "bg-red-50 text-red-600 hover:bg-red-100"
-                            : "bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                        )}
-                      >
-                        删除文章
-                      </button>
-                    )}
-
-                    {/* isPublishMode: 编辑已发布的文章 */}
-                    {isPublishMode ? (
-                      // 管理中心编辑已发布文章：仅显示"更新文章"
-                      <button
-                        onClick={handlePublish}
-                        disabled={isSaving}
-                        className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                        更新文章
-                      </button>
-                    ) : (
-                      // 用户创建文章：显示"暂存草稿"和"提交审核"
+                    {!initialArticle?.is_published ? (
+                      // 未发布内容（审核模式）：仅显示拒绝和批准按钮，不显示另存为草稿
                       <>
                         <button
+                          type="button"
+                          onClick={() => setShowRejectModal(true)}
+                          disabled={isApproving || isRejecting}
+                          className={cn(
+                            "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
+                            "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
+                            (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          <X className="h-4 w-4" />
+                          拒绝
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleApprove}
+                          disabled={isApproving || isRejecting}
+                          className={cn(
+                            "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
+                            "bg-green-600 text-white hover:bg-green-700",
+                            (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          {isApproving && <Loader2 className="h-4 w-4 animate-spin" />}
+                          <CheckCircle2 className="h-4 w-4" />
+                          {isApproving ? '发布中...' : '批准发布'}
+                        </button>
+                      </>
+                    ) : (
+                      // 已发布内容（编辑模式）：显示下架和重新提交审核
+                      <>
+                        <button
+                          type="button"
                           onClick={handleSaveDraft}
                           disabled={isSaving}
                           className={cn(
                             "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                            "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
+                            "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
+                            isSaving && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          下架
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handlePublish}
+                          disabled={isSaving}
+                          className={cn(
+                            "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
+                            "bg-blue-600 text-white hover:bg-blue-700",
                             isSaving && "opacity-50 cursor-not-allowed"
                           )}
                         >
                           {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                          暂存草稿
-                        </button>
-                        <button
-                          onClick={handlePublish}
-                          disabled={isSaving}
-                          className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                          {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                          提交审核
+                          重新提交审核
                         </button>
                       </>
                     )}

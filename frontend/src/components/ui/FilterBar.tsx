@@ -38,6 +38,7 @@ const statusOptions = [
   { label: '已发布', value: 'published' },
   { label: '待审核', value: 'pending' },
   { label: '已驳回', value: 'rejected' },
+  { label: '草稿', value: 'draft' },
 ];
 
 const FilterBar = ({

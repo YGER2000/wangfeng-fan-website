@@ -46,9 +46,8 @@ const categoryOptions = [
 
 const statusOptions = [
   { value: 'all', label: '全部状态' },
-  { value: 'published', label: '已发布' },
-  { value: 'approved', label: '已审核' },
-  { value: 'pending', label: '待审核' }
+  { value: 'pending', label: '待审核' },
+  { value: 'published', label: '已发布' }
 ];
 
 const GalleryList = () => {
@@ -94,6 +93,9 @@ const GalleryList = () => {
   const filteredAndSortedPhotoGroups = useMemo(() => {
     let result = [...photoGroups];
 
+    // 【重要】过滤掉草稿和已驳回 - 管理页面不应显示草稿和已驳回的图组
+    result = result.filter(group => group.review_status !== 'draft' && group.review_status !== 'rejected');
+
     // 搜索过滤
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -113,7 +115,6 @@ const GalleryList = () => {
     if (selectedStatus !== 'all') {
       result = result.filter(group => {
         if (selectedStatus === 'published') return group.is_published === true;
-        if (selectedStatus === 'approved') return group.review_status === 'approved' && !group.is_published;
         if (selectedStatus === 'pending') return group.review_status === 'pending';
         return true;
       });
@@ -329,13 +330,8 @@ const GalleryList = () => {
                         <CheckCircle className="h-3 w-3" />
                         已发布
                       </div>
-                    ) : group.review_status === 'approved' ? (
-                      <div className="flex items-center gap-1 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium">
-                        <Clock className="h-3 w-3" />
-                        已审核
-                      </div>
                     ) : (
-                      <div className="flex items-center gap-1 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium">
+                      <div className="flex items-center gap-1 bg-orange-500 text-white px-2 py-1 rounded text-xs font-medium">
                         <Clock className="h-3 w-3" />
                         待审核
                       </div>
@@ -405,7 +401,7 @@ const GalleryList = () => {
                   {/* 操作按钮 */}
                   <div className="mt-4 flex items-center gap-2">
                     <Link
-                      to={`/admin/gallery/edit/${group.id}`}
+                      to={group.is_published ? `/admin/gallery/edit-publish/${group.id}` : `/admin/gallery/edit/${group.id}`}
                       className={cn(
                         "flex-1 text-center px-3 py-1.5 rounded border text-xs font-medium transition-colors",
                         isLight
