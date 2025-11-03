@@ -5,12 +5,11 @@
  * 步骤2: 审批操作（保存/批准/拒绝）或更新操作（仅更新）
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AlertCircle,
   Loader2,
-  CheckCircle2,
   ArrowLeft,
   ArrowRight,
   Calendar,
@@ -19,9 +18,7 @@ import {
   Folder,
   Video as VideoIcon,
   X,
-  Check,
-  XCircle,
-  Upload,
+  Upload
 } from 'lucide-react';
 import { videoAPI, VideoData, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,14 +26,38 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import type { ReviewStatus } from '@/components/ui/StatusBadge';
+
+type StepAction =
+  | 'saveDraft'
+  | 'submit'
+  | 'withdrawToDraft'
+  | 'resubmit'
+  | 'update'
+  | 'approve'
+  | 'reject'
+  | 'delete';
+
+type ButtonStyle = 'danger' | 'gray' | 'primaryBlue' | 'primaryPurple' | 'success' | 'warning';
+
+interface StepButtonConfig {
+  label: string;
+  action: StepAction;
+  style: ButtonStyle;
+}
+
+interface VideoActionPayload {
+  video?: VideoData & { review_status?: ReviewStatus; is_published?: number };
+  rejectReason?: string;
+}
 
 interface VideoReviewEditorProps {
   videoId: string;
-  isEditMode?: boolean; // true: 编辑模式，false: 审核模式
-  isEditPublish?: boolean; // true: 编辑已发布视频（仅更新），false: 编辑草稿
-  onSave?: (videoData: VideoData) => Promise<void>;
-  onApprove?: (videoId: string) => Promise<void>;
-  onReject?: (videoId: string, reason: string) => Promise<void>;
+  mode: 'edit' | 'review';
+  videoStatus?: ReviewStatus;
+  isAdminView?: boolean;
+  onAction?: (action: StepAction, payload: VideoActionPayload) => Promise<void>;
+  backPath?: string;
 }
 
 const VIDEO_CATEGORIES = [
@@ -51,17 +72,38 @@ const VIDEO_CATEGORIES = [
 
 const VideoReviewEditor = ({
   videoId,
-  isEditMode = false,
-  isEditPublish = false,
-  onSave,
-  onApprove,
-  onReject,
+  mode,
+  videoStatus,
+  isAdminView = false,
+  onAction,
+  backPath: backPathOverride,
 }: VideoReviewEditorProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, token, currentRole } = useAuth();
   const { theme } = useTheme();
   const isLight = theme === 'white';
+
+  const isEditMode = mode === 'edit';
+  const isReviewMode = mode === 'review';
+  const resolvedAdminView =
+    isAdminView || currentRole === 'admin' || currentRole === 'super_admin';
+
+  const navigationState = location.state as { backPath?: string } | null;
+  const defaultBackPath = backPathOverride
+    || navigationState?.backPath
+    || (isReviewMode
+      ? '/admin/manage/videos'
+      : resolvedAdminView
+        ? '/admin/manage/videos'
+        : '/admin/my-videos');
+
+  const backButtonLabel = isReviewMode
+    ? '返回审核中心'
+    : resolvedAdminView
+      ? '返回视频管理'
+      : '返回我的视频';
+  const backPath = defaultBackPath;
 
   // 步骤管理
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
@@ -92,6 +134,7 @@ const VideoReviewEditor = ({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<ReviewStatus>((videoStatus || 'draft') as ReviewStatus);
 
   // 日期选择状态
   const [selectedDate, setSelectedDate] = useState({
@@ -111,10 +154,10 @@ const VideoReviewEditor = ({
 
   // 权限检查
   useEffect(() => {
-    if (!isEditMode && currentRole !== 'admin' && currentRole !== 'super_admin') {
+    if (isReviewMode && currentRole !== 'admin' && currentRole !== 'super_admin') {
       navigate('/admin/dashboard');
     }
-  }, [currentRole, navigate, isEditMode]);
+  }, [currentRole, navigate, isReviewMode]);
 
   // 加载视频数据
   useEffect(() => {
@@ -124,13 +167,14 @@ const VideoReviewEditor = ({
         const videoData = await videoAPI.getById(videoId);
 
         // 如果是审核模式，检查视频状态
-        if (!isEditMode && videoData.review_status !== 'pending') {
+        if (isReviewMode && videoData.review_status !== 'pending') {
           setError('该视频不处于待审核状态，无法审核');
-          setTimeout(() => navigate('/admin/manage/videos'), 2000);
+          setTimeout(() => navigate(backPath), 2000);
           return;
         }
 
         setVideo(videoData);
+        setWorkflowStatus((videoData.review_status as ReviewStatus) || 'draft');
         setFormData({
           title: videoData.title,
           description: videoData.description || '',
@@ -221,166 +265,270 @@ const VideoReviewEditor = ({
     formData.category
   ].filter(Boolean).join(' ');
 
-  // 保存编辑（或重新提交审核）
-  const handleSaveEdit = async () => {
-    if (!formData.title.trim() || !formData.bvid.trim()) {
-      setToast({ message: '请填写必要信息', type: 'error' });
-      return;
+  const getTagValues = useCallback(() => {
+    const explicitTags = selectedTags
+      .map(tag => tag.display_name || tag.name || tag.value)
+      .filter((value): value is string => Boolean(value && value.trim()))
+      .map(value => value.trim());
+
+    if (explicitTags.length > 0) {
+      return Array.from(new Set(explicitTags));
     }
 
-    setIsSaving(true);
-    setToast(null);
+    return formData.tags?.filter(tag => tag && tag.trim()) || [];
+  }, [selectedTags, formData.tags]);
 
-    try {
-      const videoData = {
-        ...formData,
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean),
-        // 如果是已发布的内容在编辑模式下，则设置为 pending（重新提交审核）
-        review_status: isEditMode && video?.is_published ? 'pending' : undefined
+  const buildVideoPayload = useCallback(
+    (statusOverride?: ReviewStatus) => {
+      const status = statusOverride || workflowStatus;
+      return {
+        title: formData.title.trim(),
+        description: formData.description?.trim() || '',
+        author: formData.author?.trim() || user?.username || '汪峰',
+        category: formData.category,
+        bvid: formData.bvid.trim(),
+        publish_date: formData.publish_date,
+        cover_url: formData.cover_url,
+        tags: getTagValues(),
+        review_status: status,
+        is_published: status === 'approved' ? 1 : 0,
       };
+    },
+    [formData, workflowStatus, getTagValues, user?.username]
+  );
 
-      await videoAPI.update(videoId, videoData, token);
-
-      const message = isEditMode && video?.is_published ? '✅ 已重新提交审核！' : '视频已保存';
-      setToast({ message, type: 'success' });
-
-      setTimeout(() => {
-        navigate(isEditMode ? '/admin/my-videos' : '/admin/manage/videos');
-      }, 1500);
-    } catch (err: any) {
-      console.error('保存失败:', err);
-      setToast({ message: err.message || '保存失败，请重试', type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 暂存为草稿
-  const handleSaveDraft = async () => {
-    if (!formData.title.trim() || !formData.bvid.trim()) {
-      setToast({ message: '请填写必要信息', type: 'error' });
-      return;
-    }
-
-    setIsSaving(true);
-    setToast(null);
-
-    try {
-      const videoData = {
-        ...formData,
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean),
-        review_status: 'draft',
-        is_published: false
-      };
-
-      await videoAPI.update(videoId, videoData, token);
-      setToast({ message: '✅ 视频已保存为草稿！', type: 'success' });
-
-      setTimeout(() => {
-        navigate(isEditMode ? '/admin/my-videos' : '/admin/manage/videos');
-      }, 1500);
-    } catch (err: any) {
-      console.error('保存草稿失败:', err);
-      setToast({ message: err.message || '保存失败，请重试', type: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  // 批准发布
-  const handleApproveVideo = async () => {
-    if (!videoId) {
-      setToast({ message: '视频ID不存在', type: 'error' });
-      return;
-    }
-
-    setIsApproving(true);
-    setToast(null);
-
-    try {
-      // 1. 先保存编辑
-      const videoData = {
-        ...formData,
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean)
-      };
-
-      await videoAPI.update(videoId, videoData, token);
-
-      // 2. 再调用批准发布 API
-      const approveUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/approve`;
-      const authToken = localStorage.getItem('access_token');
-      const response = await fetch(approveUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ reviewNotes: '' })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || '批准失败');
+  const triggerAction = useCallback(
+    async (action: StepAction, options?: { rejectReason?: string }) => {
+      if (isReviewMode && !token) {
+        setToast({ message: '请重新登录后操作', type: 'error' });
+        return false;
       }
 
-      setToast({ message: '✅ 已批准发布！', type: 'success' });
-      setTimeout(() => {
-        navigate('/admin/manage/videos');
-      }, 1500);
-    } catch (error) {
-      console.error('批准失败:', error);
-      setToast({
-        message: '批准失败: ' + (error instanceof Error ? error.message : '请重试'),
-        type: 'error'
-      });
-    } finally {
-      setIsApproving(false);
-    }
-  };
-
-  // 拒绝发布
-  const handleRejectVideo = async () => {
-    if (!videoId || !rejectReason.trim()) {
-      setToast({ message: '请输入拒绝原因', type: 'error' });
-      return;
-    }
-
-    setIsRejecting(true);
-    setToast(null);
-
-    try {
-      const token = localStorage.getItem('access_token');
-      const rejectUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/reject`;
-      const response = await fetch(rejectUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ reviewNotes: rejectReason.trim() })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || '拒绝失败');
+      const needsValidation = ['saveDraft', 'submit', 'withdrawToDraft', 'resubmit', 'update'].includes(action);
+      if (needsValidation) {
+        if (!formData.title.trim() || !formData.bvid.trim()) {
+          setToast({ message: '请完善标题与视频ID', type: 'error' });
+          return false;
+        }
+        if (!/^BV[A-Za-z0-9]+$/.test(formData.bvid.trim())) {
+          setToast({ message: '请输入有效的B站视频ID（格式如：BV123456789）', type: 'error' });
+          return false;
+        }
       }
 
-      setToast({ message: '✅ 已拒绝！', type: 'success' });
-      setTimeout(() => {
-        navigate('/admin/manage/videos');
-      }, 1500);
-    } catch (error) {
-      console.error('拒绝失败:', error);
-      setToast({
-        message: '拒绝失败: ' + (error instanceof Error ? error.message : '请重试'),
-        type: 'error'
-      });
-    } finally {
-      setIsRejecting(false);
-      setShowRejectModal(false);
-      setRejectReason('');
+      if (action === 'delete') {
+        if (!window.confirm('确定要删除这个视频吗？此操作不可恢复。')) {
+          return false;
+        }
+      }
+
+      const setLoadingState = (value: boolean) => {
+        if (action === 'approve') {
+          setIsApproving(value);
+        } else if (action === 'reject') {
+          setIsRejecting(value);
+        } else {
+          setIsSaving(value);
+        }
+      };
+
+      const statusMap: Partial<Record<StepAction, ReviewStatus>> = {
+        saveDraft: 'draft',
+        withdrawToDraft: 'draft',
+        submit: 'pending',
+        resubmit: 'pending',
+        update: 'approved',
+        approve: 'approved',
+        reject: 'rejected',
+      };
+
+      const rejectionReason = options?.rejectReason?.trim();
+      if (action === 'reject' && !rejectionReason) {
+        setToast({ message: '请输入驳回原因', type: 'error' });
+        return false;
+      }
+
+      try {
+        setToast(null);
+        setLoadingState(true);
+
+        const targetStatus = statusMap[action] || workflowStatus;
+        const payload = buildVideoPayload(targetStatus);
+        let result: any = null;
+
+        if (onAction) {
+          await onAction(action, {
+            video: payload as VideoData & { review_status?: ReviewStatus; is_published?: number },
+            rejectReason: rejectionReason,
+          });
+        } else if (action === 'delete') {
+          await videoAPI.delete(videoId, token);
+        } else if (action === 'approve') {
+          await videoAPI.update(videoId, payload as any, token);
+          const approveUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/approve`;
+          const response = await fetch(approveUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token ? `Bearer ${token}` : '',
+            },
+            body: JSON.stringify({ reviewNotes: '' }),
+          });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || '批准失败');
+          }
+          result = await response.json().catch(() => null);
+        } else if (action === 'reject') {
+          const rejectUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/reject`;
+          const response = await fetch(rejectUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: token ? `Bearer ${token}` : '',
+            },
+            body: JSON.stringify({ reviewNotes: rejectionReason }),
+          });
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || '拒绝失败');
+          }
+          result = await response.json().catch(() => null);
+        } else {
+          result = await videoAPI.update(videoId, payload as any, token);
+        }
+
+        const nextStatus = (result as any)?.review_status || targetStatus || workflowStatus;
+        setWorkflowStatus(nextStatus as ReviewStatus);
+
+        const successMessages: Partial<Record<StepAction, string>> = {
+          saveDraft: '✅ 视频已保存为草稿！',
+          submit: '视频已提交审核，等待审核通过。',
+          resubmit: '已重新提交审核，等待管理员审核。',
+          withdrawToDraft: '已撤回并保存草稿，可继续编辑。',
+          update: '视频已更新！',
+          approve: '视频已批准并发布。',
+          reject: '视频已驳回。',
+          delete: '视频已删除。',
+        };
+
+        const message = successMessages[action];
+        if (message) {
+          setToast({ message, type: 'success' });
+        }
+
+        const delayActions: StepAction[] = ['saveDraft', 'withdrawToDraft', 'approve', 'reject', 'delete'];
+        const delay = delayActions.includes(action) ? 1500 : 3000;
+
+        setTimeout(() => {
+          navigate(backPath);
+        }, delay);
+
+        return true;
+      } catch (error) {
+        console.error('操作失败:', error);
+        const errorMessages: Partial<Record<StepAction, string>> = {
+          saveDraft: '保存草稿失败，请重试',
+          submit: '提交审核失败，请重试',
+          resubmit: '重新提交失败，请重试',
+          withdrawToDraft: '撤回失败，请稍后再试',
+          update: '更新失败，请重试',
+          approve: '批准失败，请稍后重试',
+          reject: '驳回失败，请稍后重试',
+          delete: '删除失败，请稍后重试',
+        };
+        setToast({ message: errorMessages[action] || '操作失败，请重试', type: 'error' });
+        return false;
+      } finally {
+        setLoadingState(false);
+      }
+    },
+    [backPath, buildVideoPayload, formData, isReviewMode, navigate, onAction, token, videoId, workflowStatus]
+  );
+
+  const stepButtons = useMemo<StepButtonConfig[]>(() => {
+    if (isReviewMode && workflowStatus === 'pending') {
+      return [
+        { label: '拒绝', action: 'reject', style: 'warning' },
+        { label: '批准发布', action: 'approve', style: 'success' },
+      ];
     }
+
+    if (resolvedAdminView && workflowStatus === 'approved') {
+      return [
+        { label: '删除视频', action: 'delete', style: 'danger' },
+        { label: '更新视频', action: 'update', style: 'primaryPurple' },
+      ];
+    }
+
+    if (workflowStatus === 'draft' || workflowStatus === 'rejected') {
+      return [
+        { label: '删除视频', action: 'delete', style: 'danger' },
+        { label: '暂存草稿', action: 'saveDraft', style: 'gray' },
+        { label: '提交审核', action: 'submit', style: 'primaryBlue' },
+      ];
+    }
+
+    if (!resolvedAdminView && workflowStatus === 'pending') {
+      return [
+        { label: '删除视频', action: 'delete', style: 'danger' },
+        { label: '撤回并保存为草稿', action: 'withdrawToDraft', style: 'gray' },
+      ];
+    }
+
+    if (!resolvedAdminView && workflowStatus === 'approved') {
+      return [
+        { label: '删除视频', action: 'delete', style: 'danger' },
+        { label: '重新提交审核', action: 'resubmit', style: 'primaryBlue' },
+      ];
+    }
+
+    return [];
+  }, [resolvedAdminView, isReviewMode, workflowStatus]);
+
+  const getButtonClasses = useCallback((style: ButtonStyle) => {
+    const base =
+      'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
+    switch (style) {
+      case 'danger':
+        return cn(
+          base,
+          isLight
+            ? 'border border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
+            : 'border border-red-500/80 text-red-300 hover:bg-red-500/20'
+        );
+      case 'gray':
+        return cn(
+          base,
+          isLight
+            ? 'border border-gray-400 text-gray-700 hover:bg-gray-100'
+            : 'border border-white/20 text-gray-200 hover:bg-white/10'
+        );
+      case 'primaryBlue':
+        return cn(base, 'bg-blue-600 text-white hover:bg-blue-700');
+      case 'primaryPurple':
+        return cn(base, 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90');
+      case 'success':
+        return cn(base, 'bg-green-600 text-white hover:bg-green-700');
+      case 'warning':
+        return cn(
+          base,
+          isLight
+            ? 'border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white'
+            : 'border border-orange-500/80 text-orange-300 hover:bg-orange-500/20'
+        );
+      default:
+        return base;
+    }
+  }, [isLight]);
+
+  const isActionBusy = (action: StepAction) => {
+    if (action === 'approve') return isApproving;
+    if (action === 'reject') return isRejecting;
+    return isSaving;
   };
+
 
   // 获取B站视频链接
   const getBilibiliUrl = (bvid: string) => {
@@ -429,7 +577,7 @@ const VideoReviewEditor = ({
               {error}
             </p>
             <button
-              onClick={() => navigate(isEditMode ? '/admin/my-videos' : '/admin/manage/videos')}
+              onClick={() => navigate(backPath)}
               className={cn(
                 "text-sm underline mt-2",
                 isLight ? "text-red-700 hover:text-red-900" : "text-red-300 hover:text-red-100"
@@ -458,7 +606,7 @@ const VideoReviewEditor = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate(isEditMode ? '/admin/my-videos' : '/admin/manage/videos')}
+              onClick={() => navigate(backPath)}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 isLight
@@ -467,7 +615,7 @@ const VideoReviewEditor = ({
               )}
             >
               <ArrowLeft className="h-4 w-4" />
-              {isEditMode ? '返回我的视频' : '返回管理中心'}
+              {backButtonLabel}
             </button>
             <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
             <h1 className={cn(
@@ -497,7 +645,7 @@ const VideoReviewEditor = ({
               </button>
             )}
 
-            {currentStep === 2 && !isEditMode && (
+            {currentStep === 2 && (
               <>
                 <button
                   onClick={handlePrevStep}
@@ -510,123 +658,30 @@ const VideoReviewEditor = ({
                 >
                   上一步
                 </button>
-                {/* 审核模式（未发布的内容）: 仅显示 "拒绝" + "批准发布"，不显示草稿保存 */}
-                <button
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={isApproving || isRejecting}
-                  className={cn(
-                    "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                    "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white",
-                    (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  <XCircle className="h-4 w-4" />
-                  拒绝
-                </button>
-                <button
-                  onClick={handleApproveVideo}
-                  disabled={isApproving || isRejecting}
-                  className={cn(
-                    "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
-                    "bg-green-600 text-white hover:bg-green-700",
-                    (isApproving || isRejecting) && "opacity-50 cursor-not-allowed"
-                  )}
-                >
-                  {isApproving && <Loader2 className="h-4 w-4 animate-spin" />}
-                  <Check className="h-4 w-4" />
-                  {isApproving ? '发布中...' : '批准发布'}
-                </button>
-              </>
-            )}
+                {stepButtons.map((button) => {
+                  const disabled = isSaving || isApproving || isRejecting;
+                  const busy = isActionBusy(button.action);
+                  const handleClick = () => {
+                    if (button.action === 'reject') {
+                      setShowRejectModal(true);
+                      return;
+                    }
+                    triggerAction(button.action);
+                  };
 
-            {currentStep === 2 && isEditMode && (
-              <>
-                <button
-                  onClick={handlePrevStep}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isLight
-                      ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  )}
-                >
-                  上一步
-                </button>
-                {/* 编辑已发布视频（管理中心）: 仅显示"更新视频" */}
-                {isEditPublish ? (
-                  <button
-                    onClick={handleSaveEdit}
-                    disabled={isSaving}
-                    className={cn(
-                      "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
-                      "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90",
-                      isSaving && "opacity-50 cursor-not-allowed"
-                    )}
-                  >
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    更新视频
-                  </button>
-                ) : video?.is_published ? (
-                  <>
+                  return (
                     <button
-                      onClick={handleSaveDraft}
-                      disabled={isSaving}
-                      className={cn(
-                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                        "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
-                        isSaving && "opacity-50 cursor-not-allowed"
-                      )}
+                      key={button.action}
+                      type="button"
+                      onClick={handleClick}
+                      disabled={disabled}
+                      className={getButtonClasses(button.style)}
                     >
-                      另存为草稿
+                      {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {button.label}
                     </button>
-                    <button
-                      onClick={handleSaveDraft}
-                      disabled={isSaving}
-                      className={cn(
-                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                        "border-red-500 text-red-500 hover:bg-red-500 hover:text-white",
-                        isSaving && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      下架
-                    </button>
-                    <button
-                      onClick={handleSaveEdit}
-                      disabled={isSaving}
-                      className={cn(
-                        "px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2",
-                        "bg-blue-600 text-white hover:bg-blue-700",
-                        isSaving && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                      重新提交审核
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {/* 编辑模式（未发布的内容）: 显示 "暂存" + "保存修改" */}
-                    <button
-                      onClick={handleSaveDraft}
-                      disabled={isSaving}
-                      className={cn(
-                        "px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2",
-                        "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800",
-                        isSaving && "opacity-50 cursor-not-allowed"
-                      )}
-                    >
-                      {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                      暂存
-                    </button>
-                    <button
-                      onClick={handleSaveEdit}
-                      disabled={isSaving}
-                      className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSaving ? '保存中...' : '保存修改'}
-                    </button>
-                  </>
-                )}
+                  );
+                })}
               </>
             )}
           </div>
@@ -963,7 +1018,16 @@ const VideoReviewEditor = ({
                 </button>
                 <button
                   type="button"
-                  onClick={handleRejectVideo}
+                  onClick={async () => {
+                    if (!rejectReason.trim()) {
+                      return;
+                    }
+                    const success = await triggerAction('reject', { rejectReason: rejectReason.trim() });
+                    if (success) {
+                      setShowRejectModal(false);
+                      setRejectReason('');
+                    }
+                  }}
                   disabled={!rejectReason.trim() || isRejecting}
                   className={cn(
                     "px-6 py-2 rounded-lg text-sm font-medium transition-colors",

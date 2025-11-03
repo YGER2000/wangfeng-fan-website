@@ -117,9 +117,7 @@ def get_article(
     if not article:
         raise HTTPException(status_code=404, detail="文章不存在")
 
-    # 增加浏览次数
-    crud_article.increase_view_count(db=db, article_id=article_id)
-
+    # 注意：不再在这里自动增加浏览次数，改由前端调用专门的 POST /{article_id}/view 端点
     return article
 
 @router.get("/slug/{slug}", response_model=ArticleSchema)
@@ -132,9 +130,7 @@ def get_article_by_slug(
     if not article:
         raise HTTPException(status_code=404, detail="文章不存在")
 
-    # 增加浏览次数
-    crud_article.increase_view_count(db=db, article_id=article.id)
-
+    # 注意：不再在这里自动增加浏览次数，改由前端调用专门的 POST /{article_id}/view 端点
     return article
 
 @router.put("/{article_id}", response_model=ArticleSchema)

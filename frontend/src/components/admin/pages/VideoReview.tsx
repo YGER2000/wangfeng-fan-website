@@ -4,15 +4,24 @@
  * 使用 VideoReviewEditor 组件处理两步工作流
  */
 
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import VideoReviewEditor from '@/components/ui/VideoReviewEditor';
 
 const VideoReview = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const backPath = (location.state as { backPath?: string } | null)?.backPath;
 
   if (!id) return null;
 
-  return <VideoReviewEditor videoId={id} isEditMode={false} />;
+  return (
+    <VideoReviewEditor
+      videoId={id}
+      mode="review"
+      isAdminView
+      backPath={backPath}
+    />
+  );
 };
 
 export default VideoReview;

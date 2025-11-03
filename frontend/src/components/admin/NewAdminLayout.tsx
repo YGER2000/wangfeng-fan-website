@@ -88,19 +88,17 @@ const adminNavItems: NavItem[] = [
         to: '/admin/manage/gallery',
         icon: Image,
       },
+      {
+        label: '行程管理',
+        to: '/admin/manage/schedules',
+        icon: CalendarDays,
+      },
+      {
+        label: '标签管理',
+        to: '/admin/manage/tags',
+        icon: Tag,
+      },
     ],
-  },
-  {
-    label: '行程管理',
-    to: '/admin/schedules',
-    icon: CalendarDays,
-    adminOnly: true,
-  },
-  {
-    label: '标签管理',
-    to: '/admin/tags',
-    icon: Tag,
-    adminOnly: true,
   },
 ];
 

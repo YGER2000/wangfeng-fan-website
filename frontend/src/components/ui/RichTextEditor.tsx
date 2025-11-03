@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 
@@ -6,22 +6,54 @@ interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   height?: number | string;
+  articleId?: string;         // 文章 ID（可选，新建文章时为空）
+  categoryPrimary?: string;   // 一级分类（用于生成 OSS 路径）
 }
 
 /**
  * 基于 Quill 的富文本编辑器
  * 完全所见即所得，像 Word 一样简单易用
+ * 支持上传图片到阿里云 OSS，使用可读性命名
  */
-const RichTextEditor = ({ value, onChange, height }: RichTextEditorProps) => {
+const RichTextEditor = ({ value, onChange, height, articleId, categoryPrimary }: RichTextEditorProps) => {
   const quillRef = useRef<ReactQuill>(null);
+  const [imageSequence, setImageSequence] = useState(1); // 图片序号计数器
 
-  // 上传图片到服务器
+  // 上传图片到服务器（新端点 - 支持 OSS 可读性命名）
   const uploadImageToServer = async (file: File): Promise<string> => {
+    // 如果没有 articleId 或 categoryPrimary，回退到旧的上传接口
+    if (!articleId || !categoryPrimary) {
+      console.warn('⚠️ 缺少 articleId 或 categoryPrimary，使用旧的上传端点');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:1994/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || '上传失败');
+      }
+
+      const data = await response.json();
+      return data.url;
+    }
+
+    // 使用新的文章配图上传端点
     const formData = new FormData();
     formData.append('file', file);
+    formData.append('article_id', articleId);
+    formData.append('category_primary', categoryPrimary);
+    formData.append('sequence', String(imageSequence));
 
-    const response = await fetch('http://localhost:1994/api/upload/image', {
+    const token = localStorage.getItem('token');
+    const response = await fetch('http://localhost:1994/api/articles/upload/image', {
       method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
       body: formData,
     });
 
@@ -31,7 +63,12 @@ const RichTextEditor = ({ value, onChange, height }: RichTextEditorProps) => {
     }
 
     const data = await response.json();
-    return data.url;
+
+    // 自动递增序号
+    setImageSequence(prev => prev + 1);
+
+    // 返回 medium 尺寸的 URL（适合网页显示）
+    return data.medium_url || data.file_url;
   };
 
   // 图片上传处理器

@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     oss_bucket: str = "wangfeng-images"
     oss_custom_domain: str = ""
 
+    # 行程默认海报
+    schedule_default_poster_url: Optional[str] = None
+
     # MinIO 配置
     minio_endpoint: str = "localhost:9000"
     minio_access_key: str = "minioadmin"

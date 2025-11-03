@@ -262,18 +262,6 @@ const ArticleList = () => {
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
                       isLight ? "text-gray-600" : "text-gray-400"
                     )}>
-                      分类
-                    </th>
-                    <th className={cn(
-                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
-                      isLight ? "text-gray-600" : "text-gray-400"
-                    )}>
-                      状态
-                    </th>
-                    <th className={cn(
-                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
-                      isLight ? "text-gray-600" : "text-gray-400"
-                    )}>
                       <button
                         onClick={() => toggleSort('view_count')}
                         className="flex items-center gap-2 hover:text-wangfeng-purple transition-colors"
@@ -281,6 +269,18 @@ const ArticleList = () => {
                         浏览量
                         <SortIcon field="view_count" />
                       </button>
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
+                      分类
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
+                      状态
                     </th>
                     <th className={cn(
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
@@ -353,6 +353,20 @@ const ArticleList = () => {
                         {article.author}
                       </td>
                       <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <Eye className={cn(
+                            "h-4 w-4",
+                            isLight ? "text-gray-400" : "text-gray-500"
+                          )} />
+                          <span className={cn(
+                            "text-sm",
+                            isLight ? "text-gray-700" : "text-gray-300"
+                          )}>
+                            {article.view_count || 0}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
                           <span className={cn(
                             "text-sm font-medium",
@@ -416,20 +430,6 @@ const ArticleList = () => {
                               </span>
                             </>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <Eye className={cn(
-                            "h-4 w-4",
-                            isLight ? "text-gray-400" : "text-gray-500"
-                          )} />
-                          <span className={cn(
-                            "text-sm",
-                            isLight ? "text-gray-700" : "text-gray-300"
-                          )}>
-                            {article.view_count || 0}
-                          </span>
                         </div>
                       </td>
                       <td className="px-6 py-4">

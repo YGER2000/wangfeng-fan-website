@@ -3,49 +3,18 @@
 > vite
 
 
-  VITE v6.3.6  ready in 124 ms
+  VITE v6.3.6  ready in 104 ms
 
   ➜  Local:   http://localhost:1997/
-  ➜  Network: http://192.168.68.229:1997/
-09:48:58 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-09:49:24 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-09:49:44 [vite] (client) hmr update /src/components/ui/ArticleReviewEditor.tsx, /src/index.css
-09:50:23 [vite] (client) hmr update /src/components/ui/ArticleReviewEditor.tsx, /src/index.css
-09:58:34 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-09:58:53 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-10:02:18 [vite] (client) hmr update /src/components/admin/pages/VideoCreate.tsx, /src/index.css
-10:02:29 [vite] (client) hmr update /src/components/admin/pages/VideoCreate.tsx, /src/index.css
-10:09:08 [vite] (client) page reload src/components/admin/pages/ArticleList.tsx
-10:09:32 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:09:55 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:10:11 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:11:19 [vite] (client) hmr update /src/components/ui/StatusBadge.tsx, /src/index.css
-10:11:27 [vite] (client) hmr update /src/components/ui/StatusBadge.tsx, /src/index.css
-10:15:02 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-10:15:13 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-10:21:07 [vite] (client) hmr update /src/components/admin/pages/ManageArticleList.tsx, /src/index.css
-10:22:53 [vite] (client) hmr update /src/components/ui/ArticleReviewEditor.tsx, /src/index.css
-10:25:22 [vite] (client) hmr update /src/components/ui/ArticleReviewEditor.tsx, /src/index.css
-10:36:26 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-10:37:14 [vite] (client) hmr update /src/components/ui/ArticleEditor.tsx, /src/index.css
-10:39:02 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:39:14 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:39:26 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:39:37 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:39:50 [vite] (client) page reload src/components/admin/pages/GalleryList.tsx
-10:39:58 [vite] (client) page reload src/components/admin/pages/GalleryList.tsx
-10:40:13 [vite] (client) page reload src/components/admin/pages/GalleryList.tsx
-10:40:25 [vite] (client) page reload src/components/admin/pages/GalleryList.tsx
-10:43:04 [vite] (client) page reload src/components/admin/pages/VideoList.tsx
-10:43:16 [vite] (client) page reload src/components/admin/pages/GalleryList.tsx
-10:43:41 [vite] (client) hmr update /src/components/admin/pages/VideoEdit.tsx, /src/index.css
-10:44:18 [vite] (client) hmr update /src/components/ui/VideoReviewEditor.tsx, /src/index.css
-10:44:32 [vite] (client) hmr update /src/components/ui/VideoReviewEditor.tsx, /src/index.css
-10:44:45 [vite] (client) hmr update /src/components/ui/VideoReviewEditor.tsx, /src/index.css
-10:45:08 [vite] (client) hmr update /src/components/ui/VideoReviewEditor.tsx, /src/index.css
-10:45:27 [vite] (client) hmr update /src/components/admin/pages/GalleryEdit.tsx, /src/index.css
-10:45:54 [vite] (client) hmr update /src/components/ui/GalleryEditor.tsx, /src/index.css
-10:46:07 [vite] (client) hmr update /src/components/ui/GalleryEditor.tsx, /src/index.css
-10:46:31 [vite] (client) hmr update /src/components/ui/GalleryEditor.tsx, /src/index.css
-10:52:51 [vite] (client) hmr update /src/components/ui/VideoReviewEditor.tsx, /src/index.css
-10:54:00 [vite] (client) hmr update /src/components/ui/GalleryEditor.tsx, /src/index.css
+  ➜  Network: http://192.168.1.15:1997/
+10:04:32 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
+10:05:03 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
+17:17:54 [vite] (client) hmr update /src/components/admin/pages/ProfileAdmin.tsx, /src/index.css
+17:19:47 [vite] (client) hmr update /src/components/admin/pages/ProfileAdmin.tsx, /src/index.css
+18:47:14 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
+18:47:25 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
+18:47:32 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
+18:52:21 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
+19:00:13 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
+19:28:59 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
+19:39:36 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css

@@ -23,7 +23,7 @@ import { getPrimaryCategories } from '@/config/categories';
 
 type SortField = 'published_at' | 'view_count' | 'title' | 'author';
 type SortOrder = 'asc' | 'desc';
-type ReviewFilter = 'all' | 'pending' | 'approved' | 'rejected';
+type ReviewFilter = 'all' | 'pending' | 'approved';
 
 const AllArticleList = () => {
   const { theme } = useTheme();
@@ -76,6 +76,12 @@ const AllArticleList = () => {
     console.log('[AllArticleList] 筛选条件 - searchQuery:', searchQuery, 'selectedCategory:', selectedCategory, 'reviewFilter:', reviewFilter);
     let result = [...articles];
 
+    // 管理中心只显示已发布和待审核 - 草稿和已驳回在"我的文章"中显示
+    result = result.filter(article =>
+      article.review_status === 'pending' || article.review_status === 'approved'
+    );
+    console.log('[AllArticleList] 基础过滤后剩余:', result.length);
+
     // 搜索过滤
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -125,13 +131,15 @@ const AllArticleList = () => {
     return result;
   }, [articles, searchQuery, selectedCategory, reviewFilter, sortField, sortOrder]);
 
-  // 统计数据
+  // 统计数据 - 仅统计待审核和已发布
   const stats = useMemo(() => {
+    const validArticles = articles.filter(a =>
+      a.review_status === 'pending' || a.review_status === 'approved'
+    );
     return {
-      total: articles.length,
-      pending: articles.filter(a => a.review_status === 'pending').length,
-      approved: articles.filter(a => a.review_status === 'approved').length,
-      rejected: articles.filter(a => a.review_status === 'rejected').length,
+      total: validArticles.length,
+      pending: validArticles.filter(a => a.review_status === 'pending').length,
+      approved: validArticles.filter(a => a.review_status === 'approved').length,
     };
   }, [articles]);
 
@@ -157,7 +165,7 @@ const AllArticleList = () => {
     );
   };
 
-  // 审核状态徽章
+  // 审核状态徽章 - 仅显示待审核和已发布
   const StatusBadge = ({ status }: { status: string }) => {
     if (status === 'pending') {
       return (
@@ -181,19 +189,6 @@ const AllArticleList = () => {
             isLight ? "text-green-700" : "text-green-400"
           )}>
             已发布
-          </span>
-        </div>
-      );
-    }
-    if (status === 'rejected') {
-      return (
-        <div className="flex items-center gap-2">
-          <XCircle className="h-4 w-4 text-red-500" />
-          <span className={cn(
-            "text-sm font-medium",
-            isLight ? "text-red-700" : "text-red-400"
-          )}>
-            已驳回
           </span>
         </div>
       );
@@ -305,7 +300,6 @@ const AllArticleList = () => {
               <option value="all">全部状态</option>
               <option value="pending">待审核</option>
               <option value="approved">已发布</option>
-              <option value="rejected">已驳回</option>
             </select>
           </div>
 
@@ -393,18 +387,6 @@ const AllArticleList = () => {
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
                       isLight ? "text-gray-600" : "text-gray-400"
                     )}>
-                      分类
-                    </th>
-                    <th className={cn(
-                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
-                      isLight ? "text-gray-600" : "text-gray-400"
-                    )}>
-                      状态
-                    </th>
-                    <th className={cn(
-                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
-                      isLight ? "text-gray-600" : "text-gray-400"
-                    )}>
                       <button
                         onClick={() => toggleSort('view_count')}
                         className="flex items-center gap-2 hover:text-wangfeng-purple transition-colors"
@@ -412,6 +394,18 @@ const AllArticleList = () => {
                         浏览量
                         <SortIcon field="view_count" />
                       </button>
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
+                      分类
+                    </th>
+                    <th className={cn(
+                      "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
+                      isLight ? "text-gray-600" : "text-gray-400"
+                    )}>
+                      状态
                     </th>
                     <th className={cn(
                       "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider",
@@ -492,6 +486,20 @@ const AllArticleList = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
+                        <div className="flex items-center gap-1.5">
+                          <Eye className={cn(
+                            "h-4 w-4",
+                            isLight ? "text-gray-400" : "text-gray-500"
+                          )} />
+                          <span className={cn(
+                            "text-sm",
+                            isLight ? "text-gray-700" : "text-gray-300"
+                          )}>
+                            {article.view_count || 0}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex flex-col gap-0.5">
                           <span className={cn(
                             "text-sm font-medium",
@@ -511,20 +519,6 @@ const AllArticleList = () => {
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={article.review_status} />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-1.5">
-                          <Eye className={cn(
-                            "h-4 w-4",
-                            isLight ? "text-gray-400" : "text-gray-500"
-                          )} />
-                          <span className={cn(
-                            "text-sm",
-                            isLight ? "text-gray-700" : "text-gray-300"
-                          )}>
-                            {article.view_count || 0}
-                          </span>
-                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-1.5">

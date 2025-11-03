@@ -9,6 +9,13 @@ interface FilterOption {
   value: string;
 }
 
+const defaultStatusOptions: FilterOption[] = [
+  { label: '已发布', value: 'published' },
+  { label: '待审核', value: 'pending' },
+  { label: '已驳回', value: 'rejected' },
+  { label: '草稿', value: 'draft' },
+];
+
 interface FilterBarProps {
   // 搜索相关
   searchValue?: string;
@@ -25,6 +32,8 @@ interface FilterBarProps {
   selectedStatus?: ReviewStatus | 'published' | null;
   onStatusChange?: (status: ReviewStatus | 'published' | null) => void;
 
+  statusOptions?: FilterOption[];
+
   // 标签筛选
   availableTags?: FilterOption[];
   selectedTags?: string[];
@@ -33,13 +42,6 @@ interface FilterBarProps {
   // 样式
   className?: string;
 }
-
-const statusOptions = [
-  { label: '已发布', value: 'published' },
-  { label: '待审核', value: 'pending' },
-  { label: '已驳回', value: 'rejected' },
-  { label: '草稿', value: 'draft' },
-];
 
 const FilterBar = ({
   searchValue = '',
@@ -51,6 +53,7 @@ const FilterBar = ({
   showStatusFilter = false,
   selectedStatus = null,
   onStatusChange,
+  statusOptions = defaultStatusOptions,
   availableTags = [],
   selectedTags = [],
   onTagsChange,
@@ -75,14 +78,14 @@ const FilterBar = ({
   const handleClearAllFilters = () => {
     onSearchChange?.('');
     onCategoryChange?.('all');
-    onStatusChange?.('all');
+    onStatusChange?.(null);
     onTagsChange?.([]);
   };
 
   const hasActiveFilters =
     searchValue ||
     (selectedCategory && selectedCategory !== 'all') ||
-    (selectedStatus && selectedStatus !== 'all') ||
+    selectedStatus !== null ||
     selectedTags.length > 0;
 
   return (

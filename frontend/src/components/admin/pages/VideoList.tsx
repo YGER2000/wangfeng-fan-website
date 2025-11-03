@@ -90,8 +90,10 @@ const VideoList = () => {
   const filteredAndSortedVideos = useMemo(() => {
     let result = [...videos];
 
-    // 【重要】过滤掉草稿和已驳回 - 管理页面不应显示草稿和已驳回的视频
-    result = result.filter(video => video.review_status !== 'draft' && video.review_status !== 'rejected');
+    // 管理中心只显示已发布和待审核 - 草稿和已驳回在"我的视频"中显示
+    result = result.filter(video =>
+      video.review_status === 'pending' || video.is_published === 1
+    );
 
     // 搜索过滤
     if (searchQuery) {

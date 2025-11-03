@@ -67,7 +67,7 @@ const SimpleDashboard: React.FC = () => {
       title: '行程管理',
       description: '管理演出和活动行程',
       icon: <Calendar className="w-6 h-6 text-blue-500" />,
-      link: '/admin/schedules/list',
+      link: '/admin/manage/schedules/list',
       color: 'bg-blue-500/20'
     },
     {

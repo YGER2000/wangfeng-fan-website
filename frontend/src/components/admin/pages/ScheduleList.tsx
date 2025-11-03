@@ -2,8 +2,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Plus,
-  Search,
-  Filter,
   ArrowUpDown,
   Calendar as CalendarIcon,
   MapPin,
@@ -16,12 +14,12 @@ import {
 import { adminScheduleAPI, ScheduleItemResponse, ScheduleCategory } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import FilterBar from '@/components/ui/FilterBar';
 
 type SortField = 'date' | 'created_at' | 'theme';
 type SortOrder = 'asc' | 'desc';
 
-const categoryOptions: Array<'all' | ScheduleCategory> = [
-  'all',
+const categoryOptions: ScheduleCategory[] = [
   '演唱会',
   'livehouse',
   '音乐节',
@@ -32,12 +30,16 @@ const categoryOptions: Array<'all' | ScheduleCategory> = [
   '其他'
 ];
 
-const statusOptions = [
-  { value: 'all', label: '全部状态' },
-  { value: 'published', label: '已发布' },
-  { value: 'approved', label: '已审核' },
-  { value: 'pending', label: '待审核' }
+const scheduleStatusOptions = [
+  { label: '待审核', value: 'pending' },
+  { label: '已审核', value: 'approved' },
+  { label: '已发布', value: 'published' }
 ];
+
+const categoryFilterOptions = categoryOptions.map((option) => ({
+    label: option === 'livehouse' ? 'Livehouse' : option,
+    value: option,
+  }));
 
 const ScheduleList = () => {
   const { theme } = useTheme();
@@ -48,7 +50,7 @@ const ScheduleList = () => {
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | ScheduleCategory>('all');
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'pending' | 'approved' | 'published' | null>(null);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -114,11 +116,17 @@ const ScheduleList = () => {
     }
 
     // 状态过滤
-    if (selectedStatus !== 'all') {
+    if (selectedStatus !== null) {
       result = result.filter(schedule => {
-        if (selectedStatus === 'published') return schedule.is_published === 1;
-        if (selectedStatus === 'approved') return schedule.review_status === 'approved' && schedule.is_published !== 1;
-        if (selectedStatus === 'pending') return schedule.review_status === 'pending';
+        if (selectedStatus === 'published') {
+          return schedule.is_published === 1;
+        }
+        if (selectedStatus === 'approved') {
+          return schedule.review_status === 'approved' && schedule.is_published !== 1;
+        }
+        if (selectedStatus === 'pending') {
+          return schedule.review_status === 'pending';
+        }
         return true;
       });
     }
@@ -197,7 +205,7 @@ const ScheduleList = () => {
           </div>
 
           <Link
-            to="/admin/schedules/create"
+            to="/admin/manage/schedules/create"
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90 transition-colors text-sm font-medium"
           >
             <Plus className="h-4 w-4" />
@@ -207,75 +215,21 @@ const ScheduleList = () => {
       </div>
 
       {/* 筛选和搜索栏 */}
-      <div className={cn(
-        "flex-shrink-0 border-b px-6 py-4",
-        isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20"
-      )}>
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* 搜索框 */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className={cn(
-                "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-                isLight ? "text-gray-400" : "text-gray-500"
-              )} />
-              <input
-                type="text"
-                placeholder="搜索行程主题、城市或场馆..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={cn(
-                  "w-full pl-10 pr-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2",
-                  isLight
-                    ? "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                    : "bg-black/50 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                )}
-              />
-            </div>
-          </div>
-
-          {/* 分类筛选 */}
-          <div className="flex items-center gap-2">
-            <Filter className={cn(
-              "h-4 w-4",
-              isLight ? "text-gray-600" : "text-gray-400"
-            )} />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value as 'all' | ScheduleCategory)}
-              className={cn(
-                "px-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2",
-                isLight
-                  ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                  : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-              )}
-            >
-              {categoryOptions.map(category => (
-                <option key={category} value={category}>
-                  {category === 'all' ? '全部分类' : (category === 'livehouse' ? 'Livehouse' : category)}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* 状态筛选 */}
-          <div className="flex items-center gap-2">
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className={cn(
-                "px-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2",
-                isLight
-                  ? "bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-                  : "bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20"
-              )}
-            >
-              {statusOptions.map(status => (
-                <option key={status.value} value={status.value}>{status.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <div className="flex-shrink-0 px-6 py-4">
+        <FilterBar
+          searchValue={searchQuery}
+          searchPlaceholder="搜索行程主题、城市或场馆..."
+          onSearchChange={setSearchQuery}
+          categories={categoryFilterOptions}
+          selectedCategory={selectedCategory}
+          onCategoryChange={(value) => setSelectedCategory(value as 'all' | ScheduleCategory)}
+          showStatusFilter
+          selectedStatus={selectedStatus}
+          onStatusChange={(value) =>
+            setSelectedStatus(value as 'pending' | 'approved' | 'published' | null)
+          }
+          statusOptions={scheduleStatusOptions}
+        />
       </div>
 
       {/* 主要内容区域 - 表格 */}
@@ -298,7 +252,7 @@ const ScheduleList = () => {
                 "text-sm",
                 isLight ? "text-gray-500" : "text-gray-400"
               )}>
-                {searchQuery || selectedCategory !== 'all' || selectedStatus !== 'all' ? '未找到匹配的行程' : '暂无行程'}
+                {searchQuery || selectedCategory !== 'all' || selectedStatus !== null ? '未找到匹配的行程' : '暂无行程'}
               </p>
             </div>
           ) : (
@@ -388,7 +342,7 @@ const ScheduleList = () => {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
                             <Link
-                              to={`/admin/schedules/edit/${schedule.id}`}
+                              to={`/admin/manage/schedules/edit/${schedule.id}`}
                               className={cn(
                                 "font-medium hover:text-wangfeng-purple transition-colors line-clamp-1",
                                 isLight ? "text-gray-900" : "text-white"
@@ -475,7 +429,7 @@ const ScheduleList = () => {
                         </td>
                         <td className="px-6 py-4 text-right">
                           <Link
-                            to={`/admin/schedules/edit/${schedule.id}`}
+                            to={`/admin/manage/schedules/edit/${schedule.id}`}
                             className={cn(
                               "text-sm font-medium hover:underline",
                               isLight ? "text-wangfeng-purple" : "text-wangfeng-purple"

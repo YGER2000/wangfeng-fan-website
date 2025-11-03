@@ -179,8 +179,11 @@ def can_edit_content(content: dict, user: User) -> bool:
     Returns:
         是否有权限编辑
     """
-    # 作者可以编辑自己的草稿
-    if content.get('created_by_id') == user.id and content.get('status') == 'draft':
+    status = content.get('status')
+    created_by = content.get('created_by_id')
+
+    # 作者可以编辑自己的内容，支持草稿/待审核/已驳回/已发布的重新提交
+    if created_by == user.id and status in ['draft', 'pending', 'rejected', 'approved']:
         return True
 
     # 管理员+可以编辑任意内容（包括已发布）
@@ -206,12 +209,15 @@ def can_delete_content(content: dict, user: User) -> bool:
     Returns:
         是否有权限删除
     """
+    status = content.get('status')
+    created_by = content.get('created_by_id')
+
     # 超级管理员可以删除任意内容
     if user.role == UserRole.SUPER_ADMIN:
         return True
 
-    # 其他人只能删除自己的草稿
-    if content.get('created_by_id') == user.id and content.get('status') == 'draft':
+    # 其他人可以删除自己创建的内容（草稿/待审核/已驳回/已发布）
+    if created_by == user.id and status in ['draft', 'pending', 'rejected', 'approved']:
         return True
 
     return False

@@ -271,7 +271,7 @@ const Dashboard: React.FC = () => {
           value={pendingSchedules}
           icon={<Calendar className="w-5 h-5" />}
           color="bg-blue-500/20"
-          link="/admin/schedules/list"
+          link="/admin/manage/schedules/list"
           trend={`本周新增 ${stats?.week_new_articles ?? 0} 条`}
           loading={loading}
         />
@@ -329,7 +329,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="text-sm text-gray-500 mt-2">总行程数</div>
               <Link
-                to="/admin/schedules/list"
+                to="/admin/manage/schedules/list"
                 className="text-xs text-wangfeng-purple hover:underline mt-1 inline-block"
               >
                 查看详情 →

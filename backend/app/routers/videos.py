@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 """视频管理路由"""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
+import os
+import tempfile
+from pathlib import Path
 
 from ..database import get_db
 from ..core.permissions import require_admin
@@ -11,8 +14,14 @@ from ..core.dependencies import get_current_user
 from ..models.user_db import User
 from ..models.video import VideoCategory
 from ..schemas.video import VideoCreate, VideoUpdate, Video as VideoSchema
+from ..schemas.gallery import UploadResponse
 from ..crud.video import get_video, get_videos, get_videos_count, create_video, update_video, delete_video, get_videos_by_author, get_all_videos_admin
 from ..utils.bilibili import extract_bvid, get_video_info
+from ..services.image_processing import ImageProcessor
+from ..services.storage_service import (
+    get_storage_service,
+    generate_video_cover_path
+)
 
 router = APIRouter(prefix="/api/videos", tags=["videos"])
 
@@ -207,3 +216,88 @@ def delete_video_endpoint(
     if not success:
         raise HTTPException(status_code=404, detail="视频不存在")
     return {"message": "视频删除成功"}
+
+
+# ========== 视频封面上传路由 ==========
+
+@router.post("/upload/cover", response_model=UploadResponse)
+async def upload_video_cover(
+    video_id: str = Form(..., description="视频ID"),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    上传视频封面图片
+    - 生成 3 种尺寸: original, medium, thumb
+    - 自动上传到 OSS
+    - 返回 3 个尺寸的 URL
+    """
+    # 验证文件类型
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"不支持的文件类型：{file.content_type}，仅支持 JPEG, PNG, WebP"
+        )
+
+    # 验证文件大小（最大20MB）
+    content = await file.read()
+    if len(content) > 20 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="文件大小不能超过 20MB")
+
+    temp_dir = None
+    try:
+        # 1. 保存临时文件
+        temp_dir = tempfile.mkdtemp()
+        temp_input_path = os.path.join(temp_dir, file.filename or "cover.jpg")
+
+        with open(temp_input_path, 'wb') as f:
+            f.write(content)
+
+        # 2. 处理图片（生成 3 种尺寸）
+        temp_output_dir = os.path.join(temp_dir, "processed")
+        original_path, medium_path, thumb_path, width, height = ImageProcessor.process_image(
+            input_path=temp_input_path,
+            output_dir=temp_output_dir,
+            filename_base=video_id
+        )
+
+        # 3. 上传到OSS（使用新的可读性命名）
+        storage = get_storage_service()
+
+        # 上传 3 种尺寸
+        original_oss_path = generate_video_cover_path(video_id, "original")
+        medium_oss_path = generate_video_cover_path(video_id, "medium")
+        thumb_oss_path = generate_video_cover_path(video_id, "thumb")
+
+        original_url = storage.upload_file(original_path, original_oss_path)
+        medium_url = storage.upload_file(medium_path, medium_oss_path)
+        thumb_url = storage.upload_file(thumb_path, thumb_oss_path)
+
+        # 4. 获取文件信息
+        file_size = ImageProcessor.get_file_size(original_path)
+
+        # 5. 返回结果
+        return UploadResponse(
+            success=True,
+            message="视频封面上传成功",
+            file_url=original_url,
+            thumb_url=thumb_url,
+            medium_url=medium_url,
+            file_size=file_size,
+            width=width,
+            height=height
+        )
+
+    except Exception as e:
+        import traceback
+        error_detail = f"上传失败：{str(e)}\n{traceback.format_exc()}"
+        print(error_detail)
+        raise HTTPException(status_code=500, detail=f"上传失败：{str(e)}")
+
+    finally:
+        # 清理临时文件
+        if temp_dir and os.path.exists(temp_dir):
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)

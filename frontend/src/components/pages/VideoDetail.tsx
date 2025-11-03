@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, User, Tag } from 'lucide-react';
 import { videoAPI, Video } from '@/utils/api';
+import { withBasePath } from '@/lib/utils';
 import TagContentModal from '@/components/ui/TagContentModal';
 
 const VideoDetail = () => {
@@ -178,20 +179,63 @@ const VideoDetail = () => {
           >
             <h2 className="text-2xl font-bold mb-6 text-gray-900">相关推荐</h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedVideos.map((relatedVideo) => (
+              {relatedVideos.map((relatedVideo) => {
+                const isOssUrl = (value: string) => {
+                  try {
+                    const url = new URL(value);
+                    const host = url.hostname.toLowerCase();
+                    if (host.includes('hdslb.com') || host.includes('bilibili.com')) {
+                      return false;
+                    }
+                    return true;
+                  } catch {
+                    return false;
+                  }
+                };
+
+                const prioritized = [
+                  relatedVideo.cover_thumb,
+                  relatedVideo.cover_local,
+                  relatedVideo.cover_url && isOssUrl(relatedVideo.cover_url) ? relatedVideo.cover_url : null,
+                ].filter(Boolean) as string[];
+
+                const resolvedCover = prioritized.find((url) => url.startsWith('http://') || url.startsWith('https://'))
+                  ?? prioritized.find((url) => !url.startsWith('http://') && !url.startsWith('https://'))
+                  ?? null;
+
+                const coverUrl = resolvedCover
+                  ? (resolvedCover.startsWith('http://') || resolvedCover.startsWith('https://')
+                      ? resolvedCover
+                      : withBasePath(resolvedCover))
+                  : null;
+
+                return (
                 <div
                   key={relatedVideo.id}
                   className="flex gap-3 p-3 rounded-lg border border-gray-200 hover:border-wangfeng-purple transition-colors cursor-pointer"
                   onClick={() => navigate(`/video/${relatedVideo.id}`)}
                 >
-                  <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+                  <div className="relative w-24 h-16 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    {coverUrl ? (
+                      <img
+                        src={coverUrl}
+                        alt={relatedVideo.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                        无封面
+                      </div>
+                    )}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 truncate">{relatedVideo.title}</h3>
                     <p className="text-sm text-gray-500 truncate">{relatedVideo.author}</p>
                     <p className="text-xs text-gray-400">{new Date(relatedVideo.publish_date).toLocaleDateString('zh-CN')}</p>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}

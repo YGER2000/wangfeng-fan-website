@@ -204,12 +204,26 @@ const AppContent = () => {
             />
 
 
-            {/* 管理员专属 - 行程和标签 */}
-            <Route path="schedules" element={<Navigate to="/admin/schedules/list" replace />} />
-            <Route path="schedules/create" element={<ScheduleCreate />} />
-            <Route path="schedules/edit/:id" element={<ScheduleEdit />} />
+            {/* 管理中心 - 行程和标签管理 */}
+            <Route path="manage/schedules" element={<Navigate to="/admin/manage/schedules/list" replace />} />
             <Route
-              path="schedules/list"
+              path="manage/schedules/create"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ScheduleCreate />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manage/schedules/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
+                  <ScheduleEdit />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="manage/schedules/list"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <ScheduleList />
@@ -217,7 +231,7 @@ const AppContent = () => {
               }
             />
             <Route
-              path="tags"
+              path="manage/tags"
               element={
                 <ProtectedRoute allowedRoles={['admin', 'super_admin']}>
                   <TagManager />

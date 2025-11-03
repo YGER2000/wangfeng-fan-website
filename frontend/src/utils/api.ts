@@ -23,7 +23,7 @@ export interface Article extends ArticleData {
   cover_url?: string;           // 封面图片URL
   is_published: boolean;
   is_deleted: boolean;
-  review_status: 'pending' | 'approved' | 'rejected';  // 审核状态
+  review_status: 'draft' | 'pending' | 'approved' | 'rejected';  // 审核状态
   created_at: string;
   updated_at: string;
   published_at: string;
@@ -52,7 +52,7 @@ export interface Video extends VideoData {
   id: string;
   created_at: string;
   updated_at: string;
-  review_status: 'pending' | 'approved' | 'rejected';  // 审核状态
+  review_status: 'draft' | 'pending' | 'approved' | 'rejected';  // 审核状态
   is_published: number;  // 是否已发布: 0未发布/1已发布
   cover_url?: string;
   cover_local?: string;
@@ -882,7 +882,7 @@ export interface PhotoGroupData {
 export interface PhotoGroup extends PhotoGroupData {
   id: string;
   is_published: boolean;
-  review_status: 'pending' | 'approved' | 'rejected';
+  review_status: 'draft' | 'pending' | 'approved' | 'rejected';
   created_at: string;
   updated_at: string;
   photo_count?: number;

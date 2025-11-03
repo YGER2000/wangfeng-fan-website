@@ -43,7 +43,8 @@ from ..services.image_processing import ImageProcessor
 from ..services.storage_service import (
     get_storage_service,
     generate_unique_filename,
-    get_upload_path
+    get_upload_path,
+    generate_gallery_image_path
 )
 
 router = APIRouter(prefix="/api/gallery", tags=["gallery"])
@@ -297,6 +298,9 @@ def admin_delete_photo(
 @router.post("/admin/upload", response_model=UploadResponse)
 async def admin_upload_image(
     file: UploadFile = File(...),
+    group_id: Optional[str] = Form(None, description="图组ID（可选）"),
+    category: Optional[str] = Form(None, description="图组分类（可选）"),
+    sequence: Optional[int] = Form(None, description="图片序号（可选，从1开始）"),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
@@ -306,6 +310,8 @@ async def admin_upload_image(
     - 自动生成中等尺寸（1200px宽）
     - 压缩原图
     - 支持本地存储和OSS
+    - 可选参数：group_id, category, sequence 用于生成可读性命名
+    - 如果不提供这些参数，将使用默认的 UUID 命名
     """
     # 验证文件类型
     allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
@@ -349,19 +355,26 @@ async def admin_upload_image(
 
         # 3. 上传到存储服务
         storage = get_storage_service()
-        upload_base_path = get_upload_path("gallery")
 
-        # 上传原图
-        original_dest = f"{upload_base_path}/{filename_base}.jpg"
-        original_url = storage.upload_file(original_path, original_dest)
+        # 根据是否提供了 group_id 和 category，决定是否使用可读性命名
+        if group_id and category:
+            # 使用可读性命名 (Plan A)
+            if sequence is None:
+                sequence = 1
+            original_oss_path = generate_gallery_image_path(category, group_id, sequence, "original")
+            medium_oss_path = generate_gallery_image_path(category, group_id, sequence, "medium")
+            thumb_oss_path = generate_gallery_image_path(category, group_id, sequence, "thumb")
+        else:
+            # 使用默认命名 (向后兼容)
+            upload_base_path = get_upload_path("gallery")
+            original_oss_path = f"{upload_base_path}/{filename_base}.jpg"
+            medium_oss_path = f"{upload_base_path}/{filename_base}_medium.jpg"
+            thumb_oss_path = f"{upload_base_path}/{filename_base}_thumb.jpg"
 
-        # 上传中等尺寸
-        medium_dest = f"{upload_base_path}/{filename_base}_medium.jpg"
-        medium_url = storage.upload_file(medium_path, medium_dest)
-
-        # 上传缩略图
-        thumb_dest = f"{upload_base_path}/{filename_base}_thumb.jpg"
-        thumb_url = storage.upload_file(thumb_path, thumb_dest)
+        # 上传 3 种尺寸
+        original_url = storage.upload_file(original_path, original_oss_path)
+        medium_url = storage.upload_file(medium_path, medium_oss_path)
+        thumb_url = storage.upload_file(thumb_path, thumb_oss_path)
 
         # 4. 获取文件信息（在清理临时文件之前）
         file_size = ImageProcessor.get_file_size(original_path)

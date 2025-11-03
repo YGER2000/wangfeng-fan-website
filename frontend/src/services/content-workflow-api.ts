@@ -6,6 +6,8 @@
 
 const API_BASE_URL = 'http://localhost:1994/api/v3/content';
 
+export type ReviewStatus = 'draft' | 'pending' | 'approved' | 'rejected';
+
 export interface Article {
   id: string;
   title: string;
@@ -15,7 +17,7 @@ export interface Article {
   author_id?: string;
   category_primary?: string;
   category_secondary?: string;
-  review_status: 'pending' | 'approved' | 'rejected';
+  review_status: ReviewStatus;
   reviewer_id?: string;
   review_notes?: string;
   rejection_reason?: string;
@@ -70,6 +72,25 @@ export async function updateArticle(id: string, article: any, token: string): Pr
 }
 
 /**
+ * 更新文章状态（辅助函数）
+ */
+export async function updateArticleStatus(
+  id: string,
+  status: ReviewStatus,
+  token: string,
+  payload: Record<string, unknown> = {}
+): Promise<Article> {
+  return updateArticle(
+    id,
+    {
+      ...payload,
+      review_status: status,
+    },
+    token
+  );
+}
+
+/**
  * 删除文章
  */
 export async function deleteArticle(id: string, token: string): Promise<void> {
@@ -103,6 +124,20 @@ export async function submitArticleForReview(id: string, token: string): Promise
   }
 
   return response.json();
+}
+
+/**
+ * 撤回文章到草稿
+ */
+export async function withdrawArticle(id: string, token: string, payload: Record<string, unknown> = {}): Promise<Article> {
+  return updateArticleStatus(id, 'draft', token, payload);
+}
+
+/**
+ * 重新提交审核（pending）
+ */
+export async function resubmitArticle(id: string, token: string, payload: Record<string, unknown> = {}): Promise<Article> {
+  return updateArticleStatus(id, 'pending', token, payload);
 }
 
 /**
@@ -231,8 +266,11 @@ export async function getAllArticles(
 export const contentWorkflowAPI = {
   createArticle,
   updateArticle,
+  updateArticleStatus,
   deleteArticle,
   submitArticleForReview,
+  withdrawArticle,
+  resubmitArticle,
   approveArticle,
   rejectArticle,
   getPendingArticles,

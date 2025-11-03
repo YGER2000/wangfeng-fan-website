@@ -6,7 +6,7 @@
  * - 'review': 审核图组（两步式）
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Upload,
@@ -18,17 +18,39 @@ import {
   CheckCircle,
   AlertCircle,
   Loader,
-  Trash2,
   ArrowRight,
-  ArrowLeft,
-  Check,
-  XCircle
+  ArrowLeft
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { TagData } from '@/utils/api';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import type { ReviewStatus } from '@/components/ui/StatusBadge';
+
+type StepAction =
+  | 'saveDraft'
+  | 'submit'
+  | 'withdrawToDraft'
+  | 'resubmit'
+  | 'update'
+  | 'approve'
+  | 'reject'
+  | 'delete';
+
+type ButtonStyle = 'danger' | 'gray' | 'primaryBlue' | 'primaryPurple' | 'success' | 'warning';
+
+interface StepButtonConfig {
+  label: string;
+  action: StepAction;
+  style: ButtonStyle;
+}
+
+interface GalleryActionPayload {
+  groupId?: string;
+  status?: ReviewStatus;
+  rejectReason?: string;
+}
 
 interface Photo {
   id: string;
@@ -87,7 +109,9 @@ interface GalleryEditorProps {
   mode: 'create' | 'edit' | 'review';
   groupId?: string;
   backPath?: string;
-  isEditPublish?: boolean; // true: 编辑已发布图组，false: 编辑草稿
+  contentStatus?: ReviewStatus;
+  isAdminView?: boolean;
+  onAction?: (action: StepAction, payload: GalleryActionPayload) => Promise<void>;
   onSuccess?: (groupId: string) => void;
 }
 
@@ -97,7 +121,15 @@ const categoryOptions = [
   { value: '日常生活', label: '日常生活' }
 ];
 
-const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEditPublish = false, onSuccess }: GalleryEditorProps) => {
+const GalleryEditor = ({
+  mode,
+  groupId,
+  backPath = '/admin/gallery/list',
+  contentStatus,
+  isAdminView = false,
+  onAction,
+  onSuccess,
+}: GalleryEditorProps) => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
   const navigate = useNavigate();
@@ -105,13 +137,15 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
   // 步骤管理
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 
-  // 图组信息
+  // 状态与图组信息
+  const [currentGroupId, setCurrentGroupId] = useState<string | undefined>(groupId);
+  const [workflowStatus, setWorkflowStatus] = useState<ReviewStatus>(contentStatus || 'draft');
   const [photoGroup, setPhotoGroup] = useState<PhotoGroup | null>(null);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('巡演返图');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
-  const [isPublished, setIsPublished] = useState(mode === 'create' ? false : true);
+  const resolvedAdminView = isAdminView || mode === 'review';
 
   // 标签数据
   const [selectedTags, setSelectedTags] = useState<TagData[]>([]);
@@ -125,7 +159,7 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
 
   // 状态
   const [loading, setLoading] = useState(mode !== 'create');
-  const [saving, setSaving] = useState(false);
+  const [processingAction, setProcessingAction] = useState<StepAction | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -162,12 +196,13 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
 
       const groupData = await response.json();
       setPhotoGroup(groupData);
+      setCurrentGroupId(groupData.id);
       setTitle(groupData.title);
       setCategory(groupData.category);
       setDate(new Date(groupData.date).toISOString().split('T')[0]);
       setDescription(groupData.description || '');
-      setIsPublished(groupData.is_published);
       setExistingPhotos(groupData.photos || []);
+      setWorkflowStatus((groupData.review_status || 'draft') as ReviewStatus);
     } catch (error) {
       console.error('加载图组失败:', error);
       setToast({ message: '加载图组失败，请稍后重试', type: 'error' });
@@ -279,208 +314,127 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
     }
   };
 
-  // 保存图组
-  const handleSave = async () => {
-    if (!title.trim()) {
-      setToast({ message: '请输入标题', type: 'error' });
-      return;
+  const getToken = useCallback(() => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('缺少认证信息，请重新登录');
     }
+    return token;
+  }, []);
 
-    setSaving(true);
-    setToast(null);
+  const getTagValues = useCallback(() => {
+    return selectedTags
+      .map(tag => tag.display_name || tag.name || tag.value)
+      .filter((value): value is string => Boolean(value && value.trim()))
+      .map(value => value.trim());
+  }, [selectedTags]);
 
-    try {
-      const token = localStorage.getItem('access_token');
+  const uploadPendingImages = useCallback(async () => {
+    for (let i = 0; i < newImages.length; i++) {
+      if (newImages[i].status === 'success') continue;
+      setNewImages(prev => {
+        const arr = [...prev];
+        arr[i] = { ...arr[i], status: 'uploading' };
+        return arr;
+      });
+      await uploadSingleImage(newImages[i], i);
+    }
+  }, [newImages]);
 
-      // 上传新图片
-      for (let i = 0; i < newImages.length; i++) {
-        if (newImages[i].status === 'success') continue;
-        setNewImages(prev => {
-          const arr = [...prev];
-          arr[i] = { ...arr[i], status: 'uploading' };
-          return arr;
-        });
-        await uploadSingleImage(newImages[i], i);
+  const buildGroupPayload = useCallback(
+    (status: ReviewStatus, publish: boolean) => {
+      const targetDate = new Date(date);
+      const displayDate = targetDate.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
+      const coverFromNewImage = newImages.find(img => img.uploadedUrls)?.uploadedUrls;
+
+      return {
+        title: title.trim(),
+        category,
+        date: targetDate.toISOString(),
+        display_date: displayDate,
+        year: targetDate.getFullYear().toString(),
+        description: description?.trim() || null,
+        cover_image_url: existingPhotos[0]?.image_url || coverFromNewImage?.original || '',
+        cover_image_thumb_url: existingPhotos[0]?.image_thumb_url || coverFromNewImage?.thumb || '',
+        storage_type: 'oss',
+        is_published: publish,
+        review_status: status,
+        tags: getTagValues().join(',')
+      };
+    },
+    [category, date, description, existingPhotos, getTagValues, newImages, title]
+  );
+
+  const persistGroup = useCallback(
+    async (status: ReviewStatus, publish: boolean) => {
+      if (!title.trim()) {
+        throw new Error('请输入标题');
       }
 
-      // 更新或创建图组
-      const groupData = {
-        title,
-        category,
-        date: new Date(date).toISOString(),
-        display_date: new Date(date).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        year: new Date(date).getFullYear().toString(),
-        description: description || null,
-        cover_image_url: existingPhotos[0]?.image_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.original || '',
-        cover_image_thumb_url: existingPhotos[0]?.image_thumb_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.thumb || '',
-        storage_type: 'oss',
-        is_published: mode === 'create' ? false : isPublished,
-        review_status: mode === 'create' ? 'pending' : undefined,
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
-      };
+      await uploadPendingImages();
 
-      let createdGroupId = groupId;
+      const token = getToken();
+      const payload = buildGroupPayload(status, publish);
 
-      if (mode === 'create') {
-        // 创建新图组
+      let targetId = currentGroupId;
+      let responseBody: any = null;
+
+      if (!targetId) {
         const response = await fetch('http://localhost:1994/api/gallery/admin/groups', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(groupData)
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('创建图组失败');
-        const newGroup = await response.json();
-        createdGroupId = newGroup.id;
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || '创建图组失败');
+        }
+
+        responseBody = await response.json();
+        targetId = responseBody.id;
       } else {
-        // 更新现有图组
-        const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${groupId}`, {
+        const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${targetId}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(groupData)
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('更新图组失败');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || '更新图组失败');
+        }
+
+        responseBody = await response.json().catch(() => null);
       }
 
-      // 删除标记为删除的图片
-      for (const photoId of deletedPhotoIds) {
-        await fetch(`http://localhost:1994/api/gallery/admin/photos/${photoId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+      // 删除标记的图片
+      if (deletedPhotoIds.length > 0) {
+        await Promise.all(
+          deletedPhotoIds.map(photoId =>
+            fetch(`http://localhost:1994/api/gallery/admin/photos/${photoId}`, {
+              method: 'DELETE',
+              headers: { Authorization: `Bearer ${token}` }
+            })
+          )
+        );
+        setDeletedPhotoIds([]);
       }
 
       // 添加新图片
-      const successfulImages = newImages.filter(img => img.status === 'success');
-      const currentMaxOrder = existingPhotos.length > 0
-        ? Math.max(...existingPhotos.map(p => p.sort_order))
-        : -1;
-
-      for (let i = 0; i < successfulImages.length; i++) {
-        const image = successfulImages[i];
-        const photoData = {
-          photo_group_id: createdGroupId,
-          original_filename: image.file.name,
-          image_url: image.uploadedUrls!.original,
-          image_medium_url: image.uploadedUrls!.medium,
-          image_thumb_url: image.uploadedUrls!.thumb,
-          file_size: image.file.size,
-          mime_type: image.file.type,
-          storage_type: 'oss',
-          storage_path: image.uploadedUrls!.original,
-          sort_order: currentMaxOrder + i + 1
-        };
-
-        await fetch('http://localhost:1994/api/gallery/admin/photos', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(photoData)
-        });
-      }
-
-      const successMessage = mode === 'create' ? '图组已提交审核！' : '保存成功！';
-      setToast({ message: successMessage, type: 'success' });
-      setTimeout(() => {
-        if (onSuccess) onSuccess(createdGroupId);
-        else navigate(backPath);
-      }, 1500);
-    } catch (error) {
-      console.error('保存失败:', error);
-      setToast({
-        message: '保存失败: ' + (error instanceof Error ? error.message : '未知错误'),
-        type: 'error'
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // 暂存为草稿 - 保存图组到草稿，不提交审核
-  const handleSaveDraft = async () => {
-    if (!title.trim()) {
-      setToast({ message: '请输入标题', type: 'error' });
-      return;
-    }
-
-    setSaving(true);
-    setToast(null);
-
-    try {
-      const token = localStorage.getItem('access_token');
-
-      // 如果是创建模式，需要先上传新图片
-      if (mode === 'create') {
-        for (let i = 0; i < newImages.length; i++) {
-          if (newImages[i].status === 'success') continue;
-          setNewImages(prev => {
-            const arr = [...prev];
-            arr[i] = { ...arr[i], status: 'uploading' };
-            return arr;
-          });
-          await uploadSingleImage(newImages[i], i);
-        }
-      }
-
-      // 准备图组数据
-      const groupData = {
-        title,
-        category,
-        date: new Date(date).toISOString(),
-        display_date: new Date(date).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        year: new Date(date).getFullYear().toString(),
-        description: description || null,
-        cover_image_url: existingPhotos[0]?.image_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.original || '',
-        cover_image_thumb_url: existingPhotos[0]?.image_thumb_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.thumb || '',
-        storage_type: 'oss',
-        is_published: false,
-        review_status: 'draft',
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
-      };
-
-      let createdGroupId = groupId;
-
-      if (mode === 'create') {
-        // 创建新图组（草稿）
-        const response = await fetch('http://localhost:1994/api/gallery/admin/groups', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(groupData)
-        });
-
-        if (!response.ok) throw new Error('创建图组失败');
-        const newGroup = await response.json();
-        createdGroupId = newGroup.id;
-      } else {
-        // 更新现有图组为草稿
-        const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${groupId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(groupData)
-        });
-
-        if (!response.ok) throw new Error('保存图组失败');
-      }
-
-      // 删除标记为删除的图片
-      for (const photoId of deletedPhotoIds) {
-        await fetch(`http://localhost:1994/api/gallery/admin/photos/${photoId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-      }
-
-      // 添加新图片（仅创建模式）
-      if (mode === 'create') {
-        const successfulImages = newImages.filter(img => img.status === 'success');
+      const successfulImages = newImages.filter(img => img.status === 'success' && img.uploadedUrls);
+      if (successfulImages.length > 0 && targetId) {
         const currentMaxOrder = existingPhotos.length > 0
           ? Math.max(...existingPhotos.map(p => p.sort_order))
           : -1;
@@ -488,7 +442,7 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
         for (let i = 0; i < successfulImages.length; i++) {
           const image = successfulImages[i];
           const photoData = {
-            photo_group_id: createdGroupId,
+            photo_group_id: targetId,
             original_filename: image.file.name,
             image_url: image.uploadedUrls!.original,
             image_medium_url: image.uploadedUrls!.medium,
@@ -502,132 +456,93 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
 
           await fetch('http://localhost:1994/api/gallery/admin/photos', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
             body: JSON.stringify(photoData)
           });
         }
+
       }
 
-      setToast({ message: '✅ 已保存为草稿！', type: 'success' });
-      setTimeout(() => {
-        navigate(backPath);
-      }, 1500);
-    } catch (error) {
-      console.error('保存草稿失败:', error);
-      setToast({
-        message: '保存失败: ' + (error instanceof Error ? error.message : '未知错误'),
-        type: 'error'
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // 审核通过 - 先保存编辑，再批准发布
-  const handleApprove = async () => {
-    if (!groupId) return;
-
-    setSaving(true);
-    setToast(null);
-    try {
-      const token = localStorage.getItem('access_token');
-
-      // 1. 先保存编辑
-      const groupData = {
+      setNewImages([]);
+      if (targetId) {
+        setCurrentGroupId(targetId);
+      }
+      setWorkflowStatus(status);
+      setPhotoGroup(prev => ({
+        ...(prev || {}),
+        ...(responseBody || {}),
+        id: targetId,
         title,
         category,
-        date: new Date(date).toISOString(),
-        display_date: new Date(date).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        year: new Date(date).getFullYear().toString(),
-        description: description || null,
-        cover_image_url: existingPhotos[0]?.image_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.original || '',
-        cover_image_thumb_url: existingPhotos[0]?.image_thumb_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.thumb || '',
-        storage_type: 'oss',
-        is_published: false,
-        review_status: 'pending',
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
-      };
+        description,
+        review_status: status,
+        is_published: publish,
+      } as PhotoGroup));
 
-      await fetch(`http://localhost:1994/api/gallery/admin/groups/${groupId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(groupData)
-      });
-
-      // 2. 再调用批准发布 API
-      const approveUrl = `http://localhost:1994/api/admin/reviews/gallery/${groupId}/approve`;
-      const response = await fetch(approveUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({})
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || '批准发布失败');
+      if (targetId && onSuccess) {
+        onSuccess(targetId);
       }
 
-      setToast({ message: '✅ 已批准发布！', type: 'success' });
-      setTimeout(() => navigate(backPath), 1500);
-    } catch (error) {
-      console.error('批准发布失败:', error);
-      setToast({
-        message: '操作失败: ' + (error instanceof Error ? error.message : '请重试'),
-        type: 'error'
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+      return { groupId: targetId, status };
+    },
+    [buildGroupPayload, currentGroupId, description, existingPhotos, getToken, newImages, onSuccess, selectedTags, title, uploadPendingImages]
+  );
 
-  // 拒绝审核 - 先保存编辑，再拒绝
-  const handleRejectConfirm = async () => {
-    if (!groupId || !rejectReason.trim()) {
-      setToast({ message: '请输入拒绝原因', type: 'error' });
-      return;
+  const approveGroup = useCallback(async () => {
+    if (!currentGroupId) {
+      throw new Error('图组不存在');
     }
 
-    setSaving(true);
-    setToast(null);
-    try {
-      const token = localStorage.getItem('access_token');
+    const token = getToken();
 
-      // 1. 先保存编辑
-      const groupData = {
-        title,
-        category,
-        date: new Date(date).toISOString(),
-        display_date: new Date(date).toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        }),
-        year: new Date(date).getFullYear().toString(),
-        description: description || null,
-        cover_image_url: existingPhotos[0]?.image_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.original || '',
-        cover_image_thumb_url: existingPhotos[0]?.image_thumb_url || newImages.find(i => i.uploadedUrls)?.uploadedUrls?.thumb || '',
-        storage_type: 'oss',
-        is_published: false,
-        review_status: 'pending',
-        tags: selectedTags.map(tag => tag.display_name || tag.name || tag.value).filter(Boolean).join(',')
-      };
+    await persistGroup('pending', false);
 
-      await fetch(`http://localhost:1994/api/gallery/admin/groups/${groupId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(groupData)
-      });
+    const approveUrl = `http://localhost:1994/api/admin/reviews/gallery/${currentGroupId}/approve`;
+    const response = await fetch(approveUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({})
+    });
 
-      // 2. 再调用拒绝 API
-      const rejectUrl = `http://localhost:1994/api/admin/reviews/gallery/${groupId}/reject`;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || '批准发布失败');
+    }
+
+    setWorkflowStatus('approved');
+    setPhotoGroup(prev => prev ? { ...prev, review_status: 'approved', is_published: true } : prev);
+
+    return { groupId: currentGroupId, status: 'approved' as ReviewStatus };
+  }, [currentGroupId, getToken, persistGroup]);
+
+  const rejectGroup = useCallback(
+    async (reason: string) => {
+      if (!currentGroupId) {
+        throw new Error('图组不存在');
+      }
+
+      if (!reason.trim()) {
+        throw new Error('请输入拒绝原因');
+      }
+
+      const token = getToken();
+
+      await persistGroup('pending', false);
+
+      const rejectUrl = `http://localhost:1994/api/admin/reviews/gallery/${currentGroupId}/reject`;
       const response = await fetch(rejectUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ reviewNotes: rejectReason.trim() })
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ reviewNotes: reason.trim() })
       });
 
       if (!response.ok) {
@@ -635,40 +550,256 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
         throw new Error(errorData.detail || '拒绝失败');
       }
 
-      setToast({ message: '✅ 已拒绝！', type: 'success' });
-      setShowRejectModal(false);
-      setTimeout(() => navigate(backPath), 1500);
-    } catch (error) {
-      console.error('拒绝失败:', error);
-      setToast({
-        message: '操作失败: ' + (error instanceof Error ? error.message : '请重试'),
-        type: 'error'
-      });
-    } finally {
-      setSaving(false);
+      setWorkflowStatus('rejected');
+      setPhotoGroup(prev => prev ? { ...prev, review_status: 'rejected', is_published: false } : prev);
+
+      return { groupId: currentGroupId, status: 'rejected' as ReviewStatus };
+    },
+    [currentGroupId, getToken, persistGroup]
+  );
+
+  const deleteGroup = useCallback(async () => {
+    if (!currentGroupId) {
+      throw new Error('图组不存在');
     }
-  };
 
-  // 删除图组
-  const handleDelete = async () => {
-    if (!groupId || !window.confirm('确定要删除这个图组吗？此操作不可恢复。')) return;
+    const token = getToken();
+    const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${currentGroupId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${groupId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (!response.ok) throw new Error('删除失败');
-
-      setToast({ message: '删除成功！', type: 'success' });
-      setTimeout(() => navigate(backPath), 1500);
-    } catch (error) {
-      console.error('删除失败:', error);
-      setToast({ message: '删除失败，请稍后重试', type: 'error' });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || '删除失败');
     }
-  };
+
+    setCurrentGroupId(undefined);
+    return { groupId: undefined };
+  }, [currentGroupId, getToken]);
+
+  const isActionBusy = useCallback(
+    (action: StepAction) => processingAction === action,
+    [processingAction]
+  );
+
+  const triggerAction = useCallback(
+    async (action: StepAction, options?: { rejectReason?: string }) => {
+      if (processingAction) {
+        return false;
+      }
+
+      if (action === 'delete') {
+        if (!currentGroupId) {
+          setToast({ message: '图组尚未创建，无法删除', type: 'error' });
+          return false;
+        }
+        if (typeof window !== 'undefined') {
+          const confirmed = window.confirm('确定要删除这个图组吗？此操作不可恢复。');
+          if (!confirmed) {
+            return false;
+          }
+        }
+      }
+
+      if (['saveDraft', 'submit', 'resubmit', 'withdrawToDraft', 'update'].includes(action)) {
+        if (!title.trim()) {
+          setToast({ message: '请输入图组标题', type: 'error' });
+          return false;
+        }
+        if (mode === 'create' && newImages.length === 0 && existingPhotos.length === 0) {
+          setToast({ message: '请至少上传一张图片', type: 'error' });
+          return false;
+        }
+      }
+
+      const rejectionReason = options?.rejectReason?.trim();
+
+      if (action === 'reject' && !rejectionReason) {
+        setToast({ message: '请输入拒绝原因', type: 'error' });
+        return false;
+      }
+
+      const statusMap: Partial<Record<StepAction, ReviewStatus>> = {
+        saveDraft: 'draft',
+        withdrawToDraft: 'draft',
+        submit: 'pending',
+        resubmit: 'pending',
+        update: 'approved',
+        approve: 'approved',
+        reject: 'rejected'
+      };
+
+      setProcessingAction(action);
+      setToast(null);
+
+      try {
+        if (onAction) {
+          await onAction(action, {
+            groupId: currentGroupId,
+            status: statusMap[action],
+            rejectReason: rejectionReason
+          });
+        } else {
+          switch (action) {
+            case 'saveDraft':
+            case 'withdrawToDraft':
+              await persistGroup('draft', false);
+              break;
+            case 'submit':
+            case 'resubmit':
+              await persistGroup('pending', false);
+              break;
+            case 'update':
+              await persistGroup('approved', true);
+              break;
+            case 'approve':
+              await approveGroup();
+              break;
+            case 'reject':
+              await rejectGroup(rejectionReason || '');
+              break;
+            case 'delete':
+              await deleteGroup();
+              break;
+            default:
+              break;
+          }
+        }
+
+        if (action === 'reject') {
+          setShowRejectModal(false);
+          setRejectReason('');
+        }
+
+        const successMessages: Partial<Record<StepAction, string>> = {
+          saveDraft: '✅ 图组已保存为草稿！',
+          submit: '图组已提交审核，等待管理员审核。',
+          resubmit: '已重新提交审核。',
+          withdrawToDraft: '已撤回并保存为草稿。',
+          update: '图组已更新！',
+          approve: '图组已批准并发布。',
+          reject: '图组已驳回。',
+          delete: '图组已删除。'
+        };
+
+        const message = successMessages[action];
+        if (message) {
+          setToast({ message, type: 'success' });
+        }
+
+        const delayActions: StepAction[] = ['saveDraft', 'withdrawToDraft', 'approve', 'reject', 'delete'];
+        const delay = delayActions.includes(action) ? 1500 : 3000;
+
+        setTimeout(() => {
+          navigate(backPath);
+        }, delay);
+
+        return true;
+      } catch (error) {
+        console.error('操作失败:', error);
+        setToast({
+          message: error instanceof Error ? error.message : '操作失败，请重试',
+          type: 'error'
+        });
+        return false;
+      } finally {
+        setProcessingAction(null);
+      }
+    },
+    [backPath, currentGroupId, deleteGroup, existingPhotos.length, mode, navigate, newImages.length, onAction, persistGroup, processingAction, rejectGroup, title, approveGroup]
+  );
+
+  const stepButtons = useMemo<StepButtonConfig[]>(() => {
+    if (mode === 'review' && workflowStatus === 'pending') {
+      return [
+        { label: '拒绝', action: 'reject', style: 'warning' },
+        { label: '批准发布', action: 'approve', style: 'success' }
+      ];
+    }
+
+    if (resolvedAdminView && workflowStatus === 'approved') {
+      return [
+        { label: '删除图组', action: 'delete', style: 'danger' },
+        { label: '更新图组', action: 'update', style: 'primaryPurple' }
+      ];
+    }
+
+    if (mode === 'create') {
+      return [
+        { label: '暂存草稿', action: 'saveDraft', style: 'gray' },
+        { label: '提交审核', action: 'submit', style: 'primaryBlue' }
+      ];
+    }
+
+    if (workflowStatus === 'draft' || workflowStatus === 'rejected') {
+      return [
+        { label: '删除图组', action: 'delete', style: 'danger' },
+        { label: '暂存草稿', action: 'saveDraft', style: 'gray' },
+        { label: '提交审核', action: 'submit', style: 'primaryBlue' }
+      ];
+    }
+
+    if (!resolvedAdminView && workflowStatus === 'pending') {
+      return [
+        { label: '删除图组', action: 'delete', style: 'danger' },
+        { label: '撤回并保存草稿', action: 'withdrawToDraft', style: 'gray' }
+      ];
+    }
+
+    if (!resolvedAdminView && workflowStatus === 'approved') {
+      return [
+        { label: '删除图组', action: 'delete', style: 'danger' },
+        { label: '重新提交审核', action: 'resubmit', style: 'primaryBlue' }
+      ];
+    }
+
+    return [];
+  }, [mode, resolvedAdminView, workflowStatus]);
+
+  const effectiveButtons = useMemo(() => {
+    return stepButtons.filter(button => !(button.action === 'delete' && !currentGroupId));
+  }, [currentGroupId, stepButtons]);
+
+  const getButtonClasses = useCallback(
+    (style: ButtonStyle) => {
+      const base =
+        'px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
+
+      switch (style) {
+        case 'danger':
+          return cn(
+            base,
+            isLight
+              ? 'border border-red-500 text-red-500 hover:bg-red-500 hover:text-white'
+              : 'border border-red-500/80 text-red-300 hover:bg-red-500/20'
+          );
+        case 'gray':
+          return cn(
+            base,
+            isLight
+              ? 'border border-gray-400 text-gray-700 hover:bg-gray-100'
+              : 'border border-white/20 text-gray-200 hover:bg-white/10'
+          );
+        case 'primaryBlue':
+          return cn(base, 'bg-blue-600 text-white hover:bg-blue-700');
+        case 'primaryPurple':
+          return cn(base, 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90');
+        case 'success':
+          return cn(base, 'bg-green-600 text-white hover:bg-green-700');
+        case 'warning':
+          return cn(
+            base,
+            isLight
+              ? 'border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white'
+              : 'border border-orange-500/80 text-orange-300 hover:bg-orange-500/20'
+          );
+        default:
+          return base;
+      }
+    },
+    [isLight]
+  );
 
   if (loading) {
     return (
@@ -686,9 +817,22 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
       {/* 顶部标题栏 */}
       <div className={cn("flex-shrink-0 border-b px-6 py-4", isLight ? "bg-white border-gray-200" : "bg-black/40 border-wangfeng-purple/20")}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Upload className="h-6 w-6 text-wangfeng-purple" />
-            <h1 className={cn("text-2xl font-bold", isLight ? "text-gray-900" : "text-white")}>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(backPath)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                isLight
+                  ? "text-gray-600 hover:bg-gray-100"
+                  : "text-gray-400 hover:bg-wangfeng-purple/10 hover:text-wangfeng-purple"
+              )}
+            >
+              <ArrowLeft className="h-4 w-4" />
+              {mode === 'review' ? '返回审核中心' : '返回图片列表'}
+            </button>
+            <div className="h-5 w-px bg-gray-300 dark:bg-gray-700" />
+            <h1 className={cn("text-xl font-bold flex items-center gap-2", isLight ? "text-gray-900" : "text-white")}>
+              <Upload className="h-5 w-5 text-wangfeng-purple" />
               {pageTitle}
               <span className={cn("text-sm font-normal ml-2", isLight ? "text-gray-500" : "text-gray-400")}>
                 步骤 {currentStep}/2
@@ -698,126 +842,47 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
 
           <div className="flex items-center gap-3">
             {currentStep === 1 && (
-              <>
-                {mode !== 'create' && (
-                  <button
-                    onClick={handleDelete}
-                    disabled={saving}
-                    className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2", "border-red-500 text-red-500 hover:bg-red-500 hover:text-white", saving && "opacity-50 cursor-not-allowed")}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    删除
-                  </button>
-                )}
-                <button
-                  onClick={() => navigate(backPath)}
-                  disabled={saving}
-                  className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium", isLight ? "border-gray-300 text-gray-700 hover:bg-gray-50" : "border-wangfeng-purple/30 text-gray-300 hover:bg-wangfeng-purple/10", saving && "opacity-50 cursor-not-allowed")}
-                >
-                  返回列表
-                </button>
-                <button
-                  onClick={handleNextStep}
-                  className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
-                >
-                  下一步 <ArrowRight className="h-4 w-4" />
-                </button>
-              </>
+              <button
+                onClick={handleNextStep}
+                className="px-5 py-2 bg-wangfeng-purple text-white rounded-lg text-sm font-medium hover:bg-wangfeng-purple/90 transition-colors flex items-center gap-2"
+              >
+                下一步 <ArrowRight className="h-4 w-4" />
+              </button>
             )}
 
             {currentStep === 2 && (
               <>
                 <button
                   onClick={handlePrevStep}
+                  disabled={processingAction !== null}
                   className={cn("px-4 py-2 rounded-lg text-sm font-medium transition-colors", isLight ? "bg-gray-100 text-gray-700 hover:bg-gray-200" : "bg-white/10 text-gray-300 hover:bg-white/20")}
                 >
                   上一步
                 </button>
+                {effectiveButtons.map((button) => {
+                  const disabled = processingAction !== null;
+                  const busy = isActionBusy(button.action);
+                  const handleClick = () => {
+                    if (button.action === 'reject') {
+                      setShowRejectModal(true);
+                      return;
+                    }
+                    triggerAction(button.action);
+                  };
 
-                {/* 编辑已发布图组（管理中心）: 仅显示 "更新图组" */}
-                {mode === 'edit' && isEditPublish && (
-                  <button
-                    onClick={handleSave}
-                    disabled={saving || !title.trim()}
-                    className={cn("px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2", "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90", (saving || !title.trim()) && "opacity-50 cursor-not-allowed")}
-                  >
-                    {saving && <Loader className="h-4 w-4 animate-spin" />}
-                    更新图组
-                  </button>
-                )}
-
-                {/* 创建模式或编辑模式（未发布）: 显示 "暂存" 和 "提交审核" / "保存更改" */}
-                {(mode === 'create' || (mode === 'edit' && !photoGroup?.is_published && !isEditPublish)) && (
-                  <>
+                  return (
                     <button
-                      onClick={handleSaveDraft}
-                      disabled={saving || !title.trim()}
-                      className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2", "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800", (saving || !title.trim()) && "opacity-50 cursor-not-allowed")}
+                      key={button.action}
+                      type="button"
+                      onClick={handleClick}
+                      disabled={disabled}
+                      className={getButtonClasses(button.style)}
                     >
-                      {saving && <Loader className="h-4 w-4 animate-spin" />}
-                      暂存
+                      {busy && <Loader className="h-4 w-4 animate-spin" />}
+                      {button.label}
                     </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving || !title.trim()}
-                      className={cn("px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2", "bg-wangfeng-purple text-white hover:bg-wangfeng-purple/90", (saving || !title.trim()) && "opacity-50 cursor-not-allowed")}
-                    >
-                      {saving && <Loader className="h-4 w-4 animate-spin" />}
-                      {mode === 'create' ? (saving ? '提交中...' : '提交审核') : (saving ? '保存中...' : '保存更改')}
-                    </button>
-                  </>
-                )}
-
-                {/* 审核模式（未发布的内容）: 仅显示 "拒绝" + "批准发布"，不显示草稿保存 */}
-                {mode === 'review' && (
-                  <>
-                    <button
-                      onClick={() => setShowRejectModal(true)}
-                      disabled={saving}
-                      className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2", "border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white", saving && "opacity-50 cursor-not-allowed")}
-                    >
-                      <X className="h-4 w-4" />
-                      拒绝
-                    </button>
-                    <button
-                      onClick={handleApprove}
-                      disabled={saving}
-                      className={cn("px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2", "bg-green-600 text-white hover:bg-green-700", saving && "opacity-50 cursor-not-allowed")}
-                    >
-                      {saving && <Loader className="h-4 w-4 animate-spin" />}
-                      <Check className="h-4 w-4" />
-                      批准发布
-                    </button>
-                  </>
-                )}
-
-                {/* 编辑模式（已发布的内容）: 显示 "另存为草稿" + "下架" + "重新提交审核" */}
-                {mode === 'edit' && photoGroup?.is_published && (
-                  <>
-                    <button
-                      onClick={handleSaveDraft}
-                      disabled={saving}
-                      className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2", "border-gray-400 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800", saving && "opacity-50 cursor-not-allowed")}
-                    >
-                      另存为草稿
-                    </button>
-                    <button
-                      onClick={handleSaveDraft}
-                      disabled={saving}
-                      className={cn("px-4 py-2 rounded-lg border transition-colors text-sm font-medium flex items-center gap-2", "border-red-500 text-red-500 hover:bg-red-500 hover:text-white", saving && "opacity-50 cursor-not-allowed")}
-                    >
-                      下架
-                    </button>
-                    <button
-                      onClick={handleSave}
-                      disabled={saving || !title.trim()}
-                      className={cn("px-6 py-2 rounded-lg transition-colors text-sm font-medium flex items-center gap-2", "bg-blue-600 text-white hover:bg-blue-700", (saving || !title.trim()) && "opacity-50 cursor-not-allowed")}
-                    >
-                      {saving && <Loader className="h-4 w-4 animate-spin" />}
-                      重新提交审核
-                    </button>
-                  </>
-                )}
+                  );
+                })}
               </>
             )}
           </div>
@@ -1049,11 +1114,14 @@ const GalleryEditor = ({ mode, groupId, backPath = '/admin/gallery/list', isEdit
                 </button>
                 <button
                   type="button"
-                  onClick={handleRejectConfirm}
-                  disabled={!rejectReason.trim() || saving}
+                  onClick={async () => {
+                    if (!rejectReason.trim()) return;
+                    await triggerAction('reject', { rejectReason });
+                  }}
+                  disabled={!rejectReason.trim() || isActionBusy('reject')}
                   className={cn("px-6 py-2 rounded-lg text-sm font-medium transition-colors", "bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed")}
                 >
-                  {saving ? '拒绝中...' : '确认拒绝'}
+                  {isActionBusy('reject') ? '拒绝中...' : '确认拒绝'}
                 </button>
               </div>
             </div>

@@ -5,6 +5,7 @@ const API_BASE_URL = 'http://localhost:1994';
 
 // ============= Enums =============
 export enum ReviewStatus {
+  DRAFT = 'draft',
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',

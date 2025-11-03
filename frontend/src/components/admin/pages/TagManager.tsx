@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Plus,
-  Search,
   Tag as TagIcon,
   Trash2,
   Edit,
@@ -16,8 +15,9 @@ import {
   TagCategoryData
 } from '@/utils/api';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import FilterBar from '@/components/ui/FilterBar';
 
-type CategoryFilter = 'all' | number;
+type CategoryFilter = 'all' | string;
 
 interface TagFormState {
   categoryId: number;
@@ -124,7 +124,7 @@ const TagManager = () => {
   const filteredTags = useMemo(() => {
     return tags.filter((tag) => {
       const matchesCategory =
-        categoryFilter === 'all' ? true : tag.category_id === categoryFilter;
+        categoryFilter === 'all' ? true : tag.category_id === Number(categoryFilter);
       const query = searchQuery.trim().toLowerCase();
       if (!query) return matchesCategory;
 
@@ -138,12 +138,6 @@ const TagManager = () => {
       return matchesCategory && combined.includes(query);
     });
   }, [tags, searchQuery, categoryFilter]);
-
-  const stats = useMemo(() => ({
-    total: tags.length,
-    categories: categories.length,
-    filtered: filteredTags.length
-  }), [tags, categories.length, filteredTags.length]);
 
   const openCreateTagModal = () => {
     if (categories.length === 0) {
@@ -271,21 +265,33 @@ const TagManager = () => {
       isLight ? 'bg-gray-50' : 'bg-transparent'
     )}>
       {/* 顶部标题 */}
-      <div className={cn(
-        'flex-shrink-0 border-b px-6 py-4',
-        isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
-      )}>
-        <div className="flex items-center justify-between flex-wrap gap-3">
+      <div
+        className={cn(
+          'flex-shrink-0 border-b px-6 py-4',
+          isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
+        )}
+      >
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <TagIcon className="h-6 w-6 text-wangfeng-purple" />
-            <div>
-              <h1 className={cn('text-xl font-bold', isLight ? 'text-gray-900' : 'text-white')}>
-                标签管理
-              </h1>
-              <p className={cn('text-sm mt-0.5', isLight ? 'text-gray-500' : 'text-gray-400')}>
-                管理所有标签种类与标签，支持创建、编辑和删除
-              </p>
-            </div>
+            <h1
+              className={cn(
+                'text-2xl font-bold',
+                isLight ? 'text-gray-900' : 'text-white'
+              )}
+            >
+              标签管理
+            </h1>
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-full text-xs font-medium',
+                isLight
+                  ? 'bg-gray-200 text-gray-700'
+                  : 'bg-wangfeng-purple/20 text-wangfeng-purple'
+              )}
+            >
+              {filteredTags.length} 个
+            </span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -311,93 +317,21 @@ const TagManager = () => {
             </button>
           </div>
         </div>
-
-        {/* 指标 */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-          <div className={cn(
-            'rounded-lg p-4 border',
-            isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
-          )}>
-            <div className={cn('text-sm', isLight ? 'text-gray-600' : 'text-gray-400')}>
-              总标签数
-            </div>
-            <div className={cn('text-2xl font-bold mt-1', isLight ? 'text-gray-900' : 'text-white')}>
-              {stats.total}
-            </div>
-          </div>
-          <div className={cn(
-            'rounded-lg p-4 border',
-            isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
-          )}>
-            <div className={cn('text-sm', isLight ? 'text-gray-600' : 'text-gray-400')}>
-              标签种类
-            </div>
-            <div className={cn('text-2xl font-bold mt-1', isLight ? 'text-gray-900' : 'text-white')}>
-              {stats.categories}
-            </div>
-          </div>
-          <div className={cn(
-            'rounded-lg p-4 border',
-            isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
-          )}>
-            <div className={cn('text-sm', isLight ? 'text-gray-600' : 'text-gray-400')}>
-              当前筛选
-            </div>
-            <div className={cn('text-2xl font-bold mt-1', isLight ? 'text-gray-900' : 'text-white')}>
-              {stats.filtered}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* 筛选栏 */}
-      <div className={cn(
-        'flex-shrink-0 border-b px-6 py-4',
-        isLight ? 'bg-white border-gray-200' : 'bg-black/40 border-wangfeng-purple/20'
-      )}>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
-          <div className="flex-1 relative">
-            <Search className={cn(
-              'absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4',
-              isLight ? 'text-gray-400' : 'text-gray-500'
-            )} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="搜索标签名称、种类或描述..."
-              className={cn(
-                'w-full pl-10 pr-4 py-2 rounded-lg border text-sm transition-colors focus:outline-none focus:ring-2',
-                isLight
-                  ? 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
-                  : 'bg-black/50 border-wangfeng-purple/30 text-gray-200 placeholder:text-gray-500 focus:border-wangfeng-purple focus:ring-wangfeng-purple/30'
-              )}
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <select
-              value={categoryFilter}
-              onChange={(event) => {
-                const value = event.target.value;
-                setCategoryFilter(value === 'all' ? 'all' : Number(value));
-              }}
-              className={cn(
-                'rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2',
-                isLight
-                  ? 'bg-white border-gray-300 text-gray-700 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
-                  : 'bg-black/50 border-wangfeng-purple/30 text-gray-200 focus:border-wangfeng-purple focus:ring-wangfeng-purple/30'
-              )}
-            >
-              <option value="all">全部种类</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      <div className="flex-shrink-0 px-6 py-4">
+        <FilterBar
+          searchValue={searchQuery}
+          searchPlaceholder="搜索标签名称、种类或描述..."
+          onSearchChange={setSearchQuery}
+          categories={categories.map((category) => ({
+            label: category.name,
+            value: String(category.id),
+          }))}
+          selectedCategory={categoryFilter}
+          onCategoryChange={(value) => setCategoryFilter(value === 'all' ? 'all' : value)}
+        />
       </div>
 
       {/* 标签列表 */}

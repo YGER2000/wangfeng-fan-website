@@ -20,7 +20,7 @@ import {
   ZoomOut,
   RotateCw
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, withBasePath } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
@@ -310,12 +310,12 @@ const ProfileAdmin = () => {
     );
   }
 
-  // 构建头像URL - 修复显示问题
-  // 后端返回的是相对于 public 目录的路径，如 "images/avatars/1-头像-thumb.jpg"
-  // 前端直接使用 / 开头的绝对路径即可
-  const avatarUrl = profileData.avatar_thumb
-    ? `/${profileData.avatar_thumb}?t=${Date.now()}`
-    : '/images/avatars/default-avatar.jpg';
+  // 构建头像 URL - 兼容相对路径或完整的 OSS 地址
+  const resolvedAvatar = profileData.avatar_thumb
+    ? withBasePath(profileData.avatar_thumb)
+    : withBasePath('images/avatars/default-avatar.jpg');
+
+  const avatarUrl = `${resolvedAvatar}${resolvedAvatar.includes('?') ? '&' : '?'}t=${Date.now()}`;
 
   return (
     <div className={cn(
@@ -371,7 +371,7 @@ const ProfileAdmin = () => {
                         const target = e.target as HTMLImageElement;
                         console.error('头像加载失败:', target.src);
                         if (!target.src.includes('default-avatar.jpg')) {
-                          target.src = '/images/avatars/default-avatar.jpg';
+                          target.src = withBasePath('images/avatars/default-avatar.jpg');
                         }
                       }}
                     />

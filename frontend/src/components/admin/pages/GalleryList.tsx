@@ -93,8 +93,10 @@ const GalleryList = () => {
   const filteredAndSortedPhotoGroups = useMemo(() => {
     let result = [...photoGroups];
 
-    // 【重要】过滤掉草稿和已驳回 - 管理页面不应显示草稿和已驳回的图组
-    result = result.filter(group => group.review_status !== 'draft' && group.review_status !== 'rejected');
+    // 管理中心只显示已发布和待审核 - 草稿和已驳回在"我的图片"中显示
+    result = result.filter(group =>
+      group.review_status === 'pending' || group.is_published === true
+    );
 
     // 搜索过滤
     if (searchQuery) {

@@ -38,6 +38,14 @@ const galleryCategories = [
 type SortField = 'created_at' | 'title';
 type SortOrder = 'asc' | 'desc';
 
+const columnWidths = {
+  category: 'w-32',
+  date: 'w-36',
+  submittedAt: 'w-44',
+  status: 'w-32',
+  actions: 'w-28',
+};
+
 const ReviewGalleryList = () => {
   const { theme } = useTheme();
   const { currentRole: role } = useAuth();
@@ -51,7 +59,7 @@ const ReviewGalleryList = () => {
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -85,6 +93,11 @@ const ReviewGalleryList = () => {
   // 筛选和排序
   const filteredAndSortedGalleries = useMemo(() => {
     let result = [...galleries];
+
+    // 仅展示待审核和已发布的图片组
+    result = result.filter(
+      (gallery) => gallery.review_status === 'pending' || gallery.review_status === 'approved'
+    );
 
     // 搜索过滤
     if (searchQuery) {
@@ -299,6 +312,10 @@ const ReviewGalleryList = () => {
           showStatusFilter={true}
           selectedStatus={statusFilter}
           onStatusChange={setStatusFilter}
+          statusOptions={[
+            { label: '待审核', value: 'pending' },
+            { label: '已发布', value: 'approved' },
+          ]}
         />
       </div>
 
@@ -344,7 +361,7 @@ const ReviewGalleryList = () => {
             'border rounded-lg overflow-hidden',
             isLight ? 'border-gray-200' : 'border-wangfeng-purple/30'
           )}>
-            <table className="w-full text-sm">
+            <table className="w-full text-sm table-fixed">
               <thead>
                 <tr className={cn(
                   'border-b',
@@ -352,7 +369,7 @@ const ReviewGalleryList = () => {
                     ? 'bg-gray-50 border-gray-200'
                     : 'bg-black/30 border-wangfeng-purple/30'
                 )}>
-                  <th className="px-6 py-3 text-left font-semibold">
+                  <th className="px-6 py-3 text-left font-semibold min-w-[360px]">
                     <button
                       onClick={() => handleSort('title')}
                       className="flex items-center gap-2 hover:text-wangfeng-purple transition-colors"
@@ -366,9 +383,13 @@ const ReviewGalleryList = () => {
                         ))}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-left font-semibold">分类</th>
-                  <th className="px-6 py-3 text-left font-semibold">日期</th>
-                  <th className="px-6 py-3 text-left font-semibold">
+                  <th className={cn('px-6 py-3 text-left font-semibold whitespace-nowrap', columnWidths.category)}>
+                    分类
+                  </th>
+                  <th className={cn('px-6 py-3 text-left font-semibold whitespace-nowrap', columnWidths.date)}>
+                    日期
+                  </th>
+                  <th className={cn('px-6 py-3 text-left font-semibold whitespace-nowrap', columnWidths.submittedAt)}>
                     <button
                       onClick={() => handleSort('created_at')}
                       className="flex items-center gap-2 hover:text-wangfeng-purple transition-colors"
@@ -382,8 +403,8 @@ const ReviewGalleryList = () => {
                         ))}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-left font-semibold">状态</th>
-                  <th className="px-6 py-3 text-right font-semibold">操作</th>
+                  <th className={cn('px-6 py-3 text-left font-semibold whitespace-nowrap', columnWidths.status)}>状态</th>
+                  <th className={cn('px-6 py-3 text-right font-semibold whitespace-nowrap', columnWidths.actions)}>操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -401,7 +422,7 @@ const ReviewGalleryList = () => {
                           : 'border-wangfeng-purple/20 hover:bg-wangfeng-purple/5'
                       )}
                     >
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 min-w-[360px]">
                         <div className="flex items-start gap-3">
                           {gallery.cover_image_thumb_url && (
                             <img
@@ -426,12 +447,12 @@ const ReviewGalleryList = () => {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className={cn('px-6 py-4 whitespace-nowrap', columnWidths.category)}>
                         <p className={isLight ? 'text-gray-700' : 'text-gray-300'}>
                           {gallery.category}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className={cn('px-6 py-4 whitespace-nowrap', columnWidths.date)}>
                         <p className={cn(
                           'text-sm',
                           isLight ? 'text-gray-600' : 'text-gray-400'
@@ -439,7 +460,7 @@ const ReviewGalleryList = () => {
                           {gallery.display_date || gallery.date}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className={cn('px-6 py-4 whitespace-nowrap', columnWidths.submittedAt)}>
                         <p className={cn(
                           'text-sm',
                           isLight ? 'text-gray-600' : 'text-gray-400'
@@ -453,7 +474,7 @@ const ReviewGalleryList = () => {
                           })}
                         </p>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className={cn('px-6 py-4 whitespace-nowrap', columnWidths.status)}>
                         <div className={cn(
                           'inline-flex items-center gap-2 px-2.5 py-1.5 rounded text-xs font-medium',
                           statusInfo.bg,
@@ -463,7 +484,7 @@ const ReviewGalleryList = () => {
                           {statusInfo.label}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className={cn('px-6 py-4 whitespace-nowrap', columnWidths.actions)}>
                         <div className="flex items-center justify-end gap-2">
                           {getActionButton(gallery)}
                         </div>

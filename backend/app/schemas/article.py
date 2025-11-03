@@ -22,7 +22,7 @@ class ArticleCreate(ArticleBase):
     category_primary: str
     category_secondary: str
     author_id: Optional[str] = None  # 作者ID，由后端自动设置
-    review_status: Optional[str] = Field(default="pending", max_length=20)  # 审核状态
+    review_status: Optional[str] = Field(default="draft", max_length=20)  # 审核状态
     is_published: Optional[bool] = Field(default=False)  # 是否发布
     published_at: Optional[datetime] = None  # 发布时间
 

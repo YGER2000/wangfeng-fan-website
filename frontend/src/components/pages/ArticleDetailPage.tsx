@@ -31,8 +31,9 @@ const ArticleDetailPage = () => {
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string>('');
 
-  // 使用 ref 防止 StrictMode 导致的重复请求
+  // 使用 ref 防止 StrictMode 导致的重复请求和视图计数
   const hasLoadedRef = useRef(false);
+  const hasIncrementedRef = useRef(false);
 
   useEffect(() => {
     const loadArticle = async () => {
@@ -51,7 +52,23 @@ const ArticleDetailPage = () => {
         const data = isUUID
           ? await articleAPI.getById(slug)
           : await articleAPI.getBySlug(slug);
-        setArticle(normalizeArticle(data));
+        const normalizedArticle = normalizeArticle(data);
+        setArticle(normalizedArticle);
+
+        // 获取文章ID用于增加浏览次数
+        const articleId = normalizedArticle.id;
+
+        // 只增加一次浏览次数（防止重复）
+        if (articleId && !hasIncrementedRef.current) {
+          hasIncrementedRef.current = true;
+          try {
+            // 调用 POST 端点增加浏览次数
+            await fetch(`/api/articles/${articleId}/view`, { method: 'POST' });
+          } catch (err) {
+            console.error('增加浏览次数失败:', err);
+            // 失败不影响文章显示，仅在控制台输出错误
+          }
+        }
       } catch (err) {
         console.error('加载文章失败:', err);
         setError('文章加载失败，请稍后重试');
@@ -65,6 +82,7 @@ const ArticleDetailPage = () => {
     // 清理函数：当 slug 变化时重置标记
     return () => {
       hasLoadedRef.current = false;
+      hasIncrementedRef.current = false;
     };
   }, [slug]);
 

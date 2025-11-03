@@ -163,7 +163,7 @@ const ReviewCenter = () => {
       article: '/admin/articles/all',
       video: '/admin/videos/all',
       gallery: '/admin/gallery/all',
-      schedule: '/admin/schedules/list',
+      schedule: '/admin/manage/schedules/list',
     };
 
     const backPath = backPathMap[item.type] || '/admin/reviews';
@@ -177,7 +177,7 @@ const ReviewCenter = () => {
         navigate(`/admin/videos/edit/${item.id}`, navOptions);
         break;
       case 'schedule':
-        navigate(`/admin/schedules/edit/${item.id}`, navOptions);
+        navigate(`/admin/manage/schedules/edit/${item.id}`, navOptions);
         break;
       case 'gallery':
         navigate(`/admin/gallery/edit/${item.id}`, navOptions);

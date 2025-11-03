@@ -39,7 +39,7 @@ class PhotoGroup(Base):
     is_deleted = Column(Boolean, default=False, index=True)  # 是否删除
 
     # 审核字段
-    review_status = Column(String(20), default='pending', nullable=False, index=True)  # 审核状态
+    review_status = Column(String(20), default='draft', nullable=False, index=True)  # 审核状态
     reviewer_id = Column(String(36), nullable=True, index=True)  # 审核人ID
     review_notes = Column(Text, nullable=True)  # 审核备注/拒绝原因
     reviewed_at = Column(DateTime, nullable=True)  # 审核时间

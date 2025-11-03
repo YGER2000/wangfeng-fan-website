@@ -46,6 +46,7 @@ class ImageStorage:
         except Exception as e:
             print(f"⚠️ 存储初始化失败: {e}")
             print("💡 将在首次使用时重试...")
+            raise
 
     def _init_minio(self):
         """已移除 MinIO 支持，请使用 oss 存储类型"""
@@ -73,9 +74,13 @@ class ImageStorage:
             oss_endpoint_url = f"https://{OSS_ENDPOINT}"
             self.client = oss2.Bucket(auth, oss_endpoint_url, OSS_BUCKET)
 
-            # 测试连接
-            self.client.head_bucket()
-            print(f"✅ 阿里云 OSS 已连接: {oss_endpoint_url}")
+            # 测试连接 - 使用 get_bucket_info() 验证 bucket 是否可访问
+            try:
+                bucket_info = self.client.get_bucket_info()
+                print(f"✅ 阿里云 OSS 已连接: {OSS_BUCKET} (存储类型: {bucket_info.storage_class})")
+            except Exception as test_error:
+                print(f"⚠️ OSS 连接测试警告: {test_error}")
+                print(f"💡 将继续使用 OSS，首次上传时会验证连接")
 
         except Exception as e:
             print(f"❌ 阿里云 OSS 初始化失败: {e}")
@@ -141,7 +146,7 @@ class ImageStorage:
     def generate_filename(self, original_filename: str, extension: str) -> str:
         """
         生成唯一的文件名
-        格式: articles/YYYY/MM/uuid_原始名称.ext
+        格式: article-images/general/YYYY/MM/DD/uuid_原始名称.ext
 
         Args:
             original_filename: 原始文件名
@@ -153,6 +158,7 @@ class ImageStorage:
         now = datetime.now()
         year = now.strftime('%Y')
         month = now.strftime('%m')
+        day = now.strftime('%d')
 
         # 生成 UUID
         file_uuid = str(uuid.uuid4())[:8]
@@ -164,7 +170,45 @@ class ImageStorage:
 
         # 组合路径
         filename = f"{file_uuid}_{clean_name}.{extension}"
-        return f"articles/{year}/{month}/{filename}"
+        return f"article-images/general/{year}/{month}/{day}/{filename}"
+
+    def _object_name_to_url(self, object_name: str) -> str:
+        """将 OSS 对象键转换为可访问 URL"""
+        if OSS_CUSTOM_DOMAIN:
+            # 使用自定义域名（如果配置了）
+            return f"https://{OSS_CUSTOM_DOMAIN}/{object_name}"
+        # 使用虚拟主机式 URL（virtual hosted-style）
+        return f"https://{OSS_BUCKET}.{OSS_ENDPOINT}/{object_name}"
+
+    def upload_bytes(
+        self,
+        data: bytes,
+        object_name: str,
+        content_type: str = "image/jpeg",
+    ) -> str:
+        """
+        使用指定的对象键上传原始二进制数据到 OSS
+
+        Args:
+            data: 文件二进制数据
+            object_name: OSS 对象键（包含目录和文件名）
+            content_type: Content-Type 头
+
+        Returns:
+            文件访问 URL
+        """
+        # 确保已初始化
+        self._ensure_initialized()
+
+        try:
+            headers = {
+                "Content-Type": content_type,
+            }
+            self.client.put_object(object_name, data, headers=headers)
+            return self._object_name_to_url(object_name)
+        except Exception as e:
+            print(f"❌ 上传到 OSS 失败: {e}")
+            raise
 
     def upload_image(self, image_data: bytes, filename: str) -> str:
         """
@@ -196,14 +240,7 @@ class ImageStorage:
             self.client.put_object(object_name, image_data)
 
             # 生成访问 URL
-            if OSS_CUSTOM_DOMAIN:
-                # 使用自定义域名（如果配置了）
-                url = f"https://{OSS_CUSTOM_DOMAIN}/{object_name}"
-            else:
-                # 使用虚拟主机式 URL（virtual hosted-style）
-                url = f"https://{OSS_BUCKET}.{OSS_ENDPOINT}/{object_name}"
-
-            return url
+            return self._object_name_to_url(object_name)
 
         except Exception as e:
             print(f"❌ 上传到 OSS 失败: {e}")

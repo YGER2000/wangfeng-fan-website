@@ -9,6 +9,7 @@ Base = declarative_base()
 
 class ReviewStatus(str, enum.Enum):
     """文章审核状态枚举"""
+    DRAFT = "draft"          # 草稿
     PENDING = "pending"      # 待审核
     APPROVED = "approved"    # 已通过
     REJECTED = "rejected"    # 已拒绝
@@ -36,24 +37,30 @@ class Article(Base):
     cover_url = Column(String(500), nullable=True)  # 文章封面图片URL
 
     # 状态字段
-    is_published = Column(Boolean, default=True)
+    is_published = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
 
     # 审核字段
     review_status = Column(
         String(20),
-        default="pending",
+        default=ReviewStatus.DRAFT.value,
         nullable=False,
         index=True
     )
     reviewer_id = Column(String(36), nullable=True, index=True)  # 审核人ID
-    review_notes = Column(Text, nullable=True)  # 审核备注
+    review_notes = Column(Text, nullable=True)  # 审核备注（通过时的备注）
+    rejection_reason = Column(Text, nullable=True)  # 拒绝原因
     reviewed_at = Column(DateTime, nullable=True)  # 审核时间
+
+    # 权限系统字段
+    created_by_id = Column(Integer, nullable=True, index=True)  # 创建者ID（user表的ID）
+    submit_time = Column(DateTime, nullable=True)  # 提交审核时间
+    submitted_by_id = Column(Integer, nullable=True, index=True)  # 提交人ID
 
     # 时间字段
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    published_at = Column(DateTime, default=datetime.utcnow)
+    published_at = Column(DateTime, nullable=True, default=None)
 
     # SEO字段
     meta_description = Column(String(160))

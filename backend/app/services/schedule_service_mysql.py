@@ -1,32 +1,27 @@
-"""Schedule Service with MySQL Storage"""
-import json
+"""Schedule Service with MySQL Storage (OSS-based)"""
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+import tempfile
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from ..core.config import get_settings
 from ..models.schedule_db import Schedule
+from ..services.storage import get_storage
 from ..utils.datetime_utils import get_beijing_now
 from ..utils.image_utils import compress_image
 
 
 class ScheduleServiceMySQL:
-    """处理行程数据的服务（MySQL版本）"""
+    """处理行程数据的服务（MySQL版本，使用 OSS 存储海报）"""
 
     def __init__(self, db: Session) -> None:
         self.db = db
-        self.backend_dir = Path(__file__).resolve().parents[2]
-        self.project_root = self.backend_dir.parent
-        # 基础上传目录：frontend/public/images/
-        self.base_upload_dir = self.project_root / 'frontend' / 'public' / 'images'
-        # 临时文件夹：用于保存待审核的图片
-        self.temp_upload_dir = self.base_upload_dir / 'temp'
-
-        # 确保基础目录和临时目录存在
-        self.base_upload_dir.mkdir(parents=True, exist_ok=True)
-        self.temp_upload_dir.mkdir(parents=True, exist_ok=True)
+        self.storage = get_storage()
+        settings = get_settings()
+        self.default_poster_url = getattr(settings, "schedule_default_poster_url", None)
 
     @staticmethod
     def _normalize_date_string(date_str: Optional[str]) -> Optional[str]:
@@ -56,214 +51,86 @@ class ScheduleServiceMySQL:
     @staticmethod
     def _sanitize_folder_name(name: str) -> str:
         """
-        清理文件夹名称，移除不安全的字符
+        清理名称，移除不安全的字符
         保留中文、英文、数字、空格和常用符号
         """
-        # 移除路径分隔符和其他不安全字符
         unsafe_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|', '\n', '\r', '\t']
         safe_name = name
         for char in unsafe_chars:
             safe_name = safe_name.replace(char, '')
 
-        # 移除首尾空格
         safe_name = safe_name.strip()
 
-        # 如果清理后为空，使用时间戳
         if not safe_name:
             safe_name = get_beijing_now().strftime('%Y%m%d%H%M%S')
 
         return safe_name
 
-    def _get_folder_name(self, date: str, theme: str) -> str:
+    def _sanitize_for_object(self, value: str) -> str:
+        """将路径组件转换为适合 OSS 的形式"""
+        sanitized = self._sanitize_folder_name(value)
+        return sanitized.replace(' ', '_')
+
+    def _build_object_prefix(self, category: str, date: str, theme: str, schedule_id: int) -> str:
         """
-        生成文件夹名称：日期-主题
-        例如：2023.04.30-UNFOLLOW长沙站
-
-        Args:
-            date: 日期 YYYY-MM-DD
-            theme: 行程主题
-        Returns:
-            文件夹名称
+        生成 OSS 对象名前缀，结构：
+        schedules/{分类}/{日期-主题}/schedule-{id}
         """
-        # 将日期从 YYYY-MM-DD 转换为 YYYY.MM.DD
-        formatted_date = date.replace('-', '.')
-        # 清理主题名称
-        safe_theme = self._sanitize_folder_name(theme)
-        # 返回格式：日期-主题
-        return f"{formatted_date}-{safe_theme}"
+        safe_category = self._sanitize_for_object(category)
+        safe_date = date or get_beijing_now().strftime('%Y-%m-%d')
+        folder_name = self._sanitize_for_object(f"{safe_date}-{theme}")
+        return f"schedules/{safe_category}/{folder_name}/schedule-{schedule_id}"
 
-    def _ensure_schedule_folder(self, category: str, date: str, theme: str) -> Path:
-        """
-        确保行程文件夹存在
-        文件夹路径：images/分类/日期-主题/
-
-        Args:
-            category: 行程分类
-            date: 日期
-            theme: 行程主题
-        Returns:
-            文件夹的完整路径
-        """
-        safe_category = self._sanitize_folder_name(category)
-        folder_name = self._get_folder_name(date, theme)
-
-        # 创建目录结构：images/分类/日期-主题/
-        category_dir = self.base_upload_dir / safe_category
-        schedule_dir = category_dir / folder_name
-
-        # 确保目录存在
-        schedule_dir.mkdir(parents=True, exist_ok=True)
-
-        return schedule_dir
-
-    def _save_image_to_temp(self, upload: UploadFile, category: str, date: str, theme: str) -> str:
-        """
-        保存上传的海报图片到临时文件夹（待审核状态）
-        存储路径：images/temp/日期-主题-海报.扩展名
-
-        Args:
-            upload: 上传的文件
-            category: 行程分类（中文）
-            date: 日期 YYYY-MM-DD
-            theme: 行程主题（中文）
-        Returns:
-            相对于 public 目录的路径字符串
-        """
-        extension = Path(upload.filename or '').suffix.lower() or '.jpg'
-
-        # 获取文件夹名称（日期-主题）
-        folder_name = self._get_folder_name(date, theme)
-
-        # 生成文件名：日期-主题-海报.扩展名
-        filename = f"{folder_name}-海报{extension}"
-        destination = self.temp_upload_dir / filename
-
-        # 如果文件已存在，添加时间戳后缀避免冲突
-        if destination.exists():
-            timestamp = get_beijing_now().strftime('%H%M%S')
-            filename = f"{folder_name}-海报-{timestamp}{extension}"
-            destination = self.temp_upload_dir / filename
-
-        # 保存文件
-        with destination.open('wb') as buffer:
+    def _upload_schedule_images(
+        self,
+        upload: UploadFile,
+        category: str,
+        date: str,
+        theme: str,
+        schedule_id: int
+    ) -> Tuple[str, Optional[str]]:
+        """上传行程海报到 OSS，返回(原图URL, 缩略图URL)"""
+        try:
+            file_bytes = upload.file.read()
+        finally:
             if hasattr(upload.file, 'seek'):
                 upload.file.seek(0)
-            content = upload.file.read()
-            buffer.write(content)
 
-        # 返回相对于 public 目录的路径
-        return f"images/temp/{filename}"
+        if not file_bytes:
+            # 没有有效内容时返回默认海报
+            return self.default_poster_url or "", self.default_poster_url
 
-    def _save_image(self, upload: UploadFile, category: str, date: str, theme: str) -> tuple[str, str]:
-        """
-        保存上传的海报图片到正式文件夹（保存原图和压缩图两个版本）
-        存储路径：images/分类/日期-主题/日期-主题-海报.扩展名
-        压缩图：images/分类/日期-主题/日期-主题-海报-thumb.扩展名
-
-        Args:
-            upload: 上传的文件
-            category: 行程分类（中文）
-            date: 日期 YYYY-MM-DD
-            theme: 行程主题（中文）
-        Returns:
-            tuple: (原图路径, 压缩图路径) 相对于 public 目录的路径字符串
-        """
         extension = Path(upload.filename or '').suffix.lower() or '.jpg'
+        if extension not in ('.jpg', '.jpeg', '.png', '.webp'):
+            extension = '.jpg'
 
-        # 确保文件夹存在
-        schedule_dir = self._ensure_schedule_folder(category, date, theme)
+        mime_type = upload.content_type or 'image/jpeg'
+        if extension in ('.jpg', '.jpeg'):
+            mime_type = 'image/jpeg'
+        elif extension == '.png':
+            mime_type = 'image/png'
+        elif extension == '.webp':
+            mime_type = 'image/webp'
 
-        # 获取文件夹名称（日期-主题）
-        folder_name = self._get_folder_name(date, theme)
+        object_prefix = self._build_object_prefix(category, date, theme, schedule_id)
+        original_object_name = f"{object_prefix}-poster{extension}"
+        thumb_object_name = f"{object_prefix}-poster-thumb.jpg"
 
-        # 生成文件名：日期-主题-海报.扩展名
-        filename = f"{folder_name}-海报{extension}"
-        filename_thumb = f"{folder_name}-海报-thumb.jpg"  # 压缩图统一用jpg
-        destination = schedule_dir / filename
-        destination_thumb = schedule_dir / filename_thumb
+        thumb_bytes: bytes
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            original_path = Path(tmp_dir) / f"original{extension}"
+            original_path.write_bytes(file_bytes)
 
-        # 如果文件已存在，添加时间戳后缀避免冲突
-        if destination.exists():
-            timestamp = get_beijing_now().strftime('%H%M%S')
-            filename = f"{folder_name}-海报-{timestamp}{extension}"
-            filename_thumb = f"{folder_name}-海报-{timestamp}-thumb.jpg"
-            destination = schedule_dir / filename
-            destination_thumb = schedule_dir / filename_thumb
+            thumb_path = Path(tmp_dir) / "thumb.jpg"
+            if compress_image(original_path, thumb_path, max_size_kb=200):
+                thumb_bytes = thumb_path.read_bytes()
+            else:
+                thumb_bytes = file_bytes
 
-        # 保存原图
-        with destination.open('wb') as buffer:
-            if hasattr(upload.file, 'seek'):
-                upload.file.seek(0)
-            content = upload.file.read()
-            buffer.write(content)
+        original_url = self.storage.upload_bytes(file_bytes, original_object_name, content_type=mime_type)
+        thumb_url = self.storage.upload_bytes(thumb_bytes, thumb_object_name, content_type="image/jpeg")
 
-        # 生成压缩图（200KB以下）
-        compress_image(destination, destination_thumb, max_size_kb=200)
-
-        # 返回相对于 public 目录的路径
-        safe_category = self._sanitize_folder_name(category)
-        image_path = f"images/{safe_category}/{folder_name}/{filename}"
-        image_thumb_path = f"images/{safe_category}/{folder_name}/{filename_thumb}"
-
-        return image_path, image_thumb_path
-
-    def _move_temp_image_to_final(self, temp_path: str, category: str, date: str, theme: str) -> str:
-        """
-        将临时文件夹中的图片移动到正式文件夹
-
-        Args:
-            temp_path: 临时图片路径（如：images/temp/xxx.jpg）
-            category: 行程分类
-            date: 日期
-            theme: 行程主题
-        Returns:
-            新的图片路径
-        """
-        # 解析临时文件路径
-        temp_file = self.project_root / 'frontend' / 'public' / temp_path
-        if not temp_file.exists():
-            # 如果临时文件不存在，使用默认海报
-            return self._get_default_poster_path(category, date, theme)
-
-        # 确保目标文件夹存在
-        schedule_dir = self._ensure_schedule_folder(category, date, theme)
-
-        # 获取文件名和扩展名
-        extension = temp_file.suffix
-        folder_name = self._get_folder_name(date, theme)
-        filename = f"{folder_name}-海报{extension}"
-        destination = schedule_dir / filename
-
-        # 如果目标文件已存在，添加时间戳
-        if destination.exists():
-            timestamp = get_beijing_now().strftime('%H%M%S')
-            filename = f"{folder_name}-海报-{timestamp}{extension}"
-            destination = schedule_dir / filename
-
-        # 移动文件（使用 shutil.move）
-        import shutil
-        shutil.move(str(temp_file), str(destination))
-
-        # 返回新路径
-        safe_category = self._sanitize_folder_name(category)
-        return f"images/{safe_category}/{folder_name}/{filename}"
-
-    def _get_default_poster_path(self, category: str, date: str, theme: str) -> str:
-        """
-        获取默认海报路径
-        如果没有上传图片，返回默认海报的路径
-
-        Args:
-            category: 行程分类
-            date: 日期
-            theme: 行程主题
-        Returns:
-            默认海报的相对路径
-        """
-        # 确保文件夹存在
-        self._ensure_schedule_folder(category, date, theme)
-        # 返回默认海报路径
-        return "images/默认海报.jpg"
+        return original_url, thumb_url
 
     def get_all_entries(self) -> List[Dict[str, Any]]:
         """获取所有行程记录"""
@@ -281,32 +148,16 @@ class ScheduleServiceMySQL:
         description: Optional[str] = None,
         tags: Optional[str] = None,
         image_file: Optional[UploadFile] = None,
-        save_file: bool = False,  # 新增参数：是否立即保存文件
+        save_file: bool = False,  # 参数保留兼容性，现已统一上传到 OSS
     ) -> Dict[str, Any]:
         """
         创建新的行程记录
 
         Args:
-            save_file:
-                - False: 用户提交时，保存图片到临时文件夹（待审核状态）
-                - True: 管理员发布时，立即保存图片到正式文件夹
+            save_file: 兼容旧参数，当前无实际作用（图片立即上传 OSS）
         """
-        # 标准化日期
-        normalized_date = self._normalize_date_string(date)
+        normalized_date = self._normalize_date_string(date) or get_beijing_now().strftime('%Y-%m-%d')
 
-        # 图片处理逻辑
-        image_path: Optional[str] = None
-        image_thumb_path: Optional[str] = None
-        if image_file is not None:
-            if save_file:
-                # 立即保存图片文件到正式文件夹（管理员发布时）
-                image_path, image_thumb_path = self._save_image(image_file, category, normalized_date, theme)
-            else:
-                # 保存图片到临时文件夹（用户提交时）
-                image_path = self._save_image_to_temp(image_file, category, normalized_date, theme)
-                # 临时文件夹暂时不生成缩略图，发布时再生成
-
-        # 创建数据库记录
         new_schedule = Schedule(
             category=category,
             date=normalized_date,
@@ -315,14 +166,30 @@ class ScheduleServiceMySQL:
             theme=theme,
             description=description,
             tags=tags,
-            image=image_path,
-            image_thumb=image_thumb_path,
+            image=None,
+            image_thumb=None,
             source='custom',
-            review_status='pending',  # 默认待审核
-            is_published=0,  # 默认未发布
+            review_status='pending',
+            is_published=0,
         )
 
         self.db.add(new_schedule)
+        self.db.flush()
+
+        if image_file is not None:
+            image_url, image_thumb_url = self._upload_schedule_images(
+                image_file,
+                category,
+                normalized_date,
+                theme,
+                new_schedule.id
+            )
+            new_schedule.image = image_url
+            new_schedule.image_thumb = image_thumb_url or image_url
+        elif self.default_poster_url:
+            new_schedule.image = self.default_poster_url
+            new_schedule.image_thumb = self.default_poster_url
+
         self.db.commit()
         self.db.refresh(new_schedule)
 
@@ -350,7 +217,6 @@ class ScheduleServiceMySQL:
         if not schedule:
             return None
 
-        # 更新字段
         if category is not None:
             schedule.category = category
         if date is not None:
@@ -364,14 +230,27 @@ class ScheduleServiceMySQL:
         if description is not None:
             schedule.description = description
 
-        # 如果有新图片，保存并更新路径
         if image_file is not None:
-            current_category = category if category else schedule.category
-            current_date = date if date else schedule.date
-            current_theme = theme if theme else schedule.theme
-            image_path, image_thumb_path = self._save_image(image_file, current_category, current_date, current_theme)
-            schedule.image = image_path
-            schedule.image_thumb = image_thumb_path
+            # 删除旧图（忽略失败）
+            for url in {schedule.image, schedule.image_thumb}:
+                if url:
+                    try:
+                        self.storage.delete_image(url)
+                    except Exception:
+                        pass
+
+            current_category = category if category is not None else schedule.category
+            current_date = schedule.date or get_beijing_now().strftime('%Y-%m-%d')
+            current_theme = theme if theme is not None else schedule.theme
+            image_url, image_thumb_url = self._upload_schedule_images(
+                image_file,
+                current_category,
+                current_date,
+                current_theme,
+                schedule.id
+            )
+            schedule.image = image_url
+            schedule.image_thumb = image_thumb_url or image_url
 
         schedule.updated_at = get_beijing_now()
         self.db.commit()
@@ -382,41 +261,25 @@ class ScheduleServiceMySQL:
     def publish_schedule(self, schedule_id: int, image_file: Optional[UploadFile] = None) -> Optional[Dict[str, Any]]:
         """
         发布行程（审核通过后）
-
-        将临时文件夹中的图片移动到正式文件夹
+        由于图片已存储在 OSS，此处仅确保存在可用海报
         """
         schedule = self.db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if not schedule:
             return None
 
-        # 处理图片：从临时文件夹移动到正式文件夹
-        if schedule.image and schedule.image.startswith('images/temp/'):
-            # 将临时图片移动到正式文件夹
-            image_path = self._move_temp_image_to_final(
-                schedule.image,
-                schedule.category,
-                schedule.date,
-                schedule.theme
-            )
-            schedule.image = image_path
-        elif image_file is not None:
-            # 如果提供了新图片，直接保存到正式文件夹
-            image_path, image_thumb_path = self._save_image(
+        if image_file is not None:
+            image_url, image_thumb_url = self._upload_schedule_images(
                 image_file,
                 schedule.category,
-                schedule.date,
-                schedule.theme
+                schedule.date or get_beijing_now().strftime('%Y-%m-%d'),
+                schedule.theme,
+                schedule.id
             )
-            schedule.image = image_path
-            schedule.image_thumb = image_thumb_path
-        else:
-            # 没有临时图片也没有新图片，创建文件夹并使用默认海报
-            image_path = self._get_default_poster_path(
-                schedule.category,
-                schedule.date,
-                schedule.theme
-            )
-            schedule.image = image_path
+            schedule.image = image_url
+            schedule.image_thumb = image_thumb_url or image_url
+        elif not schedule.image and self.default_poster_url:
+            schedule.image = self.default_poster_url
+            schedule.image_thumb = self.default_poster_url
 
         schedule.updated_at = get_beijing_now()
         self.db.commit()
@@ -429,6 +292,13 @@ class ScheduleServiceMySQL:
         schedule = self.db.query(Schedule).filter(Schedule.id == schedule_id).first()
         if not schedule:
             return False
+
+        for url in {schedule.image, schedule.image_thumb}:
+            if url:
+                try:
+                    self.storage.delete_image(url)
+                except Exception:
+                    pass
 
         self.db.delete(schedule)
         self.db.commit()

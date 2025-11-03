@@ -11,7 +11,7 @@ import uuid
 
 from app.database import get_db
 from app.schemas.article import Article as ArticleSchema, ArticleCreate, ArticleUpdate
-from app.models.article import Article
+from app.models.article import Article, ReviewStatus
 from app.models.user_db import User
 from app.core.dependencies import get_current_user, get_current_active_user
 from app.core.permissions import (
@@ -81,7 +81,20 @@ def create_article_v3(
     if not excerpt and article.content:
         excerpt = article.content[:150] + "..." if len(article.content) > 150 else article.content
 
-    # 创建文章 - 初始状态为 draft
+    # 规范初始状态
+    requested_status = (article.review_status or ReviewStatus.DRAFT.value).lower()
+    valid_statuses = {status.value for status in ReviewStatus}
+    if requested_status not in valid_statuses:
+        requested_status = ReviewStatus.DRAFT.value
+
+    # 根据状态确定发布属性
+    is_published = bool(article.is_published) if article.is_published is not None else False
+    if requested_status != ReviewStatus.APPROVED.value:
+        is_published = False
+
+    published_at = article.published_at if requested_status == ReviewStatus.APPROVED.value else None
+
+    # 创建文章 - 初始状态随状态配置
     db_article = Article(
         id=article_id,
         slug=slug,
@@ -100,9 +113,10 @@ def create_article_v3(
         # 新增权限系统字段
         created_by_id=current_user.id,
         created_at=datetime.utcnow(),
-        # 初始状态为草稿
-        review_status='pending',  # 注：暂时使用 review_status（未来可统一为 status）
-        is_published=False
+        # 初始状态
+        review_status=requested_status,
+        is_published=is_published,
+        published_at=published_at
     )
 
     db.add(db_article)
@@ -143,8 +157,13 @@ def update_article_v3(
         )
 
     # 权限检查：检查用户是否可以编辑
+    try:
+        author_id_value = int(article.author_id) if article.author_id is not None else None
+    except (TypeError, ValueError):
+        author_id_value = article.author_id
+
     content_dict = {
-        'created_by_id': int(article.author_id) if article.author_id else None,
+        'created_by_id': author_id_value,
         'status': article.review_status
     }
 
@@ -154,11 +173,99 @@ def update_article_v3(
             detail="您没有权限编辑此文章"
         )
 
-    # 更新字段
+    # 准备更新数据
     update_data = article_update.dict(exclude_unset=True)
+    requested_status = update_data.pop('review_status', None)
+    requested_is_published = update_data.pop('is_published', None)
+
+    # 应用普通字段更新
     for field, value in update_data.items():
         if hasattr(article, field):
             setattr(article, field, value)
+
+    current_status = article.review_status
+    is_admin = current_user.role in [UserRole.ADMIN, UserRole.SUPER_ADMIN]
+    is_author = str(current_user.id) == (article.author_id or "")
+
+    # 状态转换处理
+    if requested_status:
+        requested_status = requested_status.lower()
+    valid_statuses = {status.value for status in ReviewStatus}
+    if requested_status and requested_status not in valid_statuses:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"不支持的状态值: {requested_status}"
+        )
+
+    if is_admin:
+        # 管理员可直接变更状态和发布状态
+        if requested_status:
+            article.review_status = requested_status
+            if requested_status == ReviewStatus.APPROVED.value:
+                article.reviewed_at = datetime.utcnow()
+                article.reviewer_id = str(current_user.id)
+            elif requested_status in [ReviewStatus.DRAFT.value, ReviewStatus.PENDING.value]:
+                # 重置审核信息
+                article.reviewed_at = None
+                article.reviewer_id = None
+                if requested_status == ReviewStatus.DRAFT.value:
+                    article.review_notes = None
+
+        if requested_is_published is not None:
+            article.is_published = bool(requested_is_published)
+        elif requested_status:
+            if requested_status == ReviewStatus.APPROVED.value:
+                article.is_published = True
+            elif requested_status in [ReviewStatus.DRAFT.value, ReviewStatus.PENDING.value, ReviewStatus.REJECTED.value]:
+                article.is_published = False
+    else:
+        if not is_author:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="您没有权限编辑此文章"
+            )
+
+        allowed_transitions = {
+            ReviewStatus.DRAFT.value: {ReviewStatus.DRAFT.value, ReviewStatus.PENDING.value},
+            ReviewStatus.REJECTED.value: {ReviewStatus.DRAFT.value, ReviewStatus.PENDING.value},
+            ReviewStatus.PENDING.value: {ReviewStatus.PENDING.value, ReviewStatus.DRAFT.value},
+            ReviewStatus.APPROVED.value: {ReviewStatus.PENDING.value},
+        }
+
+        target_status = requested_status or current_status
+        if current_status in allowed_transitions:
+            if target_status not in allowed_transitions[current_status]:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"当前状态({current_status})不支持切换到 {target_status}"
+                )
+        else:
+            # 未知状态时禁止用户编辑
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="当前状态不允许编辑"
+            )
+
+        # 应用状态
+        if requested_status:
+            article.review_status = target_status
+
+        # 用户发起的操作不允许直接修改发布状态
+        article.is_published = False if target_status in [ReviewStatus.DRAFT.value, ReviewStatus.PENDING.value] else article.is_published
+
+        # 重新提交审核时重置审核信息
+        if target_status == ReviewStatus.PENDING.value:
+            article.review_notes = None
+            article.reviewed_at = None
+            article.reviewer_id = None
+
+        # 撤回到草稿时保留驳回原因，但清除审核时间/审核人
+        if target_status == ReviewStatus.DRAFT.value:
+            article.reviewed_at = None
+            article.reviewer_id = None
+
+        # 用户无法控制 is_published
+        requested_is_published = None
 
     # 记录更新时间
     article.updated_at = datetime.utcnow()
@@ -199,8 +306,13 @@ def delete_article_v3(
         )
 
     # 权限检查：检查用户是否可以删除
+    try:
+        author_id_value = int(article.author_id) if article.author_id is not None else None
+    except (TypeError, ValueError):
+        author_id_value = article.author_id
+
     content_dict = {
-        'created_by_id': int(article.author_id) if article.author_id else None,
+        'created_by_id': author_id_value,
         'status': article.review_status
     }
 
@@ -254,17 +366,22 @@ def submit_article_for_review(
             detail="只能提交自己创建的文章"
         )
 
-    # 状态检查：只有草稿可以提交
-    if article.review_status != 'pending':  # 注：当前系统使用 review_status='pending' 表示待审核
+    # 状态检查：只有草稿或被驳回的内容可以提交
+    if article.review_status not in [ReviewStatus.DRAFT.value, ReviewStatus.REJECTED.value]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"只有草稿文章可以提交审核，当前状态: {article.review_status}"
         )
 
     # 更新状态为待审核
-    article.review_status = 'pending'
+    article.review_status = ReviewStatus.PENDING.value
+    article.is_published = False
+    article.review_notes = None
+    article.reviewed_at = None
+    article.reviewer_id = None
     article.submit_time = datetime.utcnow()
     article.submitted_by_id = current_user.id
+    article.updated_at = datetime.utcnow()
 
     db.commit()
     db.refresh(article)
@@ -308,14 +425,14 @@ def approve_article(
         )
 
     # 状态检查：只有待审核的文章可以批准
-    if article.review_status != 'pending':
+    if article.review_status != ReviewStatus.PENDING.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"只能批准待审核的文章，当前状态: {article.review_status}"
         )
 
     # 更新状态为已批准，自动发布
-    article.review_status = 'approved'
+    article.review_status = ReviewStatus.APPROVED.value
     article.is_published = True
     article.reviewed_at = datetime.utcnow()
     article.reviewer_id = str(current_user.id)
@@ -359,14 +476,14 @@ def reject_article(
         )
 
     # 状态检查：只有待审核的文章可以拒绝
-    if article.review_status != 'pending':
+    if article.review_status != ReviewStatus.PENDING.value:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"只能拒绝待审核的文章，当前状态: {article.review_status}"
         )
 
     # 更新状态为已拒绝
-    article.review_status = 'rejected'
+    article.review_status = ReviewStatus.REJECTED.value
     article.is_published = False
     article.review_notes = reason
     article.reviewed_at = datetime.utcnow()
@@ -404,7 +521,7 @@ def get_pending_articles(
 
     # 查询待审核的文章
     query = db.query(Article).filter(
-        Article.review_status == 'pending',
+        Article.review_status == ReviewStatus.PENDING.value,
         Article.is_deleted == False
     )
 

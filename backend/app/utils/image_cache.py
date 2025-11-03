@@ -1,30 +1,33 @@
 # -*- coding: utf-8 -*-
-"""
-图片缓存工具
-下载并缓存B站视频封面到本地
+"""图片缓存工具
+下载并缓存B站视频封面到对象存储 (OSS)
 """
 import os
+import tempfile
 import requests
 import hashlib
 from PIL import Image
 from io import BytesIO
 from typing import Optional, Tuple
-from pathlib import Path
+
+from ..services.storage_service import get_storage_service
 
 
 # 配置
-# 获取项目根目录（backend/app/utils -> 向上3级）
-_project_root = Path(__file__).parent.parent.parent.parent
-CACHE_DIR = _project_root / "frontend/public/images/video_covers"  # 封面缓存目录
 THUMB_SIZE = (480, 270)  # 缩略图尺寸 16:9 比例 (适合视频卡片)
 ORIGINAL_SIZE = (640, 360)  # 原图尺寸 16:9 比例
+BASE_PREFIX = "video-covers"
 
 
-def ensure_cache_dir():
-    """确保缓存目录存在"""
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    thumb_dir = CACHE_DIR / "thumbnails"
-    thumb_dir.mkdir(exist_ok=True)
+_storage_instance = None
+
+
+def _get_storage():
+    """获取存储服务单例"""
+    global _storage_instance
+    if _storage_instance is None:
+        _storage_instance = get_storage_service()
+    return _storage_instance
 
 
 def get_cache_filename(url: str, is_thumbnail: bool = False) -> str:
@@ -125,105 +128,82 @@ def get_bilibili_resized_url(cover_url: str, width: int, height: int) -> str:
     return f"{cover_url}@{width}w_{height}h.jpg"
 
 
+def _build_object_key(filename: str, is_thumbnail: bool = False) -> str:
+    """构建 OSS 对象键"""
+    if is_thumbnail:
+        return f"{BASE_PREFIX}/thumbnails/{filename}"
+    return f"{BASE_PREFIX}/{filename}"
+
+
+def _upload_bytes(data: bytes, object_key: str) -> str:
+    """写入临时文件并通过存储服务上传，返回访问 URL"""
+    storage = _get_storage()
+
+    with tempfile.NamedTemporaryFile(delete=False) as tmp:
+        tmp.write(data)
+        tmp.flush()
+        tmp_path = tmp.name
+
+    try:
+        return storage.upload_file(tmp_path, object_key)
+    finally:
+        try:
+            os.remove(tmp_path)
+        except FileNotFoundError:
+            pass
+
+
 def cache_cover_image(cover_url: str, bvid: str = "") -> Tuple[Optional[str], Optional[str]]:
     """
-    下载并缓存视频封面图片（使用B站的16:9尺寸参数）
+    下载并缓存视频封面图片到 OSS（使用B站的16:9尺寸参数）
 
     Args:
         cover_url: B站封面URL
         bvid: 视频BV号（用于日志）
 
     Returns:
-        (原图本地路径, 缩略图本地路径)，失败返回 (None, None)
-        路径格式: /images/video_covers/xxx.jpg
+        (原图访问URL, 缩略图访问URL)，失败返回 (None, None)
     """
-    ensure_cache_dir()
-
-    # 生成文件名
     original_filename = get_cache_filename(cover_url, is_thumbnail=False)
     thumb_filename = get_cache_filename(cover_url, is_thumbnail=True)
 
-    original_path = CACHE_DIR / original_filename
-    thumb_path = CACHE_DIR / "thumbnails" / thumb_filename
-
-    # 检查是否已缓存
-    if original_path.exists() and thumb_path.exists():
-        print(f"  ✓ 封面已缓存: {bvid}")
-        # 返回相对于public目录的路径
-        return (
-            f"/images/video_covers/{original_filename}",
-            f"/images/video_covers/thumbnails/{thumb_filename}"
-        )
+    original_key = _build_object_key(original_filename, is_thumbnail=False)
+    thumb_key = _build_object_key(thumb_filename, is_thumbnail=True)
 
     print(f"  → 正在下载封面: {bvid}")
 
     try:
         # 使用B站的尺寸参数直接获取16:9比例的图片
-        # 640x360 原图
         original_url = get_bilibili_resized_url(cover_url, 640, 360)
         original_data = download_image(original_url)
 
         if not original_data:
             return None, None
 
-        # 保存原图
-        with open(original_path, 'wb') as f:
-            f.write(original_data)
-
         # 480x270 缩略图
-        thumb_url = get_bilibili_resized_url(cover_url, 480, 270)
-        thumb_data = download_image(thumb_url)
+        thumb_source_url = get_bilibili_resized_url(cover_url, 480, 270)
+        thumb_data = download_image(thumb_source_url)
 
         if not thumb_data:
             # 如果缩略图下载失败，从原图生成
             thumb_data = resize_image(original_data, THUMB_SIZE)
 
+        # 上传原图
+        original_access_url = _upload_bytes(original_data, original_key)
+
+        # 上传缩略图（若生成失败则用原图）
         if thumb_data:
-            with open(thumb_path, 'wb') as f:
-                f.write(thumb_data)
+            thumb_access_url = _upload_bytes(thumb_data, thumb_key)
+        else:
+            print(f"  ⚠️ 缩略图生成失败，使用原图代替: {bvid}")
+            thumb_access_url = _upload_bytes(original_data, thumb_key)
 
         print(f"  ✓ 封面缓存成功: {bvid}")
-        print(f"    原图(640x360): {len(original_data) / 1024:.1f}KB")
-        print(f"    缩略图(480x270): {len(thumb_data) / 1024:.1f}KB")
-
-        return (
-            f"/images/video_covers/{original_filename}",
-            f"/images/video_covers/thumbnails/{thumb_filename}"
-        )
+        return original_access_url, thumb_access_url
 
     except Exception as e:
         print(f"  ✗ 保存封面失败 {bvid}: {e}")
-        # 清理可能的部分文件
-        if original_path.exists():
-            original_path.unlink()
-        if thumb_path.exists():
-            thumb_path.unlink()
         return None, None
-
-
-def get_cached_cover_paths(cover_url: str) -> Tuple[Optional[str], Optional[str]]:
-    """
-    获取已缓存的封面路径（不下载）
-
-    Args:
-        cover_url: B站封面URL
-
-    Returns:
-        (原图路径, 缩略图路径)，如果不存在返回 (None, None)
-    """
-    original_filename = get_cache_filename(cover_url, is_thumbnail=False)
-    thumb_filename = get_cache_filename(cover_url, is_thumbnail=True)
-
-    original_path = CACHE_DIR / original_filename
-    thumb_path = CACHE_DIR / "thumbnails" / thumb_filename
-
-    if original_path.exists() and thumb_path.exists():
-        return (
-            f"/images/video_covers/{original_filename}",
-            f"/images/video_covers/thumbnails/{thumb_filename}"
-        )
-
-    return None, None
 
 
 # 测试代码

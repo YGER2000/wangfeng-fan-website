@@ -7,10 +7,11 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ArticleEditor from '@/components/ui/ArticleEditor';
+import ArticleEditor, { Step3Action } from '@/components/ui/ArticleEditor';
 import { Article } from '@/utils/contentManager';
 import { articleAPI, uploadAPI } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { contentWorkflowAPI } from '@/services/content-workflow-api';
 
 const ArticleEditPublish = () => {
   const { id } = useParams();
@@ -52,7 +53,8 @@ const ArticleEditPublish = () => {
           tags: data.tags || [],
           excerpt: data.excerpt,
           coverUrl: data.cover_url,
-        });
+          review_status: data.review_status,
+        } as any);
       } catch (e) {
         console.error('加载文章失败', e);
         alert('加载文章失败');
@@ -64,58 +66,48 @@ const ArticleEditPublish = () => {
     load();
   }, [id, navigate]);
 
-  const handleSave = async (article: Article, coverImage?: File) => {
-    if (!id) return;
+  const handleAction = async (
+    action: Step3Action,
+    payload: { article?: Article; coverImageFile?: File | null; articleId?: string }
+  ) => {
+    if (!id || !token) return;
 
-    try {
-      // 1. 如果有新的封面图片，先上传
-      let coverUrl: string | undefined = undefined;
-      if (coverImage) {
-        try {
-          console.log('正在上传新封面图片...');
-          const uploadResult = await uploadAPI.uploadImage(coverImage);
-          coverUrl = uploadResult.url;
-          console.log('封面上传成功:', coverUrl);
-        } catch (uploadError) {
-          console.error('封面上传失败:', uploadError);
-          throw new Error('封面图片上传失败，请重试');
-        }
+    if (action === 'delete') {
+      if (currentRole !== 'super_admin') {
+        throw new Error('您没有权限删除该文章');
       }
-
-      // 2. 准备更新数据 - 编辑已发布文章
-      const updateData = {
-        title: article.title,
-        content: article.content,
-        excerpt: article.excerpt,
-        author: article.author,
-        category: article.category,
-        category_primary: article.category_primary,
-        category_secondary: article.category_secondary,
-        tags: article.tags || [],
-        cover_url: coverUrl,
-        published_at: article.date ? new Date(article.date).toISOString() : undefined,
-        // 保持已发布状态
-        review_status: 'approved',
-        is_published: true,
-      };
-
-      // 3. 更新文章
-      await articleAPI.update(id, updateData, token);
-    } catch (error) {
-      console.error('更新文章失败:', error);
-      throw error;
+      await contentWorkflowAPI.deleteArticle(id, token);
+      return;
     }
-  };
 
-  const handleDelete = async (articleId: string) => {
-    if (!confirm('确定删除该文章吗？')) return;
-    try {
-      await articleAPI.delete(articleId, token);
-      navigate('/admin/manage/articles');
-    } catch (error) {
-      console.error('删除文章失败:', error);
-      alert('删除失败');
+    if (!payload.article) {
+      return;
     }
+
+    const targetStatus = action === 'update' ? 'approved' : (payload.article as any).review_status || 'approved';
+
+    let coverUrl = (payload.article as any).coverUrl || initial?.coverUrl;
+    if (payload.coverImageFile) {
+      const uploadResult = await uploadAPI.uploadImage(payload.coverImageFile);
+      coverUrl = uploadResult.url;
+    }
+
+    const updateBody = {
+      title: payload.article.title,
+      content: payload.article.content,
+      excerpt: payload.article.excerpt,
+      author: payload.article.author,
+      category: payload.article.category,
+      category_primary: payload.article.category_primary || payload.article.category,
+      category_secondary: payload.article.category_secondary || payload.article.category,
+      tags: payload.article.tags || [],
+      cover_url: coverUrl,
+      review_status: targetStatus,
+      is_published: true,
+    };
+
+    const updated = await contentWorkflowAPI.updateArticle(id, updateBody, token);
+    return updated;
   };
 
   const handlePreview = (article: Article) => {
@@ -126,11 +118,13 @@ const ArticleEditPublish = () => {
 
   return (
     <ArticleEditor
+      mode="edit"
+      contentId={id}
+      contentStatus={(initial as any).review_status}
+      isAdminView
       initialArticle={initial}
-      onSave={handleSave}
+      onAction={handleAction}
       onPreview={handlePreview}
-      onDelete={currentRole === 'super_admin' ? handleDelete : undefined}
-      isPublishMode={true}
     />
   );
 };

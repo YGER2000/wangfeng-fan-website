@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ArticleEditor from '@/components/ui/ArticleEditor';
+import ArticleEditor, { Step3Action } from '@/components/ui/ArticleEditor';
 import { Article } from '@/utils/contentManager';
 import { articleAPI, uploadAPI } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { contentWorkflowAPI } from '@/services/content-workflow-api';
 
 const ArticleEdit = () => {
   const { id } = useParams();
@@ -28,8 +29,9 @@ const ArticleEdit = () => {
           category_secondary: data.category_secondary,
           tags: data.tags || [],
           excerpt: data.excerpt,
-          coverUrl: data.cover_url, // 加载现有封面
-        });
+          coverUrl: data.cover_url,
+          review_status: data.review_status,
+        } as any);
       } catch (e) {
         console.error('加载文章失败', e);
         alert('加载文章失败');
@@ -39,64 +41,57 @@ const ArticleEdit = () => {
       }
     };
     load();
-  }, [id]);
+  }, [id, navigate]);
 
-  const handleSave = async (article: Article, coverImage?: File) => {
-    if (!id) return;
+  const handleAction = async (
+    action: Step3Action,
+    payload: { article?: Article; coverImageFile?: File | null; articleId?: string }
+  ) => {
+    if (!id || !token) return;
 
-    try {
-      // 1. 如果有新的封面图片，先上传
-      let coverUrl: string | undefined = undefined;
-      if (coverImage) {
-        try {
-          console.log('正在上传新封面图片...');
-          const uploadResult = await uploadAPI.uploadImage(coverImage);
-          coverUrl = uploadResult.url;
-          console.log('封面上传成功:', coverUrl);
-        } catch (uploadError) {
-          console.error('封面上传失败:', uploadError);
-          throw new Error('封面图片上传失败，请重试');
-        }
-      }
-
-      // 2. 准备更新数据 - 所有编辑都需要重新审核
-      const updateData = {
-        title: article.title,
-        content: article.content,
-        excerpt: article.excerpt,
-        author: article.author,
-        category: article.category,
-        category_primary: article.category_primary,
-        category_secondary: article.category_secondary,
-        tags: article.tags || [],
-        cover_url: coverUrl, // 如果有新封面则更新，否则保持原样
-        published_at: article.date ? new Date(article.date).toISOString() : undefined,
-        // 所有文章编辑后都需要重新审核，不管是谁编辑的
-        review_status: 'pending',
-        is_published: false,
-      };
-
-      // 3. 更新文章
-      await articleAPI.update(id, updateData, token);
-
-      // 4. 不在这里跳转，让 ArticleEditor 处理跳转和提示
-      // navigate('/admin/articles/list');
-    } catch (error) {
-      console.error('更新文章失败:', error);
-      throw error;
+    if (action === 'delete') {
+      await contentWorkflowAPI.deleteArticle(id, token);
+      return;
     }
+
+    if (!payload.article) {
+      return;
+    }
+
+    const statusMap: Partial<Record<Step3Action, 'draft' | 'pending' | 'approved'>> = {
+      saveDraft: 'draft',
+      withdrawToDraft: 'draft',
+      submit: 'pending',
+      resubmit: 'pending',
+      update: 'approved',
+    };
+
+    const targetStatus = statusMap[action] || (payload.article as any).review_status || 'draft';
+
+    let coverUrl = (payload.article as any).coverUrl || initial?.coverUrl;
+    if (payload.coverImageFile) {
+      const uploadResult = await uploadAPI.uploadImage(payload.coverImageFile);
+      coverUrl = uploadResult.url;
+    }
+
+    const updateBody = {
+      title: payload.article.title,
+      content: payload.article.content,
+      excerpt: payload.article.excerpt,
+      author: payload.article.author,
+      category: payload.article.category,
+      category_primary: payload.article.category_primary || payload.article.category,
+      category_secondary: payload.article.category_secondary || payload.article.category,
+      tags: payload.article.tags || [],
+      cover_url: coverUrl,
+      review_status: targetStatus,
+      is_published: targetStatus === 'approved',
+    };
+
+    const updated = await contentWorkflowAPI.updateArticle(id, updateBody, token);
+    return updated;
   };
 
-  const handleDelete = async (articleId: string) => {
-    if (!confirm('确定删除该文章吗？')) return;
-    try {
-      await articleAPI.delete(articleId, token);
-      navigate('/admin/manage/articles');
-    } catch (error) {
-      console.error('删除文章失败:', error);
-      alert('删除失败');
-    }
-  };
 
   const handlePreview = (article: Article) => {
     console.log('预览文章:', article);
@@ -106,13 +101,15 @@ const ArticleEdit = () => {
 
   return (
     <ArticleEditor
+      mode="edit"
+      contentId={id}
+      contentStatus={(initial as any).review_status}
+      isAdminView={currentRole === 'admin' || currentRole === 'super_admin'}
       initialArticle={initial}
-      onSave={handleSave}
+      onAction={handleAction}
       onPreview={handlePreview}
-      onDelete={handleDelete}
     />
   );
 };
 
 export default ArticleEdit;
-

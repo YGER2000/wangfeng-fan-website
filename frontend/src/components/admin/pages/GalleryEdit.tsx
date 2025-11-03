@@ -4,7 +4,7 @@ import GalleryEditor from '@/components/ui/GalleryEditor';
 const GalleryEdit = () => {
   const { id } = useParams();
   const location = useLocation();
-  const isEditPublish = location.pathname.includes('/edit-publish/');
+  const backPath = (location.state as { backPath?: string } | null)?.backPath;
 
   if (!id) return null;
 
@@ -12,8 +12,8 @@ const GalleryEdit = () => {
     <GalleryEditor
       mode="edit"
       groupId={id}
-      backPath="/admin/gallery/list"
-      isEditPublish={isEditPublish}
+      backPath={backPath || '/admin/gallery/list'}
+      isAdminView
     />
   );
 };

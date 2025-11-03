@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useRef, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useRef, ReactNode, useEffect, useCallback } from 'react';
 import { withBasePath } from '@/lib/utils';
 
 export interface Song {
@@ -111,7 +111,13 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
   const [isPlaylistVisible, setIsPlaylistVisible] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const handleSongEndedRef = useRef<() => void>(() => {});
+  const currentSongRef = useRef<Song | null>(currentSong);
   const [shuffledPlaylist, setShuffledPlaylist] = useState<Song[]>([]);
+
+  useEffect(() => {
+    currentSongRef.current = currentSong;
+  }, [currentSong]);
   
   // 生成随机播放列表
   const generateShuffledPlaylist = (songs: Song[], currentSong?: Song) => {
@@ -144,7 +150,7 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     // 绑定事件监听器
     audio.addEventListener('loadedmetadata', () => {
       // 如果当前歌曲没有预定义的时长，则使用音频文件的时长
-      if (!currentSong?.duration || currentSong.duration <= 0) {
+      if (!currentSongRef.current?.duration || currentSongRef.current.duration <= 0) {
         setDuration(audio.duration || 0);
       }
     });
@@ -161,7 +167,7 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
     
     audio.addEventListener('ended', () => {
       setIsPlaying(false);
-      setTimeout(() => handleSongEnded(), 100);
+      setTimeout(() => handleSongEndedRef.current(), 100);
     });
     
     audio.addEventListener('error', (e) => {
@@ -195,6 +201,10 @@ export const MusicProvider = ({ children }: { children: ReactNode }) => {
       setIsPlaying(false);
     }
   };
+
+  useEffect(() => {
+    handleSongEndedRef.current = handleSongEnded;
+  });
 
   // 获取下一首歌曲信息
   const getNextSong = (): { song: Song; index: number } | null => {

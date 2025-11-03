@@ -3,9 +3,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from typing import Optional
+import os
+import shutil
+import tempfile
 from pathlib import Path
-from datetime import datetime
+from typing import Optional
 
 from ..database import get_db
 from ..models.user_db import User
@@ -13,7 +15,10 @@ from ..models.article import Article
 from ..core.dependencies import get_current_user
 from ..core.security import get_password_hash, verify_password
 from ..utils.image_utils import compress_image
-from ..schemas.user import UserResponse
+from ..services.storage_service import (
+    get_storage_service,
+    generate_avatar_keys
+)
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -23,52 +28,79 @@ def get_default_avatar() -> str:
     return "images/avatars/default-avatar.jpg"
 
 
-def save_avatar(user_id: int, upload: UploadFile) -> tuple[str, str]:
-    """
-    保存用户头像（原图和压缩图）
+def _derive_thumb_key(original_key: str) -> str:
+    """根据原图键推导缩略图键"""
+    if '/' in original_key:
+        directory, filename = original_key.rsplit('/', 1)
+    else:
+        directory, filename = '', original_key
 
-    Args:
-        user_id: 用户ID
-        upload: 上传的文件
+    name, _ = os.path.splitext(filename)
+    base_name = name[:-9] if name.endswith('_original') else name
+    thumb_filename = f"{base_name}_thumb.jpg"
+    return f"{directory}/{thumb_filename}" if directory else thumb_filename
 
-    Returns:
-        tuple: (原图路径, 压缩图路径)
-    """
-    from ..utils.datetime_utils import get_beijing_now
 
-    # 获取项目根目录
-    backend_dir = Path(__file__).resolve().parents[2]
-    project_root = backend_dir.parent
-    avatar_dir = project_root / 'frontend' / 'public' / 'images' / 'avatars'
+def _resolve_avatar_urls(avatar_value: Optional[str]) -> tuple[str, str]:
+    """根据存储值返回原图和缩略图URL/路径"""
+    if not avatar_value:
+        default = get_default_avatar()
+        return default, default
 
-    # 确保目录存在
-    avatar_dir.mkdir(parents=True, exist_ok=True)
+    # 新的存储键形式（avatars/...）
+    if avatar_value.startswith('avatars/'):
+        storage = get_storage_service()
+        original_url = storage.get_file_url(avatar_value)
+        thumb_key = _derive_thumb_key(avatar_value)
+        thumb_url = storage.get_file_url(thumb_key)
+        return original_url, thumb_url
 
-    # 获取文件扩展名
-    extension = Path(upload.filename or '').suffix.lower() or '.jpg'
+    # 已是完整URL
+    if avatar_value.startswith('http://') or avatar_value.startswith('https://'):
+        thumb_url = avatar_value
+        if '_original' in avatar_value:
+            thumb_url = avatar_value.replace('_original', '_thumb')
+        return avatar_value, thumb_url
 
-    # 生成文件名：用户ID-头像.扩展名
-    filename = f"{user_id}-头像{extension}"
-    filename_thumb = f"{user_id}-头像-thumb.jpg"
+    # 兼容旧的相对路径（images/avatars/xxx.jpg）
+    relative_path = avatar_value.lstrip('/')
+    thumb_path = relative_path
+    for ext in ('.jpg', '.jpeg', '.png', '.webp'):
+        if relative_path.lower().endswith(ext):
+            thumb_path = f"{relative_path[:-len(ext)]}-thumb.jpg"
+            break
 
-    destination = avatar_dir / filename
-    destination_thumb = avatar_dir / filename_thumb
+    return relative_path, thumb_path
 
-    # 保存原图
-    with destination.open('wb') as buffer:
+
+def save_avatar(user_id: int, upload: UploadFile) -> tuple[str, str, str, str]:
+    """保存头像到配置的存储服务，返回键和值"""
+    temp_dir = Path(tempfile.mkdtemp(prefix="avatar-"))
+    storage = get_storage_service()
+
+    try:
+        extension = Path(upload.filename or '').suffix.lower()
+        if extension not in {'.jpg', '.jpeg', '.png', '.webp'}:
+            extension = '.jpg'
+
+        original_temp_path = temp_dir / f"original{extension}"
         if hasattr(upload.file, 'seek'):
             upload.file.seek(0)
-        content = upload.file.read()
-        buffer.write(content)
+        original_content = upload.file.read()
+        original_temp_path.write_bytes(original_content)
 
-    # 生成压缩图（100KB以下，用于显示）
-    compress_image(destination, destination_thumb, max_size_kb=100)
+        thumb_temp_path = temp_dir / "thumb.jpg"
+        compressed = compress_image(original_temp_path, thumb_temp_path, max_size_kb=100)
+        if not compressed:
+            thumb_temp_path.write_bytes(original_content)
 
-    # 返回相对路径
-    avatar_path = f"images/avatars/{filename}"
-    avatar_thumb_path = f"images/avatars/{filename_thumb}"
+        avatar_key, thumb_key = generate_avatar_keys(user_id, extension)
+        avatar_url = storage.upload_file(str(original_temp_path), avatar_key)
+        thumb_url = storage.upload_file(str(thumb_temp_path), thumb_key)
 
-    return avatar_path, avatar_thumb_path
+        return avatar_key, thumb_key, avatar_url, thumb_url
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @router.get("/me")
@@ -84,8 +116,7 @@ async def get_my_profile(
     ).scalar() or 0
 
     # 获取用户头像，如果没有则返回默认头像
-    avatar = current_user.avatar if current_user.avatar else get_default_avatar()
-    avatar_thumb = avatar.replace('.jpg', '-thumb.jpg').replace('.png', '-thumb.jpg') if current_user.avatar else avatar
+    avatar, avatar_thumb = _resolve_avatar_urls(current_user.avatar)
 
     return {
         "id": current_user.id,
@@ -126,16 +157,16 @@ async def upload_avatar(
 
     try:
         # 保存头像
-        avatar_path, avatar_thumb_path = save_avatar(current_user.id, avatar)
+        avatar_key, _thumb_key, avatar_url, avatar_thumb_url = save_avatar(current_user.id, avatar)
 
         # 更新数据库
-        current_user.avatar = avatar_path
+        current_user.avatar = avatar_key
         db.commit()
 
         return {
             "message": "头像上传成功",
-            "avatar": avatar_path,
-            "avatar_thumb": avatar_thumb_path
+            "avatar": avatar_url,
+            "avatar_thumb": avatar_thumb_url
         }
     except Exception as e:
         db.rollback()

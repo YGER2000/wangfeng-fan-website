@@ -34,10 +34,10 @@ class Video(Base):
     tags = Column(JSON, default=list)  # 标签列表
 
     # 状态字段
-    is_published = Column(Integer, default=1, nullable=False)  # 是否已发布: 0未发布/1已发布
+    is_published = Column(Integer, default=0, nullable=False)  # 是否已发布: 0未发布/1已发布
 
     # 审核字段
-    review_status = Column(String(20), default='pending', nullable=False, index=True)  # 审核状态
+    review_status = Column(String(20), default='draft', nullable=False, index=True)  # 审核状态
     reviewer_id = Column(String(36), nullable=True, index=True)  # 审核人ID
     review_notes = Column(Text, nullable=True)  # 审核备注/拒绝原因
     reviewed_at = Column(DateTime, nullable=True)  # 审核时间
