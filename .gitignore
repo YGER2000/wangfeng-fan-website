@@ -11,4 +11,6 @@ node_modules
 .backend.pid
 .frontend.pid
 backend/.env
-backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
