@@ -53,8 +53,6 @@ COPY backend/ /app/backend/
 
 # 复制前端资源，确保后台服务能够访问到静态文件目录
 COPY --from=frontend-builder /workspace/frontend/dist /app/frontend/dist
-COPY frontend/public /app/frontend/public
-COPY data /app/data
 
 # 设置项目根目录环境变量，方便脚本使用
 ENV PROJECT_ROOT=/app
