@@ -155,7 +155,6 @@ const ImageCropModal = ({ image, onCropComplete, onClose, aspect = 16 / 9 }: Ima
             onRotationChange={setRotation}
             onCropComplete={onCropAreaChange}
             showGrid={true}
-            gridColor="rgba(139, 92, 246, 0.2)"
           />
 
           {/* 宽高比标签 */}

@@ -49,7 +49,8 @@ const VideoCreate = () => {
     category: '演出现场',
     bvid: '',
     publish_date: new Date().toISOString().split('T')[0],
-    cover_url: ''
+    cover_url: '',
+    tags: []
   });
 
   // 标签数据

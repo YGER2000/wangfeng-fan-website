@@ -59,7 +59,7 @@ const ReviewGalleryList = () => {
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | null>(null);
+  const [statusFilter, setStatusFilter] = useState<'pending' | 'approved' | 'rejected' | 'draft' | 'published' | null>(null);
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 

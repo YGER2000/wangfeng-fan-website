@@ -27,6 +27,7 @@ export interface Article extends ArticleData {
   created_at: string;
   updated_at: string;
   published_at: string;
+  date: string;                 // 文章日期
   view_count: number;
   like_count: number;
   category_primary: string;
@@ -78,6 +79,7 @@ export interface ScheduleItemResponse {
   article_id?: string | null;
   created_at?: string;
   updated_at?: string;
+  tags?: string[] | TagData[];
 }
 
 // API 请求函数
@@ -498,6 +500,23 @@ export const scheduleAPI = {
     return response.json();
   },
 
+  getById: async (id: string | number, token?: string | null): Promise<ScheduleItemResponse> => {
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/schedules/${id}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      throw new Error('获取行程详情失败');
+    }
+
+    return response.json();
+  },
+
   create: async (formData: FormData, token?: string | null): Promise<ScheduleItemResponse> => {
     const headers: Record<string, string> = {};
     if (token) {
@@ -887,6 +906,7 @@ export interface PhotoGroup extends PhotoGroupData {
   updated_at: string;
   photo_count?: number;
   created_by?: string;
+  author?: string;
   tags?: string[];
 }
 

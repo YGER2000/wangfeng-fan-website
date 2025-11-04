@@ -10,7 +10,7 @@ const ArticleCreate = () => {
   const handleAction = async (
     action: Step3Action,
     payload: { article?: Article; coverImageFile?: File | null }
-  ) => {
+  ): Promise<Article | void> => {
     if (action === 'delete' || !payload.article) {
       return;
     }

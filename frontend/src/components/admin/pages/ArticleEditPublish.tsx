@@ -69,7 +69,7 @@ const ArticleEditPublish = () => {
   const handleAction = async (
     action: Step3Action,
     payload: { article?: Article; coverImageFile?: File | null; articleId?: string }
-  ) => {
+  ): Promise<Article | void> => {
     if (!id || !token) return;
 
     if (action === 'delete') {

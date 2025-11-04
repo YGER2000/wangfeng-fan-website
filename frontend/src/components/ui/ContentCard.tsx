@@ -19,6 +19,7 @@ interface ContentCardProps {
   isPublished?: boolean;
   rejectionReason?: string | null;
   onEdit: (id: string) => void;
+  onView?: (id: string) => void;
   className?: string;
 }
 
