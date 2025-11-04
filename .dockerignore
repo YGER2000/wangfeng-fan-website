@@ -3,6 +3,7 @@
 node_modules
 frontend/node_modules
 frontend/.pnpm-store
+frontend/public/music
 backend/.venv
 backend/__pycache__
 __pycache__

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { buildApiUrl } from '@/config/api';
 
 export type UserRole = 'guest' | 'user' | 'admin' | 'super_admin';
 
@@ -39,8 +40,6 @@ export interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-const API_BASE_URL = 'http://localhost:1994';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -91,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const authToken = data.access_token;
 
       // 获取用户信息
-      const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      const userResponse = await fetch(buildApiUrl('/auth/me'), {
         headers: {
           'Authorization': `Bearer ${authToken}`,
         },
@@ -133,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const response = await fetch(buildApiUrl('/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerWithEmail = async (email: string, code: string, username: string, password: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/verification/register-with-email`, {
+      const response = await fetch(buildApiUrl('/verification/register-with-email'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initSuperAdmin = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/init-super-admin`, {
+      const response = await fetch(buildApiUrl('/auth/init-super-admin'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

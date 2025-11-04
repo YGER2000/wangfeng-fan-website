@@ -18,7 +18,7 @@ RUN corepack enable \
     && corepack prepare pnpm@8.15.8 --activate \
     && pnpm install --frozen-lockfile
 
-# 构建产物
+# 构建产物（排除 public/music，通过 .dockerignore 自动处理）
 COPY frontend/ ./
 RUN pnpm build
 
@@ -28,10 +28,11 @@ RUN pnpm build
 ########################################
 FROM python:3.12-slim AS backend-runtime
 
-WORKDIR /app/backend
+WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PROJECT_ROOT=/app
 
 # 安装系统依赖（用于 Pillow、bcrypt、cryptography 等）
 RUN apt-get update \
@@ -45,17 +46,22 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # 安装 Python 依赖
-COPY backend/requirements.txt /app/backend/requirements.txt
-RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+COPY backend/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制后端代码
-COPY backend/ /app/backend/
+# 复制后端代码（不含 .env 文件）
+COPY backend/ ./backend/
 
-# 复制前端资源，确保后台服务能够访问到静态文件目录
-COPY --from=frontend-builder /workspace/frontend/dist /app/frontend/dist
+# 复制前端静态资源（不含 public/music - 通过 volume 挂载）
+COPY --from=frontend-builder /workspace/frontend/dist ./frontend/dist
 
-# 设置项目根目录环境变量，方便脚本使用
-ENV PROJECT_ROOT=/app
+# 为 public/data 和 public/images 创建占位符目录
+# 音乐文件通过 Docker volume 挂载，在启动时映射到这里
+RUN mkdir -p frontend/public/data frontend/public/images
+
+# 拷贝前端其他公共资源（不包括音乐）
+COPY frontend/public/data ./frontend/public/data 2>/dev/null || true
+COPY frontend/public/images ./frontend/public/images 2>/dev/null || true
 
 # 暴露后端端口
 EXPOSE 1994
@@ -65,4 +71,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:1994/health || exit 1
 
 # 启动后端服务
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "1994"]
+# 确保从正确的工作目录执行，使 .env 加载成功
+CMD ["python3", "backend/start.py"]

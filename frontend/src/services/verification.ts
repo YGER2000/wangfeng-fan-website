@@ -1,8 +1,7 @@
 /**
  * 验证码服务API
  */
-
-const API_BASE_URL = 'http://localhost:1994';
+import { buildApiUrl } from '@/config/api';
 
 export interface SendCodeRequest {
   email: string;
@@ -41,7 +40,7 @@ export const sendVerificationCode = async (
   email: string,
   type: 'register' | 'reset_password' | 'login' | 'change_email'
 ): Promise<SendCodeResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/verification/send-code`, {
+  const response = await fetch(buildApiUrl('/verification/send-code'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -65,7 +64,7 @@ export const verifyCode = async (
   code: string,
   type: string
 ): Promise<SendCodeResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/verification/verify-code`, {
+  const response = await fetch(buildApiUrl('/verification/verify-code'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -87,7 +86,7 @@ export const verifyCode = async (
 export const registerWithEmail = async (
   data: RegisterWithEmailRequest
 ): Promise<any> => {
-  const response = await fetch(`${API_BASE_URL}/api/verification/register-with-email`, {
+  const response = await fetch(buildApiUrl('/verification/register-with-email'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -109,7 +108,7 @@ export const registerWithEmail = async (
 export const resetPassword = async (
   data: ResetPasswordRequest
 ): Promise<SendCodeResponse> => {
-  const response = await fetch(`${API_BASE_URL}/api/verification/reset-password`, {
+  const response = await fetch(buildApiUrl('/verification/reset-password'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -132,7 +131,7 @@ export const loginWithEmail = async (
   email: string,
   password: string
 ): Promise<{ access_token: string; token_type: string }> => {
-  const response = await fetch(`${API_BASE_URL}/api/verification/login-with-email`, {
+  const response = await fetch(buildApiUrl('/verification/login-with-email'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

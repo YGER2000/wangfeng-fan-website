@@ -1,5 +1,4 @@
-// API 基础配置
-const API_BASE_URL = 'http://localhost:1994/api';
+import { API_BASE_URL } from "@/config/api";
 
 // 文章相关API
 export interface ArticleData {
