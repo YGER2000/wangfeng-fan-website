@@ -4,11 +4,13 @@
 """
 
 from dotenv import load_dotenv
+import os
 import uvicorn
 from app.main import app
 
-# 加载 .env 文件
-load_dotenv()
+# 加载 .env 文件 - 使用绝对路径，确保从 backend/ 目录加载
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(env_path)
 
 if __name__ == "__main__":
     uvicorn.run(
