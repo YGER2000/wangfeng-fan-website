@@ -13,12 +13,25 @@ export interface Article {
   category_secondary?: string; // 二级分类：汪峰博客/汪峰语录等
 
   tags: string[];
-  excerpt: string;
+  excerpt?: string;  // 改为可选，与 api.ts 保持一致
   content: string;
   featured?: boolean;
   coverImage?: string;    // 旧的封面字段（兼容性）
   coverUrl?: string;      // 新的封面URL字段（从后端获取）
+  cover_url?: string;     // 后端返回的封面字段
   slug: string;
+
+  // 后端字段
+  is_published?: boolean;
+  is_deleted?: boolean;
+  review_status?: 'draft' | 'pending' | 'approved' | 'rejected';  // 审核状态
+  created_at?: string;
+  updated_at?: string;
+  published_at?: string;
+  view_count?: number;
+  like_count?: number;
+  meta_description?: string;
+  meta_keywords?: string;
 
   // 特殊字段
   source?: string;           // 来源 (博客、访谈等)

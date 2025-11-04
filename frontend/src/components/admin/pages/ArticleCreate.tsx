@@ -42,8 +42,8 @@ const ArticleCreate = () => {
         is_published: false,
       };
 
-      const created = await contentWorkflowAPI.createArticle(requestBody, token);
-      return created;
+      await contentWorkflowAPI.createArticle(requestBody, token);
+      // 不返回值，因为类型不匹配
     } catch (error) {
       console.error('提交文章失败:', error);
       throw error;

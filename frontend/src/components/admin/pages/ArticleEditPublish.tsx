@@ -106,8 +106,8 @@ const ArticleEditPublish = () => {
       is_published: true,
     };
 
-    const updated = await contentWorkflowAPI.updateArticle(id, updateBody, token);
-    return updated;
+    await contentWorkflowAPI.updateArticle(id, updateBody, token);
+    // 不返回值，因为类型不匹配
   };
 
   const handlePreview = (article: Article) => {

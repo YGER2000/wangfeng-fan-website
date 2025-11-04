@@ -92,8 +92,8 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
     coverImage = withBasePath(explicitCover);
   } else {
     const contentImage =
-      extractFirstImageFromHtml(article.content) ||
-      extractFirstImageFromHtml(article.excerpt);
+      (article.excerpt ? extractFirstImageFromHtml(article.excerpt) : null) ||
+      extractFirstImageFromHtml(article.content);
 
     if (contentImage) {
       coverImage = withBasePath(contentImage);
@@ -134,7 +134,9 @@ const ArticleCard = ({ article, onClick, index = 0 }: ArticleCardProps) => {
   };
 
   // 获取显示用的正文开头（用于卡片底部，缩短字数以显示三行）
-  const displayContent = article.content ? getPlainTextFromHtml(article.content) : '';
+  const displayContent = article.excerpt
+    ? getPlainTextFromHtml(article.excerpt)
+    : (article.content ? getPlainTextFromHtml(article.content) : '');
   const displayExcerpt = displayContent.substring(0, 80) || '暂无内容';
 
   return (

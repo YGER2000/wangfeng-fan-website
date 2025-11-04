@@ -88,8 +88,8 @@ const ArticleEdit = () => {
       is_published: targetStatus === 'approved',
     };
 
-    const updated = await contentWorkflowAPI.updateArticle(id, updateBody, token);
-    return updated;
+    await contentWorkflowAPI.updateArticle(id, updateBody, token);
+    // 不返回值，因为类型不匹配
   };
 
 
