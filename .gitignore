@@ -14,3 +14,4 @@ backend/.env
 frontend/.env
 frontend/.env.local
 frontend/.env.production
+*.DS_Store

@@ -3,21 +3,7 @@
 > vite
 
 
-  VITE v6.3.6  ready in 104 ms
+  VITE v6.3.6  ready in 111 ms
 
   ➜  Local:   http://localhost:1997/
   ➜  Network: http://192.168.1.15:1997/
-10:04:32 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
-10:05:03 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
-17:17:54 [vite] (client) hmr update /src/components/admin/pages/ProfileAdmin.tsx, /src/index.css
-17:19:47 [vite] (client) hmr update /src/components/admin/pages/ProfileAdmin.tsx, /src/index.css
-18:47:14 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
-18:47:25 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
-18:47:32 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
-18:52:21 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
-19:00:13 [vite] (client) hmr update /src/components/admin/pages/ScheduleEditor.tsx, /src/index.css
-19:28:59 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
-19:39:36 [vite] (client) hmr update /src/components/pages/VideoDetail.tsx, /src/index.css
-23:28:04 [vite] (client) hmr update /src/App.tsx, /src/index.css, /src/contexts/MusicContext.tsx, /src/components/layout/Header.tsx, /src/components/layout/Footer.tsx, /src/components/ui/MusicPlayer.tsx, /src/components/pages/GameActivity.tsx, /src/components/pages/Discography.tsx, /src/components/pages/AboutSite.tsx, /src/components/pages/TourDates.tsx, /src/components/pages/About.tsx, /src/components/pages/Home.tsx, /src/components/admin/ProtectedRoute.tsx, /src/components/admin/pages/SimpleDashboard.tsx, /src/components/admin/NewAdminLayout.tsx, /src/components/admin/pages/MyArticleList.tsx, /src/components/admin/AdminLogin.tsx, /src/components/admin/pages/ScheduleList.tsx, /src/components/admin/pages/MyVideoList.tsx, /src/components/admin/pages/TagManager.tsx, /src/components/admin/pages/MyGalleryList.tsx, /src/components/admin/pages/ReviewPanel.tsx, /src/components/admin/pages/ReviewGalleryList.tsx, /src/components/admin/pages/ReviewVideoList.tsx, /src/components/admin/pages/ManageArticleList.tsx, /src/components/admin/pages/ProfileAdmin.tsx, /src/components/ui/ArticleCard.tsx, /src/components/admin/pages/GalleryUpload.tsx, /src/components/ui/GameCard.tsx, /src/components/ui/VideoCard.tsx, /src/components/ui/PollCard.tsx, /src/components/ui/PlaylistModal.tsx, /src/components/ui/TagContentModal.tsx, /src/components/ui/AlbumModal.tsx, /src/components/admin/pages/VideoCreate.tsx, /src/components/ui/GameScreen.tsx, /src/components/admin/pages/ScheduleEditor.tsx, /src/components/ui/VideoReviewEditor.tsx, /src/components/ui/GalleryEditor.tsx, /src/components/ui/SimpleToast.tsx, /src/components/ui/card.tsx, /src/components/ui/ContentCard.tsx, /src/components/ui/FilterBar.tsx, /src/components/ui/ArticleEditor.tsx, /src/components/admin/shared/TagSelectionPanel.tsx, /src/components/ui/ArticleReviewEditor.tsx, /src/components/ui/InfoTooltip.tsx, /src/components/ui/StatusBadge.tsx, /src/components/ui/ImageCropModal.tsx, /src/components/pages/VideoDetail.tsx
-23:28:04 [vite] (client) hmr invalidate /src/contexts/MusicContext.tsx Could not Fast Refresh ("useMusicContext" export is incompatible). Learn more at https://github.com/vitejs/vite-plugin-react/tree/main/packages/plugin-react#consistent-components-exports
-23:28:04 [vite] (client) page reload src/contexts/MusicContext.tsx
