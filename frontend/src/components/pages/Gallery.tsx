@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Camera, Images, Shuffle, ArrowDownUp, Sparkles } from 'lucide-react';
+import { buildApiUrl } from '@/config/api';
 
 // API PhotoGroup 类型
 interface APIPhotoGroup {
@@ -76,7 +77,7 @@ const Gallery = () => {
     const fetchPhotoGroups = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:1994/api/gallery/groups');
+        const response = await fetch(buildApiUrl('/gallery/groups'));
         const data: APIPhotoGroup[] = await response.json();
 
         // 只保留云端存储的照片组（过滤掉 legacy 类型）
@@ -87,7 +88,7 @@ const Gallery = () => {
           ossOnlyGroups.map(async (apiGroup) => {
             try {
               // 获取照片组的照片
-              const photosResponse = await fetch(`http://localhost:1994/api/gallery/groups/${apiGroup.id}`);
+              const photosResponse = await fetch(buildApiUrl(`/gallery/groups/${apiGroup.id}`));
               const groupDetail: APIPhotoGroup & { photos: APIPhoto[] } = await photosResponse.json();
 
               return {

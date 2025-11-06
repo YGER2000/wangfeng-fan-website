@@ -27,6 +27,7 @@ import { TagData } from '@/utils/api';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 import type { ReviewStatus } from '@/components/ui/StatusBadge';
+import { buildApiUrl } from '@/config/api';
 
 type StepAction =
   | 'saveDraft'
@@ -124,7 +125,7 @@ const categoryOptions = [
 const GalleryEditor = ({
   mode,
   groupId,
-  backPath = '/admin/gallery/list',
+  backPath = '/admin/manage/gallery',
   contentStatus,
   isAdminView = false,
   onAction,
@@ -188,7 +189,7 @@ const GalleryEditor = ({
   const loadPhotoGroup = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`http://localhost:1994/api/gallery/groups/${groupId}`, {
+      const response = await fetch(buildApiUrl(`/gallery/groups/${groupId}`), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -277,7 +278,7 @@ const GalleryEditor = ({
       const formData = new FormData();
       formData.append('file', image.file);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/gallery/admin/upload', {
+      const response = await fetch(buildApiUrl('/gallery/admin/upload'), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
@@ -385,7 +386,7 @@ const GalleryEditor = ({
       let responseBody: any = null;
 
       if (!targetId) {
-        const response = await fetch('http://localhost:1994/api/gallery/admin/groups', {
+        const response = await fetch(buildApiUrl('/gallery/admin/groups'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -402,7 +403,7 @@ const GalleryEditor = ({
         responseBody = await response.json();
         targetId = responseBody.id;
       } else {
-        const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${targetId}`, {
+        const response = await fetch(buildApiUrl(`/gallery/admin/groups/${targetId}`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -423,7 +424,7 @@ const GalleryEditor = ({
       if (deletedPhotoIds.length > 0) {
         await Promise.all(
           deletedPhotoIds.map(photoId =>
-            fetch(`http://localhost:1994/api/gallery/admin/photos/${photoId}`, {
+            fetch(buildApiUrl(`/gallery/admin/photos/${photoId}`), {
               method: 'DELETE',
               headers: { Authorization: `Bearer ${token}` }
             })
@@ -454,7 +455,7 @@ const GalleryEditor = ({
             sort_order: currentMaxOrder + i + 1
           };
 
-          await fetch('http://localhost:1994/api/gallery/admin/photos', {
+          await fetch(buildApiUrl('/gallery/admin/photos'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -500,7 +501,7 @@ const GalleryEditor = ({
 
     await persistGroup('pending', false);
 
-    const approveUrl = `http://localhost:1994/api/admin/reviews/gallery/${currentGroupId}/approve`;
+    const approveUrl = buildApiUrl(`/admin/reviews/gallery/${currentGroupId}/approve`);
     const response = await fetch(approveUrl, {
       method: 'POST',
       headers: {
@@ -535,7 +536,7 @@ const GalleryEditor = ({
 
       await persistGroup('pending', false);
 
-      const rejectUrl = `http://localhost:1994/api/admin/reviews/gallery/${currentGroupId}/reject`;
+      const rejectUrl = buildApiUrl(`/admin/reviews/gallery/${currentGroupId}/reject`);
       const response = await fetch(rejectUrl, {
         method: 'POST',
         headers: {
@@ -564,7 +565,7 @@ const GalleryEditor = ({
     }
 
     const token = getToken();
-    const response = await fetch(`http://localhost:1994/api/gallery/admin/groups/${currentGroupId}`, {
+    const response = await fetch(buildApiUrl(`/gallery/admin/groups/${currentGroupId}`), {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` }
     });

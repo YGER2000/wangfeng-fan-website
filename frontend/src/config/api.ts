@@ -1,22 +1,31 @@
-const DEFAULT_API_ORIGIN = "http://localhost:1994";
+const DEFAULT_API_BASE = "http://localhost:1994/api";
 
-const normalizeUrl = (url: string) => url.replace(/\/+$/, "");
+const trimTrailingSlashes = (value: string) => value.replace(/\/+$/, "");
 
-const apiOrigin = normalizeUrl(
-  import.meta.env.VITE_API_BASE_URL || DEFAULT_API_ORIGIN,
+const normalizeBase = (raw: string): string => {
+  const value = raw.trim();
+  if (!value) {
+    return DEFAULT_API_BASE;
+  }
+
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return trimTrailingSlashes(value);
+  }
+
+  if (value.startsWith("/")) {
+    return trimTrailingSlashes(value);
+  }
+
+  return `/${trimTrailingSlashes(value.replace(/^\/+/, ""))}`;
+};
+
+const resolvedBase = normalizeBase(
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE,
 );
 
-export const API_ORIGIN = apiOrigin;
-
-export const API_BASE_URL = `${apiOrigin}/api`;
+export const API_BASE_URL = resolvedBase;
 
 export const buildApiUrl = (path: string) => {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${API_BASE_URL}${normalized}`;
 };
-
-export const buildApiOriginUrl = (path: string) => {
-  const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${API_ORIGIN}${normalized}`;
-};
-

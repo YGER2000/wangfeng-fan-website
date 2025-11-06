@@ -115,15 +115,6 @@ const VideoCard = ({ video, index = 0 }: VideoCardProps) => {
           <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-xs px-2 py-1 rounded">
             {video.category}
           </div>
-
-          {/* 播放图标 - 中间 */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-black/50 rounded-full p-3 backdrop-blur-sm transition-all duration-300 group-hover:scale-110">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-            </div>
-          </div>
         </div>
 
         {/* 视频信息 - 固定高度和布局（减少21px：从139px改为118px） */}

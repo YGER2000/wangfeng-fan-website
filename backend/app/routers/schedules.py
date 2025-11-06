@@ -1,4 +1,5 @@
 from typing import List, Optional
+import json
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
@@ -35,8 +36,11 @@ async def create_schedule(
     description: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
+    images: Optional[List[UploadFile]] = File(None),
+    cover_index: Optional[int] = Form(None),
     schedule_service: ScheduleServiceMySQL = Depends(get_schedule_service)
 ):
+    """创建新行程，支持多张海报"""
     try:
         # 将逗号分隔的标签字符串转换为列表
         tags_list = [tag.strip() for tag in tags.split(',')] if tags else None
@@ -62,6 +66,8 @@ async def create_schedule(
         description=payload.description,
         tags=','.join(payload.tags) if payload.tags else None,
         image_file=image,
+        images_files=images or [],
+        cover_index=cover_index,
         save_file=False,  # 不立即保存文件
     )
     return created

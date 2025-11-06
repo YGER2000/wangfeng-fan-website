@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { buildApiUrl } from '@/config/api';
 
 interface PhotoGroup {
   id: string;
@@ -70,7 +71,7 @@ const GalleryList = () => {
   const loadPhotoGroups = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/gallery/admin/groups?limit=100', {
+      const response = await fetch(buildApiUrl('/gallery/admin/groups?limit=100'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

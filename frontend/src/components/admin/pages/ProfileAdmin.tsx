@@ -24,6 +24,7 @@ import { cn, withBasePath } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import { buildApiUrl } from '@/config/api';
 
 interface ProfileData {
   id: number;
@@ -130,7 +131,7 @@ const ProfileAdmin = () => {
   const loadProfileData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:1994/api/profile/me', {
+      const response = await fetch(buildApiUrl('/profile/me'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -197,7 +198,7 @@ const ProfileAdmin = () => {
       formData.append('avatar', croppedBlob, 'avatar.jpg');
 
       // 上传
-      const response = await fetch('http://localhost:1994/api/profile/avatar', {
+      const response = await fetch(buildApiUrl('/profile/avatar'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -240,7 +241,7 @@ const ProfileAdmin = () => {
       formData.append('old_password', oldPassword);
       formData.append('new_password', newPassword);
 
-      const response = await fetch('http://localhost:1994/api/profile/password', {
+      const response = await fetch(buildApiUrl('/profile/password'), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

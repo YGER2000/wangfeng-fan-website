@@ -17,6 +17,8 @@ class Schedule(Base):
     description = Column(Text, nullable=True, comment='补充说明')
     image = Column(String(500), nullable=True, comment='海报图片路径（原图）')
     image_thumb = Column(String(500), nullable=True, comment='海报缩略图路径（压缩图）')
+    images = Column(Text, nullable=True, comment='多张海报图片数组（JSON格式）')
+    images_thumb = Column(Text, nullable=True, comment='多张海报缩略图数组（JSON格式）')
     tags = Column(Text, nullable=True, comment='标签，用逗号分隔')
     source = Column(String(20), default='custom', nullable=False, comment='数据来源：legacy/custom')
     author_id = Column(String(36), nullable=True, index=True, comment='创建者用户ID')
@@ -38,6 +40,24 @@ class Schedule(Base):
 
     def to_dict(self):
         """转换为字典格式"""
+        import json
+
+        # 解析 JSON 数组字段
+        images_list = None
+        images_thumb_list = None
+
+        if self.images:
+            try:
+                images_list = json.loads(self.images) if isinstance(self.images, str) else self.images
+            except (json.JSONDecodeError, TypeError):
+                images_list = None
+
+        if self.images_thumb:
+            try:
+                images_thumb_list = json.loads(self.images_thumb) if isinstance(self.images_thumb, str) else self.images_thumb
+            except (json.JSONDecodeError, TypeError):
+                images_thumb_list = None
+
         return {
             'id': self.id,
             'category': self.category,
@@ -48,6 +68,8 @@ class Schedule(Base):
             'description': self.description,
             'image': self.image,
             'image_thumb': self.image_thumb,
+            'images': images_list,
+            'images_thumb': images_thumb_list,
             'tags': self.tags.split(',') if self.tags else [],
             'source': self.source,
             'author_id': self.author_id,

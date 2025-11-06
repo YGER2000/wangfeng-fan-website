@@ -17,6 +17,7 @@ import { videoAPI, VideoData, TagData } from '@/utils/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+import { buildApiUrl } from '@/config/api';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import InfoTooltip from '@/components/ui/InfoTooltip';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
@@ -321,7 +322,7 @@ const VideoCreate = () => {
       console.log('提取的BV号:', bvid);
 
       // 调用后端API获取视频信息
-      const response = await fetch(`http://localhost:1994/api/videos/parse-bilibili?bvid=${bvid}`);
+      const response = await fetch(buildApiUrl(`/videos/parse-bilibili?bvid=${bvid}`));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

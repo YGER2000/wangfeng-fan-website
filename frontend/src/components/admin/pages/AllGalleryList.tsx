@@ -194,7 +194,7 @@ const AllGalleryList = () => {
   // 处理审核跳转
   const handleReview = (gallery: PhotoGroup) => {
     navigate(`/admin/gallery/edit/${gallery.id}`, {
-      state: { fromReview: true, backPath: '/admin/gallery/all' }
+      state: { fromReview: true, backPath: '/admin/manage/gallery' }
     });
   };
 

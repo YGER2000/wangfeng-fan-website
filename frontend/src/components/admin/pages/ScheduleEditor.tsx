@@ -106,9 +106,12 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
 
   const days = Array.from({ length: getDaysInMonth(selectedDate.year, selectedDate.month) }, (_, i) => i + 1);
 
-  // 海报相关状态
-  const [posterFile, setPosterFile] = useState<File | null>(null);
-  const [posterPreview, setPosterPreview] = useState<string | null>(initialSchedule?.image || initialSchedule?.image_thumb || null);
+  // 海报相关状态 - 支持多张海报
+  const [posterFiles, setPosterFiles] = useState<File[]>([]);
+  const [posterPreviews, setPosterPreviews] = useState<string[]>(
+    initialSchedule?.images ? initialSchedule.images : []
+  );
+  const [coverIndex, setCoverIndex] = useState<number>(0);
 
   // UI状态
   const [isSaving, setIsSaving] = useState(false);
@@ -116,19 +119,14 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
 
   // 清理预览图片
   useEffect(() => {
-    if (!posterFile) {
-      const remotePreview = initialSchedule?.image_thumb || initialSchedule?.image || null;
-      setPosterPreview(remotePreview);
-    }
-  }, [initialSchedule?.image, initialSchedule?.image_thumb, posterFile]);
-
-  useEffect(() => {
     return () => {
-      if (posterPreview && posterPreview.startsWith('blob:')) {
-        URL.revokeObjectURL(posterPreview);
-      }
+      posterPreviews.forEach(preview => {
+        if (preview && preview.startsWith('blob:')) {
+          URL.revokeObjectURL(preview);
+        }
+      });
     };
-  }, [posterPreview]);
+  }, [posterPreviews]);
 
   // 同步selectedDate到formState.date
   useEffect(() => {
@@ -178,29 +176,41 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
     });
   };
 
-  // 处理海报上传
+  // 处理海报上传 - 支持多张
   const handlePosterUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
       return;
     }
 
-    if (posterPreview && posterPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(posterPreview);
-    }
+    const newFiles = Array.from(files);
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
 
-    const objectUrl = URL.createObjectURL(file);
-    setPosterPreview(objectUrl);
-    setPosterFile(file);
+    setPosterFiles(prev => [...prev, ...newFiles]);
+    setPosterPreviews(prev => [...prev, ...newPreviews]);
   };
 
-  // 移除海报
-  const handleRemovePoster = () => {
-    if (posterPreview && posterPreview.startsWith('blob:')) {
-      URL.revokeObjectURL(posterPreview);
+  // 移除指定索引的海报
+  const handleRemovePoster = (index: number) => {
+    const preview = posterPreviews[index];
+    if (preview && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview);
     }
-    setPosterFile(null);
-    setPosterPreview(null);
+
+    setPosterFiles(prev => prev.filter((_, i) => i !== index));
+    setPosterPreviews(prev => prev.filter((_, i) => i !== index));
+
+    // 如果删除的是封面，重置封面索引
+    if (index === coverIndex) {
+      setCoverIndex(0);
+    } else if (index < coverIndex) {
+      setCoverIndex(prev => prev - 1);
+    }
+  };
+
+  // 设置封面海报
+  const handleSetCover = (index: number) => {
+    setCoverIndex(index);
   };
 
   // 处理标签变化
@@ -279,8 +289,17 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
           formData.append('tags', tagValues.join(','));
         }
       }
-      if (posterFile) {
-        formData.append('image', posterFile);
+
+      // 添加多张海报
+      if (posterFiles.length > 0) {
+        posterFiles.forEach((file) => {
+          formData.append('images', file);
+        });
+      }
+
+      // 添加封面索引
+      if (posterPreviews.length > 0) {
+        formData.append('cover_index', String(coverIndex));
       }
 
       if (isEditMode && initialSchedule?.id) {
@@ -605,62 +624,93 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
                   <Upload className="w-5 h-5 text-wangfeng-purple" />
                   上传海报
                   <span className="text-xs font-normal text-gray-400">
-                    （支持 JPG/PNG/WebP，建议尺寸 3:4）
+                    （支持多张，点击图片设置封面）
                   </span>
                 </h2>
 
-                {posterPreview ? (
-                  <div className="relative mb-4">
-                    <img
-                      src={posterPreview}
-                      alt="海报预览"
-                      className="w-full max-w-xs rounded-lg shadow"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleRemovePoster}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className={cn(
-                    'block w-full p-8 rounded-lg border-2 border-dashed cursor-pointer transition-colors text-center',
-                    isLight
-                      ? 'border-gray-300 hover:border-wangfeng-purple/50 bg-gray-50 hover:bg-gray-100'
-                      : 'border-wangfeng-purple/30 hover:border-wangfeng-purple bg-black/20 hover:bg-black/30'
-                  )}>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePosterUpload}
-                      className="hidden"
-                    />
-                    <div className="flex flex-col items-center justify-center">
-                      <Upload className={cn(
-                        'w-8 h-8 mb-2',
-                        isLight ? 'text-gray-400' : 'text-gray-500'
-                      )} />
-                      <p className={cn(
-                        'text-sm',
-                        isLight ? 'text-gray-600' : 'text-gray-400'
-                      )}>
-                        点击上传海报 / 拖放到此处
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        支持 JPG、PNG、WebP，最大 10MB
-                      </p>
+                {/* 已上传的海报网格 */}
+                {posterPreviews.length > 0 && (
+                  <div className="mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {posterPreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <div
+                            className={cn(
+                              'relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all aspect-[3/4]',
+                              coverIndex === index
+                                ? 'border-wangfeng-purple shadow-lg'
+                                : 'border-transparent hover:border-wangfeng-purple/50'
+                            )}
+                            onClick={() => handleSetCover(index)}
+                          >
+                            <img
+                              src={preview}
+                              alt={`海报 ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+
+                            {/* 封面标记 */}
+                            {coverIndex === index && (
+                              <div className="absolute top-2 left-2 px-2 py-1 bg-wangfeng-purple text-white text-xs rounded-full">
+                                封面
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 删除按钮 */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemovePoster(index);
+                            }}
+                            className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
-                  </label>
+                  </div>
                 )}
+
+                {/* 上传按钮 */}
+                <label className={cn(
+                  'block w-full p-8 rounded-lg border-2 border-dashed cursor-pointer transition-colors text-center',
+                  isLight
+                    ? 'border-gray-300 hover:border-wangfeng-purple/50 bg-gray-50 hover:bg-gray-100'
+                    : 'border-wangfeng-purple/30 hover:border-wangfeng-purple bg-black/20 hover:bg-black/30'
+                )}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePosterUpload}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center justify-center">
+                    <Upload className={cn(
+                      'w-8 h-8 mb-2',
+                      isLight ? 'text-gray-400' : 'text-gray-500'
+                    )} />
+                    <p className={cn(
+                      'text-sm',
+                      isLight ? 'text-gray-600' : 'text-gray-400'
+                    )}>
+                      点击上传海报 / 拖放到此处
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      支持多张，JPG/PNG/WebP，单张最大 10MB
+                    </p>
+                  </div>
+                </label>
 
                 <p className={cn(
                   'text-xs mt-4 flex items-start gap-2',
                   isLight ? 'text-gray-500' : 'text-gray-400'
                 )}>
                   <AlertCircle className="w-4 h-4 mt-0.5 text-wangfeng-purple" />
-                  未上传时将使用默认海报，后续可在审核或发布阶段替换。
+                  支持上传多张海报，点击图片选择作为封面。未上传时将使用默认海报。
                 </p>
               </motion.div>
             </>
@@ -754,8 +804,13 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
                 <div className="grid gap-6 md:grid-cols-3">
                   <div className="md:col-span-1">
                     <div className="aspect-[3/4] rounded-lg overflow-hidden bg-gray-100 dark:bg-black/30 border border-dashed border-gray-300 dark:border-wangfeng-purple/20 flex items-center justify-center">
-                      {posterPreview ? (
-                        <img src={posterPreview} alt="行程海报预览" className="h-full object-cover" />
+                      {posterPreviews.length > 0 ? (
+                        <>
+                          <img src={posterPreviews[coverIndex]} alt="行程海报预览" className="h-full object-cover w-full" />
+                          <div className="absolute top-2 left-2 px-2 py-1 bg-wangfeng-purple text-white text-xs rounded-full">
+                            {posterPreviews.length}张
+                          </div>
+                        </>
                       ) : (
                         <span className="text-xs text-gray-400">未上传海报</span>
                       )}

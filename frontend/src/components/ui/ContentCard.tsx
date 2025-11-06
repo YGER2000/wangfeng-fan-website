@@ -123,17 +123,6 @@ const ContentCard = ({
           </div>
         )}
 
-        {/* 视频播放图标 */}
-        {type === 'video' && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/50 rounded-full p-2 backdrop-blur-sm transition-all duration-300 group-hover:scale-110">
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </div>
-        )}
-
         {/* Hover时显示的编辑按钮 */}
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button

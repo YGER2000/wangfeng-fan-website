@@ -8,6 +8,7 @@
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { adminService, DashboardStats } from './admin';
+import { buildApiUrl } from '@/config/api';
 
 // ============= Authentication Helper =============
 
@@ -229,7 +230,7 @@ export function LoginPageExample() {
 
     try {
       // Call your auth API (not part of admin service)
-      const response = await fetch('http://localhost:1994/api/auth/login', {
+      const response = await fetch(buildApiUrl('/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),

@@ -177,9 +177,6 @@ const LatestAlbum = () => {
       <div className="absolute top-40 right-20 transform rotate-12 z-10 hidden md:block">
         <span className="fan-comment">太燃了！ 💜</span>
       </div>
-      <div className="absolute bottom-40 left-20 transform -rotate-6 z-10 hidden md:block">
-        <span className="fan-comment">传奇！ 👑</span>
-      </div>
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Section title with fan styling */}
@@ -349,9 +346,6 @@ const TourDatesPreview = () => {
         <div className="text-center mb-16">
           <h2 className="section-title relative inline-block">
             相信未来巡演
-            <span className="absolute -top-6 -right-12 text-sm bg-wangfeng-purple theme-text-primary px-2 py-1 rounded-lg transform rotate-12 font-bold animate-pulse">
-              2025-2027!
-            </span>
           </h2>
           <p className="theme-text-secondary max-w-2xl mx-auto mt-4">
             为期两年的全新巡演即将开始，全新曲目、全新舞台制作、全新的震撼就要来了！
@@ -449,9 +443,6 @@ const TourDatesPreview = () => {
               {/* Fan reaction badges */}
               <div className="absolute -top-5 -right-5  border-2 border-wangfeng-purple text-wangfeng-purple px-3 py-1 rounded-full transform rotate-12 font-bebas tracking-wider animate-pulse-glow text-lg">
                 官方海报！
-              </div>
-              <div className="absolute -bottom-5 -left-5  border-2 border-wangfeng-purple text-wangfeng-purple px-3 py-1 rounded-full transform -rotate-12 font-bebas tracking-wider animate-pulse-glow text-lg">
-                2025-2027！
               </div>
             </div>
           </motion.div>
@@ -621,10 +612,6 @@ const GalleryPreview = () => {
           >
             查看完整图库！
           </Link>
-          
-          <div className="mt-4 text-sm theme-text-secondary italic">
-            更多我们数不清的 <span className="text-wangfeng-purple font-bold">经典</span> 时刻！
-          </div>
         </div>
       </div>
     </section>
@@ -723,9 +710,6 @@ const AwardsHighlights = () => {
             查看所有奖杯！
           </Link>
           
-          <div className="mt-4 text-sm theme-text-secondary italic">
-            他还没停止收集奖杯呢！ <span className="text-wangfeng-purple font-bold">♥</span>
-          </div>
         </div>
       </div>
     </section>

@@ -81,7 +81,7 @@ const SimpleDashboard: React.FC = () => {
       title: '图片管理',
       description: '管理图片画廊',
       icon: <Image className="w-6 h-6 text-green-500" />,
-      link: '/admin/gallery/list',
+    link: '/admin/manage/gallery',
       color: 'bg-green-500/20'
     },
   ];

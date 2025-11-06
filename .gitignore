@@ -16,3 +16,4 @@ frontend/.env.local
 frontend/.env.production
 *.DS_Store
 /logs/
+/docs/

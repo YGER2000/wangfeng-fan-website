@@ -4,7 +4,9 @@
  * 用于与后端 /api/v3/content 端点通信
  */
 
-const API_BASE_URL = 'http://localhost:1994/api/v3/content';
+import { buildApiUrl } from '@/config/api';
+
+const API_BASE_URL = buildApiUrl('/v3/content');
 
 export type ReviewStatus = 'draft' | 'pending' | 'approved' | 'rejected';
 

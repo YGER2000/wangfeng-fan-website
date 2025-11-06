@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
 import type { ReviewStatus } from '@/components/ui/StatusBadge';
+import { buildApiUrl } from '@/config/api';
 
 type StepAction =
   | 'saveDraft'
@@ -365,7 +366,7 @@ const VideoReviewEditor = ({
           await videoAPI.delete(videoId, token);
         } else if (action === 'approve') {
           await videoAPI.update(videoId, payload as any, token);
-          const approveUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/approve`;
+          const approveUrl = buildApiUrl(`/admin/reviews/video/${videoId}/approve`);
           const response = await fetch(approveUrl, {
             method: 'POST',
             headers: {
@@ -380,7 +381,7 @@ const VideoReviewEditor = ({
           }
           result = await response.json().catch(() => null);
         } else if (action === 'reject') {
-          const rejectUrl = `http://localhost:1994/api/admin/reviews/video/${videoId}/reject`;
+          const rejectUrl = buildApiUrl(`/admin/reviews/video/${videoId}/reject`);
           const response = await fetch(rejectUrl, {
             method: 'POST',
             headers: {

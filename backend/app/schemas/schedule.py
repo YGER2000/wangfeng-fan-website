@@ -30,6 +30,9 @@ class ScheduleCreate(ScheduleBase):
 class ScheduleResponse(ScheduleBase):
     id: int
     image: Optional[str] = None
+    image_thumb: Optional[str] = None
+    images: Optional[List[str]] = None  # 多张海报数组
+    images_thumb: Optional[List[str]] = None  # 多张缩略图数组
     tags: Optional[List[str]] = None
     source: Literal['legacy', 'custom']
     created_at: Optional[datetime] = None

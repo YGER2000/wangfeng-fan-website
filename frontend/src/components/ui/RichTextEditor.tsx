@@ -1,6 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from 'react';
 import ReactQuill, { Quill } from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { buildApiUrl } from '@/config/api';
 
 interface RichTextEditorProps {
   value: string;
@@ -27,7 +28,7 @@ const RichTextEditor = ({ value, onChange, height, articleId, categoryPrimary }:
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('http://localhost:1994/api/upload/image', {
+      const response = await fetch(buildApiUrl('/upload/image'), {
         method: 'POST',
         body: formData,
       });
@@ -49,7 +50,7 @@ const RichTextEditor = ({ value, onChange, height, articleId, categoryPrimary }:
     formData.append('sequence', String(imageSequence));
 
     const token = localStorage.getItem('token');
-    const response = await fetch('http://localhost:1994/api/articles/upload/image', {
+    const response = await fetch(buildApiUrl('/articles/upload/image'), {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

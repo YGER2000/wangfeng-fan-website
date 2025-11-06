@@ -94,7 +94,7 @@ const ArticleEditor = ({
   const fromReview = Boolean(navigationState?.fromReview);
   const defaultBackPath =
     currentRole === 'admin' || currentRole === 'super_admin'
-      ? '/admin/articles/all'
+      ? '/admin/manage/articles'
       : '/admin/my-articles';
   const backPath =
     onBackPathOverride ||

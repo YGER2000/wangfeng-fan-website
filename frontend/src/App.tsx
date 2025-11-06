@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import './App.css';
 
@@ -72,6 +73,13 @@ const AppContent = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
   const location = useLocation();
+  
+  // 路由切换后自动滚动到页面顶部，避免残留的滚动位置影响体验
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }
+  }, [location.pathname, location.search]);
   
   // 判断当前是否在管理界面
   const isAdminRoute = location.pathname.startsWith('/admin');

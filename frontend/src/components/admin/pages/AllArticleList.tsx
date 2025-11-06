@@ -199,7 +199,7 @@ const AllArticleList = () => {
   // 处理审核跳转
   const handleReview = (article: Article) => {
     navigate(`/admin/articles/edit/${article.id}`, {
-      state: { fromReview: true, backPath: '/admin/articles/all' }
+      state: { fromReview: true, backPath: '/admin/manage/articles' }
     });
   };
 

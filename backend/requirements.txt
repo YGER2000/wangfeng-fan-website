@@ -18,6 +18,7 @@ cryptography==44.0.0
 
 # 存储服务（支持阿里云 OSS/MinIO/R2 的 S3 兼容 API）
 minio==7.2.11
+oss2==2.19.1
 
 # 图片处理
 Pillow==11.0.0

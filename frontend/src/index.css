@@ -571,5 +571,20 @@
       opacity: 0;
     }
   }
-  
+
+}
+
+/* Schedule Card Theme Styles */
+.schedule-card {
+  background-color: rgb(243, 244, 246);
+  @apply border-gray-200 shadow-gray-200/50;
+}
+
+html.starry-fantasy .schedule-card {
+  @apply bg-wangfeng-purple/20 border-wangfeng-purple/50 shadow-wangfeng-purple/25;
+}
+
+html.white .schedule-card {
+  background-color: rgb(243, 244, 246);
+  @apply border-gray-200 shadow-gray-200/50;
 }

@@ -12,7 +12,7 @@ const GalleryEdit = () => {
     <GalleryEditor
       mode="edit"
       groupId={id}
-      backPath={backPath || '/admin/gallery/list'}
+      backPath={backPath || '/admin/manage/gallery'}
       isAdminView
     />
   );

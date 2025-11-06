@@ -4,6 +4,7 @@ import { X, FileText, Video, Image, Calendar, User, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '@/config/api';
 
 interface TagContentModalProps {
   isOpen: boolean;
@@ -38,7 +39,8 @@ interface VideoItem {
 
 interface GalleryItem {
   id: string;
-  name: string;
+  name?: string;
+  title?: string;
   description: string;
   cover_image_url: string | null;
   cover_image_thumb_url: string | null;
@@ -47,11 +49,25 @@ interface GalleryItem {
   photo_count: number;
 }
 
+interface ScheduleItem {
+  id: number | string;
+  theme: string;
+  date: string;
+  city: string;
+  venue?: string | null;
+  category: string;
+  image?: string | null;
+  image_thumb?: string | null;
+  description?: string | null;
+  created_at?: string | null;
+}
+
 interface TagContents {
   tag_name: string;
   articles: ArticleItem[];
   videos: VideoItem[];
   galleries: GalleryItem[];
+  schedules: ScheduleItem[];
 }
 
 const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => {
@@ -60,7 +76,7 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
   const navigate = useNavigate();
   const [contents, setContents] = useState<TagContents | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'articles' | 'videos' | 'galleries'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'videos' | 'galleries' | 'schedules'>('articles');
 
   useEffect(() => {
     if (isOpen && tagName) {
@@ -71,17 +87,26 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
   const loadContents = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:1994/api/tags/by-name/${encodeURIComponent(tagName)}/contents`);
+      const response = await fetch(buildApiUrl(`/tags/by-name/${encodeURIComponent(tagName)}/contents`));
       const data = await response.json();
-      setContents(data);
+      const normalizedData: TagContents = {
+        tag_name: data.tag_name,
+        articles: data.articles || [],
+        videos: data.videos || [],
+        galleries: data.galleries || [],
+        schedules: data.schedules || []
+      };
+      setContents(normalizedData);
 
       // 自动切换到有内容的标签页
-      if (data.articles.length > 0) {
+      if (normalizedData.articles.length > 0) {
         setActiveTab('articles');
-      } else if (data.videos.length > 0) {
+      } else if (normalizedData.videos.length > 0) {
         setActiveTab('videos');
-      } else if (data.galleries.length > 0) {
+      } else if (normalizedData.galleries.length > 0) {
         setActiveTab('galleries');
+      } else if (normalizedData.schedules.length > 0) {
+        setActiveTab('schedules');
       }
     } catch (error) {
       console.error('加载标签内容失败:', error);
@@ -90,7 +115,7 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
     }
   };
 
-  const handleItemClick = (type: 'article' | 'video' | 'gallery', item: any) => {
+  const handleItemClick = (type: 'article' | 'video' | 'gallery' | 'schedule', item: any) => {
     onClose();
     if (type === 'article') {
       navigate(`/article/${item.slug || item.id}`);
@@ -98,6 +123,8 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
       navigate(`/videos`);
     } else if (type === 'gallery') {
       navigate(`/gallery`);
+    } else if (type === 'schedule') {
+      navigate('/tour-dates', { state: { focusScheduleId: item.id } });
     }
   };
 
@@ -108,7 +135,11 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
     return tmp.textContent || tmp.innerText || '暂无描述';
   };
 
-  const totalCount = (contents?.articles.length || 0) + (contents?.videos.length || 0) + (contents?.galleries.length || 0);
+  const totalCount =
+    (contents?.articles.length || 0) +
+    (contents?.videos.length || 0) +
+    (contents?.galleries.length || 0) +
+    (contents?.schedules.length || 0);
 
   return (
     <AnimatePresence>
@@ -205,6 +236,26 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
                 <Video className="w-4 h-4 inline mr-2" />
                 视频 ({contents?.videos.length || 0})
                 {activeTab === 'videos' && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-wangfeng-purple"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setActiveTab('schedules')}
+                className={cn(
+                  "flex-1 px-4 py-3 text-sm font-medium transition-colors relative",
+                  activeTab === 'schedules'
+                    ? "text-wangfeng-purple"
+                    : isLight
+                      ? "text-gray-600 hover:text-gray-900"
+                      : "text-gray-400 hover:text-white"
+                )}
+              >
+                <Calendar className="w-4 h-4 inline mr-2" />
+                行程 ({contents?.schedules.length || 0})
+                {activeTab === 'schedules' && (
                   <motion.div
                     layoutId="activeTab"
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-wangfeng-purple"
@@ -397,7 +448,7 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
                               "text-lg font-semibold mb-2",
                               isLight ? "text-gray-900" : "text-white"
                             )}>
-                              {gallery.name}
+                              {gallery.title || gallery.name || '未命名相册'}
                             </h3>
                             <p className={cn(
                               "text-sm mb-3 line-clamp-2",
@@ -426,6 +477,64 @@ const TagContentModal = ({ isOpen, onClose, tagName }: TagContentModalProps) => 
                           isLight ? "text-gray-500" : "text-gray-400"
                         )}>
                           暂无相册
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                  {/* 行程列表 */}
+                  {activeTab === 'schedules' && (
+                    <motion.div
+                      key="schedules"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="space-y-4"
+                    >
+                      {contents?.schedules && contents.schedules.length > 0 ? (
+                        contents.schedules.map((schedule) => (
+                          <div
+                            key={schedule.id}
+                            onClick={() => handleItemClick('schedule', schedule)}
+                            className={cn(
+                              "p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.02]",
+                              isLight
+                                ? "bg-white border-gray-200 hover:border-wangfeng-purple/50 hover:shadow-md"
+                                : "bg-gray-800/50 border-gray-700 hover:border-wangfeng-purple/50"
+                            )}
+                          >
+                            <h3 className={cn(
+                              "text-lg font-semibold mb-2",
+                              isLight ? "text-gray-900" : "text-white"
+                            )}>
+                              {schedule.theme}
+                            </h3>
+                            <p className={cn(
+                              "text-sm mb-3",
+                              isLight ? "text-gray-600" : "text-gray-400"
+                            )}>
+                              {schedule.city} · {schedule.venue || '地点待定'}
+                            </p>
+                            <div className={cn(
+                              "flex flex-wrap items-center gap-4 text-xs",
+                              isLight ? "text-gray-500" : "text-gray-500"
+                            )}>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3" />
+                                {schedule.date}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Image className="w-3 h-3" />
+                                {schedule.category}
+                              </span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={cn(
+                          "text-center py-12",
+                          isLight ? "text-gray-500" : "text-gray-400"
+                        )}>
+                          暂无行程
                         </div>
                       )}
                     </motion.div>

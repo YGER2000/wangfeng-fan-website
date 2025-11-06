@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { User, Mail, Calendar, FileText, MessageSquare, Heart, Camera, Lock, Upload } from 'lucide-react';
 import { cn, withBasePath } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildApiUrl } from '@/config/api';
 
 interface ProfileStats {
   article_count: number;
@@ -65,7 +66,7 @@ const Profile = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/profile/me', {
+      const response = await fetch(buildApiUrl('/profile/me'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -86,7 +87,7 @@ const Profile = () => {
   const loadMyArticles = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/profile/my-articles?limit=50', {
+      const response = await fetch(buildApiUrl('/profile/my-articles?limit=50'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -135,7 +136,7 @@ const Profile = () => {
       formData.append('avatar', file);
 
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/profile/avatar', {
+      const response = await fetch(buildApiUrl('/profile/avatar'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -180,7 +181,7 @@ const Profile = () => {
       formData.append('new_password', newPassword);
 
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:1994/api/profile/password', {
+      const response = await fetch(buildApiUrl('/profile/password'), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

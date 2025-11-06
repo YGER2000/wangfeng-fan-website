@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildApiUrl } from '@/config/api';
 import {
   FileText,
   Calendar,
@@ -133,7 +134,7 @@ const Dashboard: React.FC = () => {
       console.log('[Dashboard] Token:', token ? token.substring(0, 20) + '...' : 'null');
 
       // 加载统计数据
-      const statsResponse = await fetch('http://localhost:1994/api/admin/dashboard/stats', {
+      const statsResponse = await fetch(buildApiUrl('/admin/dashboard/stats'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -153,7 +154,7 @@ const Dashboard: React.FC = () => {
       setStats(statsData);
 
       // 加载待审核行程数量
-      const schedulesResponse = await fetch('http://localhost:1994/api/admin/schedules?limit=1000', {
+      const schedulesResponse = await fetch(buildApiUrl('/admin/schedules?limit=1000'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -166,14 +167,14 @@ const Dashboard: React.FC = () => {
       }
 
       // 加载视频总数
-      const videosCountResponse = await fetch('http://localhost:1994/api/videos/count');
+      const videosCountResponse = await fetch(buildApiUrl('/videos/count'));
       if (videosCountResponse.ok) {
         const videosData = await videosCountResponse.json();
         setTotalVideos(videosData.count);
       }
 
       // 加载最近操作日志
-      const logsResponse = await fetch('http://localhost:1994/api/admin/logs?limit=5', {
+      const logsResponse = await fetch(buildApiUrl('/admin/logs?limit=5'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -289,7 +290,7 @@ const Dashboard: React.FC = () => {
           value="—"
           icon={<Image className="w-5 h-5" />}
           color="bg-green-500/20"
-          link="/admin/gallery/list"
+          link="/admin/manage/gallery"
           trend="(暂未实现审核功能)"
           loading={loading}
         />

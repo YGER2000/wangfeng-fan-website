@@ -25,6 +25,7 @@ import {
   XCircle
 } from 'lucide-react';
 import { Article } from '@/utils/contentManager';
+import { buildApiUrl } from '@/config/api';
 import { getSecondaryCategories } from '@/config/categories';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -616,7 +617,9 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isReviewMo
       }
 
       // 2. 再调用批准发布 API
-      const approveUrl = `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/approve`;
+      const approveUrl = buildApiUrl(
+        `/v3/content/articles/${initialArticle.id}/approve`,
+      );
 
       const response = await fetch(approveUrl, {
         method: 'POST',
@@ -692,7 +695,11 @@ const ArticleEditor = ({ initialArticle, onSave, onPreview, onDelete, isReviewMo
       }
 
       // 2. 再调用拒绝 API
-      const rejectUrl = `http://localhost:1994/api/v3/content/articles/${initialArticle.id}/reject?reason=${encodeURIComponent(reviewNotes)}`;
+      const rejectUrl = buildApiUrl(
+        `/v3/content/articles/${initialArticle.id}/reject?reason=${encodeURIComponent(
+          reviewNotes,
+        )}`,
+      );
 
       const response = await fetch(rejectUrl, {
         method: 'POST',

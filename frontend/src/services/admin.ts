@@ -1,8 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { API_ORIGIN } from '@/config/api';
-
-// ============= Constants =============
-const API_BASE_URL = API_ORIGIN;
+import { API_BASE_URL } from '@/config/api';
 
 // ============= Enums =============
 export enum ReviewStatus {

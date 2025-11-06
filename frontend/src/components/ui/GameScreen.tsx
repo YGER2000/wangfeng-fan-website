@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, RotateCcw, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
+import { buildApiUrl } from '@/config/api';
 
 interface GameQuestion {
   type: string;
@@ -56,7 +57,7 @@ const GameScreen = ({ gameId, gameTitle, onBack }: GameScreenProps) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://localhost:1994/api/games/${gameId}/question`);
+      const response = await fetch(buildApiUrl(`/games/${gameId}/question`));
 
       if (!response.ok) {
         throw new Error('加载问题失败');

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Eye, EyeOff, User, Mail, Lock, Send } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { buildApiUrl } from '@/config/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:1994/api/verification/send-code', {
+      const response = await fetch(buildApiUrl('/verification/send-code'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

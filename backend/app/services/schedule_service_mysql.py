@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 import tempfile
+import json
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -87,9 +88,14 @@ class ScheduleServiceMySQL:
         category: str,
         date: str,
         theme: str,
-        schedule_id: int
+        schedule_id: int,
+        index: int = 0
     ) -> Tuple[str, Optional[str]]:
-        """上传行程海报到 OSS，返回(原图URL, 缩略图URL)"""
+        """上传行程海报到 OSS，返回(原图URL, 缩略图URL)
+
+        Args:
+            index: 海报索引（用于多张海报时区分不同文件）
+        """
         try:
             file_bytes = upload.file.read()
         finally:
@@ -113,8 +119,9 @@ class ScheduleServiceMySQL:
             mime_type = 'image/webp'
 
         object_prefix = self._build_object_prefix(category, date, theme, schedule_id)
-        original_object_name = f"{object_prefix}-poster{extension}"
-        thumb_object_name = f"{object_prefix}-poster-thumb.jpg"
+        # 对于多张海报，在文件名中加上索引号 (poster-0, poster-1, poster-2, ...)
+        original_object_name = f"{object_prefix}-poster-{index}{extension}"
+        thumb_object_name = f"{object_prefix}-poster-{index}-thumb.jpg"
 
         thumb_bytes: bytes
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -148,16 +155,22 @@ class ScheduleServiceMySQL:
         description: Optional[str] = None,
         tags: Optional[str] = None,
         image_file: Optional[UploadFile] = None,
+        images_files: Optional[List[UploadFile]] = None,
+        cover_index: Optional[int] = None,
         save_file: bool = False,  # 参数保留兼容性，现已统一上传到 OSS
     ) -> Dict[str, Any]:
         """
-        创建新的行程记录
+        创建新的行程记录，支持多张海报
 
         Args:
+            image_file: 单张海报（向后兼容）
+            images_files: 多张海报列表
+            cover_index: 封面海报的索引（0表示第一张）
             save_file: 兼容旧参数，当前无实际作用（图片立即上传 OSS）
         """
         normalized_date = self._normalize_date_string(date) or get_beijing_now().strftime('%Y-%m-%d')
 
+        now = get_beijing_now()
         new_schedule = Schedule(
             category=category,
             date=normalized_date,
@@ -168,15 +181,51 @@ class ScheduleServiceMySQL:
             tags=tags,
             image=None,
             image_thumb=None,
+            images=None,
+            images_thumb=None,
             source='custom',
-            review_status='pending',
-            is_published=0,
+            review_status='approved',
+            reviewed_at=now,
+            is_published=1,
+            created_at=now,
+            updated_at=now,
         )
 
         self.db.add(new_schedule)
         self.db.flush()
 
-        if image_file is not None:
+        # 处理多张海报
+        if images_files and len(images_files) > 0:
+            images_urls = []
+            images_thumb_urls = []
+
+            for idx, image_file in enumerate(images_files):
+                image_url, image_thumb_url = self._upload_schedule_images(
+                    image_file,
+                    category,
+                    normalized_date,
+                    theme,
+                    new_schedule.id,
+                    index=idx
+                )
+                images_urls.append(image_url)
+                images_thumb_urls.append(image_thumb_url or image_url)
+
+            # 存储为 JSON 数组
+            new_schedule.images = json.dumps(images_urls)
+            new_schedule.images_thumb = json.dumps(images_thumb_urls)
+
+            # 设置封面海报（默认第一张，或指定 cover_index）
+            cover_idx = cover_index or 0
+            if 0 <= cover_idx < len(images_urls):
+                new_schedule.image = images_urls[cover_idx]
+                new_schedule.image_thumb = images_thumb_urls[cover_idx]
+            else:
+                new_schedule.image = images_urls[0]
+                new_schedule.image_thumb = images_thumb_urls[0]
+
+        # 处理单张海报（向后兼容）
+        elif image_file is not None:
             image_url, image_thumb_url = self._upload_schedule_images(
                 image_file,
                 category,
@@ -190,6 +239,9 @@ class ScheduleServiceMySQL:
             new_schedule.image = self.default_poster_url
             new_schedule.image_thumb = self.default_poster_url
 
+        new_schedule.review_status = 'approved'
+        new_schedule.reviewed_at = now
+        new_schedule.is_published = 1
         self.db.commit()
         self.db.refresh(new_schedule)
 
@@ -253,6 +305,10 @@ class ScheduleServiceMySQL:
             schedule.image_thumb = image_thumb_url or image_url
 
         schedule.updated_at = get_beijing_now()
+        schedule.review_status = 'approved'
+        schedule.is_published = 1
+        if not schedule.reviewed_at:
+            schedule.reviewed_at = get_beijing_now()
         self.db.commit()
         self.db.refresh(schedule)
 

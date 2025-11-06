@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import { buildApiUrl } from '@/config/api';
 
 // 审核项统一接口
 interface ReviewItem {
@@ -70,7 +71,7 @@ const ReviewCenter = () => {
       setLoading(true);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:1994/api/admin/reviews/?limit=100`, {
+      const response = await fetch(buildApiUrl('/admin/reviews/?limit=100'), {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -160,9 +161,9 @@ const ReviewCenter = () => {
 
   const handleItemClick = (item: ReviewItem) => {
     const backPathMap: Record<string, string> = {
-      article: '/admin/articles/all',
-      video: '/admin/videos/all',
-      gallery: '/admin/gallery/all',
+      article: '/admin/manage/articles',
+      video: '/admin/manage/videos',
+      gallery: '/admin/manage/gallery',
       schedule: '/admin/manage/schedules/list',
     };
 

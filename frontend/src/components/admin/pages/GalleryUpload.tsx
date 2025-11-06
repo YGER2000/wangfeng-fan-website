@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { TagData } from '@/utils/api';
 import TagSelectionPanel from '@/components/admin/shared/TagSelectionPanel';
 import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import { buildApiUrl } from '@/config/api';
 
 interface UploadedImage {
   file: File;
@@ -145,7 +146,7 @@ const GalleryUpload = () => {
       const token = localStorage.getItem('access_token');
       console.log('开始上传图片', index + 1);
 
-      const response = await fetch('http://localhost:1994/api/gallery/admin/upload', {
+      const response = await fetch(buildApiUrl('/gallery/admin/upload'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -275,7 +276,7 @@ const GalleryUpload = () => {
 
       console.log('发送图组创建请求:', photoGroupData);
 
-      const groupResponse = await fetch('http://localhost:1994/api/gallery/admin/groups', {
+      const groupResponse = await fetch(buildApiUrl('/gallery/admin/groups'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +315,7 @@ const GalleryUpload = () => {
 
         console.log(`添加图片 ${i + 1}/${successfulImages.length}:`, photoData);
 
-        const photoResponse = await fetch('http://localhost:1994/api/gallery/admin/photos', {
+        const photoResponse = await fetch(buildApiUrl('/gallery/admin/photos'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -334,7 +335,7 @@ const GalleryUpload = () => {
 
       console.log('=== 图组创建完成 ===');
       setToast({ message: '图组已提交审核！', type: 'success' });
-      setTimeout(() => navigate('/admin/gallery/list'), 1500);
+      setTimeout(() => navigate('/admin/manage/gallery'), 1500);
     } catch (error) {
       console.error('=== 提交失败 ===', error);
       setToast({ message: '提交失败: ' + (error instanceof Error ? error.message : '未知错误'), type: 'error' });
@@ -373,7 +374,7 @@ const GalleryUpload = () => {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate('/admin/gallery/list')}
+              onClick={() => navigate('/admin/manage/gallery')}
               className={cn(
                 "px-4 py-2 rounded-lg border transition-colors text-sm font-medium",
                 isLight

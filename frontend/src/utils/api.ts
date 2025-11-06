@@ -72,6 +72,8 @@ export interface ScheduleItemResponse {
   description?: string | null;
   image?: string | null;
   image_thumb?: string | null;
+  images?: string[] | null;  // 多张海报数组
+  images_thumb?: string[] | null;  // 多张缩略图数组
   source: 'legacy' | 'custom';
   review_status?: 'pending' | 'approved';
   is_published?: number;
@@ -1029,15 +1031,22 @@ export const adminScheduleAPI = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/admin/schedules/${scheduleId}`, {
+    const adminResponse = await fetch(`${API_BASE_URL}/admin/schedules/${scheduleId}`, {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error('获取行程详情失败');
+    if (adminResponse.ok) {
+      return adminResponse.json();
     }
 
-    return response.json();
+    if (adminResponse.status === 404) {
+      const fallbackResponse = await fetch(`${API_BASE_URL}/schedules/${scheduleId}`, { headers });
+      if (fallbackResponse.ok) {
+        return fallbackResponse.json();
+      }
+    }
+
+    throw new Error('获取行程详情失败');
   },
 
   // 更新行程
