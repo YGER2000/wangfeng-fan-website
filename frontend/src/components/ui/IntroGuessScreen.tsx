@@ -305,7 +305,7 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
                   className="h-full bg-gradient-to-r from-wangfeng-purple to-pink-500"
                   initial={{ width: '0%' }}
                   animate={{ width: `${(currentTime / 10) * 100}%` }}
-                  transition={{ type: 'linear' }}
+                  transition={{ duration: 0.1, ease: 'linear' }}
                 />
               </div>
             </div>
