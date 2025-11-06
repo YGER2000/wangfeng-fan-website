@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Pause, RotateCcw, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { Play, Pause, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { buildApiUrl } from '@/config/api';
+import GameResultModal from './GameResultModal';
 
 interface GameQuestion {
   type: string;
@@ -33,9 +34,10 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
   const [isCorrect, setIsCorrect] = useState(false);
   const [score, setScore] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showBubble, setShowBubble] = useState(false);
+  const [responseTimes, setResponseTimes] = useState<number[]>([]);  // 新增：记录每题的答题用时
 
   // 音频播放相关
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -43,6 +45,13 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
   const [currentTime, setCurrentTime] = useState(0);
   const [playStartTime, setPlayStartTime] = useState<number | null>(null);
   const [answerTime, setAnswerTime] = useState<number | null>(null);
+
+  // 新增：是否播放过前奏（答题后播放全曲）
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [isPlayingFullSong, setIsPlayingFullSong] = useState(false);
+
+  // 新增：游戏是否完成
+  const [gameCompleted, setGameCompleted] = useState(false);
 
   useEffect(() => {
     loadQuestion();
@@ -56,15 +65,17 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
 
-      // 10秒后自动停止
-      if (audio.currentTime >= 10) {
+      // 未答题时：10秒后自动停止（只播放前奏）
+      if (!hasAnswered && audio.currentTime >= 10) {
         audio.pause();
         setIsPlaying(false);
       }
+      // 已答题时：播放整首歌，正常结束
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
+      setIsPlayingFullSong(false);
     };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
@@ -74,17 +85,7 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, []);
-
-  // 气泡反馈自动消散
-  useEffect(() => {
-    if (showBubble) {
-      const timer = setTimeout(() => {
-        setShowBubble(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [showBubble]);
+  }, [hasAnswered]);
 
   const loadQuestion = async () => {
     try {
@@ -100,15 +101,20 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
       setQuestion(data);
       setSelectedAnswer(null);
       setShowResult(false);
+      setHasAnswered(false);
+      setIsPlayingFullSong(false);
       setCurrentTime(0);
       setPlayStartTime(null);
       setAnswerTime(null);
       setTotalQuestions(totalQuestions + 1);
 
-      // 重置音频
+      // 重置音频并预加载
       if (audioRef.current) {
+        audioRef.current.src = data.audio_url;
         audioRef.current.currentTime = 0;
         audioRef.current.pause();
+        // 预加载音频以消除播放延迟
+        audioRef.current.load();
       }
       setIsPlaying(false);
     } catch (err) {
@@ -125,8 +131,8 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      // 只允许从开始播放一次，设置起始时间
-      if (currentTime === 0) {
+      // 未答题时：从开始播放（前奏）
+      if (!hasAnswered && currentTime === 0) {
         setPlayStartTime(Date.now());
       }
       audioRef.current.play();
@@ -134,61 +140,66 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
     }
   };
 
-  const resetAudio = () => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = 0;
-    setCurrentTime(0);
-    setIsPlaying(false);
-    setPlayStartTime(null);
-    setAnswerTime(null);
-  };
-
   const handleAnswerSelect = (answer: string) => {
-    if (!showResult && !selectedAnswer) {
-      setSelectedAnswer(answer);
-      // 记录答题时间
-      if (playStartTime) {
-        setAnswerTime(Date.now() - playStartTime);
-      }
-    }
-  };
+    if (showResult || selectedAnswer) return;
 
-  const handleSubmitAnswer = () => {
-    if (!selectedAnswer || !question) return;
-
-    const correct = selectedAnswer === question.correct_answer;
+    setSelectedAnswer(answer);
+    const correct = answer === question?.correct_answer;
     setIsCorrect(correct);
     setShowResult(true);
-    setShowBubble(true);
 
-    // 暂停音频
+    // 记录答题时间
+    const timeTaken = playStartTime ? Date.now() - playStartTime : 0;
+    setAnswerTime(timeTaken);
+
+    // 暂停当前播放
     if (audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);
     }
 
-    // 计算分数：根据答题时间
+    // 计算答题用时（秒），错误和超时都算10秒
+    const responseTimeSeconds = correct
+      ? Math.min(timeTaken / 1000, 10)  // 正确答案：记录实际时间，最多10秒
+      : 10;  // 错误答案：算10秒
+
+    setResponseTimes([...responseTimes, responseTimeSeconds]);
+
+    // 计算分数
     if (correct) {
       let points = 10;
-      if (answerTime !== null) {
-        const secondsElapsed = answerTime / 1000;
-        // 前1秒：10分，10秒后：5分，中间线性递减
-        if (secondsElapsed <= 1) {
-          points = 10;
-        } else if (secondsElapsed >= 10) {
-          points = 5;
-        } else {
-          // 线性递减：10 - (secondsElapsed - 1) * 5 / 9
-          points = Math.round(10 - (secondsElapsed - 1) * 5 / 9);
-        }
+      const secondsElapsed = timeTaken / 1000;
+      if (secondsElapsed <= 1) {
+        points = 10;
+      } else if (secondsElapsed >= 10) {
+        points = 5;
+      } else {
+        points = Math.round(10 - (secondsElapsed - 1) * 5 / 9);
       }
       setScore(score + points);
+      setCorrectAnswers(correctAnswers + 1);
     }
+
+    // 标记已答题，准备播放全曲
+    setHasAnswered(true);
+    // 重置音频到开始
+    audioRef.current!.currentTime = 0;
+    // 自动开始播放整首歌
+    setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.play();
+        setIsPlaying(true);
+        setIsPlayingFullSong(true);
+      }
+    }, 500);
   };
 
   const handleNextQuestion = () => {
     if (totalQuestions < 10) {
       loadQuestion();
+    } else {
+      // 游戏完成，显示结果模态框
+      setGameCompleted(true);
     }
   };
 
@@ -236,14 +247,14 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
 
   return (
     <div className={cn(
-      'min-h-screen rounded-2xl p-8 transition-colors',
+      'min-h-screen p-6 transition-colors flex flex-col',
       isLight ? 'bg-gray-50' : 'bg-black/40 backdrop-blur-sm'
     )}>
-      {/* 标题和进度 */}
+      {/* 导航栏 */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className={cn(
-            'text-3xl font-bebas tracking-wider mb-2',
+            'text-4xl font-bebas tracking-wider mb-2',
             isLight ? 'text-gray-900' : 'text-white'
           )}>
             {gameTitle}
@@ -253,7 +264,7 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
           </p>
         </div>
         <button
-          onClick={handleBackClick}
+          onClick={onBack}
           className={cn(
             'px-6 py-3 rounded-full font-semibold transition-all',
             isLight
@@ -265,49 +276,107 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
         </button>
       </div>
 
-      {question && (
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-wangfeng-purple border-t-transparent mx-auto mb-4"></div>
+            <p className={isLight ? 'text-gray-600' : 'text-gray-400'}>加载游戏中...</p>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button
+              onClick={onBack}
+              className={cn(
+                'px-6 py-3 rounded-lg font-semibold transition-all',
+                isLight
+                  ? 'bg-gray-900 text-white hover:bg-gray-700'
+                  : 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
+              )}
+            >
+              返回
+            </button>
+          </div>
+        </div>
+      ) : question ? (
         <motion.div
           key={`question-${question.song_id}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="space-y-8"
+          className="flex-1 flex flex-col"
         >
-          {/* 音频播放器 */}
+          {/* 时间轴 - 替代播放按钮 */}
           <div className={cn(
-            'rounded-xl p-8 space-y-4',
+            'rounded-xl p-6 mb-8',
             isLight
               ? 'bg-white border border-gray-200'
               : 'bg-black/60 border border-wangfeng-purple/30'
           )}>
             <h2 className={cn(
-              'text-lg font-semibold',
+              'text-lg font-semibold mb-4',
               isLight ? 'text-gray-900' : 'text-white'
             )}>
               听前奏，猜歌名 🎵
             </h2>
 
-            {/* 进度条 */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm mb-2">
+            {/* 时间进度条 */}
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
                 <span className={isLight ? 'text-gray-600' : 'text-gray-400'}>
-                  {currentTime.toFixed(1)}s / 10s
-                </span>
-                <span className={isLight ? 'text-gray-600' : 'text-gray-400'}>
-                  {answerTime ? `答题用时: ${(answerTime / 1000).toFixed(1)}s` : '等待答题'}
+                  {currentTime.toFixed(1)}s / {hasAnswered ? '全曲' : '10s'}
                 </span>
               </div>
               <div className={cn(
-                'h-2 rounded-full overflow-hidden',
+                'h-3 rounded-full overflow-hidden',
                 isLight ? 'bg-gray-300' : 'bg-gray-700'
               )}>
                 <motion.div
                   className="h-full bg-gradient-to-r from-wangfeng-purple to-pink-500"
                   initial={{ width: '0%' }}
-                  animate={{ width: `${(currentTime / 10) * 100}%` }}
+                  animate={{ width: hasAnswered ? `${(currentTime / 200) * 100}%` : `${(currentTime / 10) * 100}%` }}
                   transition={{ duration: 0.1, ease: 'linear' }}
                 />
               </div>
+            </div>
+
+            {/* 状态文字 - 统一框 */}
+            <div className={cn(
+              'p-4 rounded-lg text-center font-semibold min-h-20 flex items-center justify-center',
+              showResult
+                ? isCorrect
+                  ? 'bg-green-500/20 text-green-600 border border-green-500'
+                  : 'bg-red-500/20 text-red-600 border border-red-500'
+                : isLight
+                ? 'bg-gray-100 text-gray-700'
+                : 'bg-gray-700 text-gray-300'
+            )}>
+              {!showResult ? (
+                // 未答题状态：显示当前耗时或正在播放整首歌
+                <span>
+                  {isPlayingFullSong ? '🎵 正在播放整首歌...' : `⏱️ 当前耗时: ${currentTime.toFixed(1)}s`}
+                </span>
+              ) : (
+                // 已答题状态：显示答题结果
+                <div className="text-center w-full">
+                  <div className="text-lg mb-1">
+                    {isCorrect ? '✓ 答对了！' : '✗ 答错了'}
+                  </div>
+                  <div className="text-sm leading-tight">
+                    {isCorrect ? (
+                      <>
+                        用时: {(answerTime! / 1000).toFixed(1)}s ·
+                        <span className="text-green-400 ml-1">
+                          + {10 - Math.max(0, Math.round((answerTime! / 1000 - 1) * 5 / 9))} 分
+                        </span>
+                      </>
+                    ) : (
+                      `正确答案: ${question.correct_answer}`
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 隐藏的音频元素 */}
@@ -315,187 +384,106 @@ const IntroGuessScreen = ({ gameId, gameTitle, difficulty, onBack }: IntroGuessS
               ref={audioRef}
               src={question.audio_url}
               crossOrigin="anonymous"
+              preload="auto"
               onError={() => setError('音频加载失败')}
             />
-
-            {/* 控制按钮 */}
-            <div className="flex gap-4 justify-center">
-              <button
-                onClick={playAudio}
-                disabled={showResult}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all',
-                  showResult
-                    ? 'opacity-50 cursor-not-allowed'
-                    : isLight
-                    ? 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                    : 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                )}
-              >
-                {isPlaying ? (
-                  <>
-                    <Pause className="w-4 h-4" />
-                    <span>暂停</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    <span>播放</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={resetAudio}
-                disabled={showResult}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all',
-                  showResult
-                    ? 'opacity-50 cursor-not-allowed'
-                    : isLight
-                    ? 'bg-gray-300 text-gray-900 hover:bg-gray-400'
-                    : 'bg-gray-700 text-white hover:bg-gray-600'
-                )}
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>重置</span>
-              </button>
-            </div>
           </div>
 
-          {/* 选项 */}
-          <div className="space-y-3">
-            <h3 className={cn(
-              'text-sm font-semibold',
-              isLight ? 'text-gray-600' : 'text-gray-400'
-            )}>
-              选择正确的歌名：
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {question.options.map((option, index) => {
-                const isSelected = selectedAnswer === option;
-                const isCorrectOption = option === question.correct_answer;
-                const showCorrect = showResult && isCorrectOption;
-                const showIncorrect = showResult && isSelected && !isCorrectOption;
+          {/* 选项 - 纵向排列 */}
+          <div className="space-y-3 mb-8">
+            {question.options.map((option, index) => {
+              const isSelected = selectedAnswer === option;
+              const isCorrectOption = option === question.correct_answer;
+              const showCorrect = showResult && isCorrectOption;
+              const showIncorrect = showResult && isSelected && !isCorrectOption;
 
-                return (
-                  <motion.button
-                    key={index}
-                    onClick={() => handleAnswerSelect(option)}
-                    disabled={showResult}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={cn(
-                      'p-4 rounded-lg text-left font-semibold transition-all border-2 flex items-center gap-3',
-                      showCorrect
-                        ? 'bg-green-500/20 border-green-500 text-green-600'
-                        : showIncorrect
-                        ? 'bg-red-500/20 border-red-500 text-red-600'
-                        : isSelected
-                        ? isLight
-                          ? 'bg-wangfeng-purple/20 border-wangfeng-purple text-gray-900'
-                          : 'bg-wangfeng-purple/20 border-wangfeng-purple text-white'
-                        : isLight
-                        ? 'bg-white border-gray-300 text-gray-900 hover:border-wangfeng-purple'
-                        : 'bg-black/30 border-gray-600 text-gray-300 hover:border-wangfeng-purple'
-                    )}
-                  >
-                    {showCorrect ? (
-                      <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                    ) : showIncorrect ? (
-                      <XCircle className="w-5 h-5 flex-shrink-0" />
-                    ) : null}
-                    <span>{option}</span>
-                  </motion.button>
-                );
-              })}
-            </div>
+              return (
+                <motion.button
+                  key={index}
+                  onClick={() => handleAnswerSelect(option)}
+                  disabled={showResult}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className={cn(
+                    'w-full p-4 rounded-lg text-center font-semibold transition-all border-2 flex items-center justify-center gap-3',
+                    showCorrect
+                      ? 'bg-green-500/20 border-green-500 text-green-600'
+                      : showIncorrect
+                      ? 'bg-red-500/20 border-red-500 text-red-600'
+                      : isSelected
+                      ? isLight
+                        ? 'bg-wangfeng-purple/20 border-wangfeng-purple text-gray-900'
+                        : 'bg-wangfeng-purple/20 border-wangfeng-purple text-white'
+                      : isLight
+                      ? 'bg-white border-gray-300 text-gray-900 hover:border-wangfeng-purple hover:bg-gray-50'
+                      : 'bg-black/30 border-gray-600 text-gray-300 hover:border-wangfeng-purple hover:bg-black/40'
+                  )}
+                >
+                  {showCorrect ? (
+                    <CheckCircle className="w-5 h-5 flex-shrink-0" />
+                  ) : showIncorrect ? (
+                    <XCircle className="w-5 h-5 flex-shrink-0" />
+                  ) : null}
+                  <span className="flex-1 text-center">{option}</span>
+                </motion.button>
+              );
+            })}
           </div>
 
-          {/* 提交按钮 */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          {/* 底部按钮 */}
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
+            onClick={() => {
+              if (!showResult) {
+                playAudio();
+              } else {
+                handleNextQuestion();
+              }
+            }}
+            disabled={false}
+            className={cn(
+              'w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2',
+              isLight
+                ? 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
+                : 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
+            )}
           >
             {!showResult ? (
-              <button
-                onClick={handleSubmitAnswer}
-                disabled={!selectedAnswer}
-                className={cn(
-                  'w-full py-4 rounded-lg font-bold text-lg transition-all',
-                  selectedAnswer
-                    ? isLight
-                      ? 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                      : 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                    : 'opacity-50 cursor-not-allowed bg-gray-500 text-white'
-                )}
-              >
-                提交答案
-              </button>
+              <>
+                <Play className="w-5 h-5" />
+                {isPlaying ? '暂停' : '开始播放'}
+              </>
+            ) : totalQuestions >= 10 ? (
+              `完成游戏 (总分: ${score})`
             ) : (
-              <div className="space-y-4">
-                <div className={cn(
-                  'p-4 rounded-lg text-center text-lg font-bold',
-                  isCorrect
-                    ? 'bg-green-500/20 text-green-600 border border-green-500'
-                    : 'bg-red-500/20 text-red-600 border border-red-500'
-                )}>
-                  {isCorrect ? '✓ 答对了！' : '✗ 答错了'}
-                  {isCorrect && answerTime && (
-                    <p className="text-sm mt-2">
-                      答题用时: {(answerTime / 1000).toFixed(1)}秒
-                    </p>
-                  )}
-                </div>
-                {totalQuestions < 10 ? (
-                  <button
-                    onClick={handleNextQuestion}
-                    className={cn(
-                      'w-full py-4 rounded-lg font-bold text-lg transition-all',
-                      isLight
-                        ? 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                        : 'bg-wangfeng-purple text-white hover:bg-wangfeng-purple/80'
-                    )}
-                  >
-                    下一题
-                  </button>
-                ) : (
-                  <button
-                    onClick={onBack}
-                    className={cn(
-                      'w-full py-4 rounded-lg font-bold text-lg transition-all',
-                      isLight
-                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    )}
-                  >
-                    完成游戏 (总分: {score})
-                  </button>
-                )}
-              </div>
+              <>
+                <Play className="w-5 h-5" />
+                下一题
+              </>
             )}
-          </motion.div>
+          </motion.button>
         </motion.div>
-      )}
+      ) : null}
 
-      {/* 气泡反馈 */}
+      {/* 游戏完成时显示结果模态框 */}
       <AnimatePresence>
-        {showBubble && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50"
-          >
-            <div className={cn(
-              'text-6xl font-bold',
-              isCorrect ? 'text-green-500' : 'text-red-500'
-            )}>
-              {isCorrect ? '✓' : '✗'}
-            </div>
-          </motion.div>
+        {gameCompleted && (
+          <GameResultModal
+            gameId={gameId}
+            gameTitle={gameTitle}
+            score={score}
+            totalQuestions={totalQuestions}
+            correctAnswers={correctAnswers}
+            difficulty={difficulty}
+            responseTimes={responseTimes}
+            onClose={() => {
+              setGameCompleted(false);
+              onBack();
+            }}
+          />
         )}
       </AnimatePresence>
     </div>

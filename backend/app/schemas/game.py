@@ -88,11 +88,16 @@ class GameScoreRequest(BaseModel):
     score: int
     total_questions: int
     correct_answers: int
+    player_name: str  # 新增：玩家名字
+    difficulty: str = "easy"  # 新增：难度
+    avg_response_time: float  # 新增：平均答题用时（秒）
 
 
 class GameScoreResponse(BaseModel):
     id: str
     game_id: str
+    player_name: Optional[str] = None  # 新增
+    difficulty: Optional[str] = None  # 新增
     score: int
     total_questions: int
     correct_answers: int
@@ -100,3 +105,30 @@ class GameScoreResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class LeaderboardEntry(BaseModel):
+    """排行榜条目"""
+    rank: int
+    player_name: str
+    score: int
+    accuracy: float  # 正确率百分比
+    avg_response_time: Optional[float] = None  # 新增：平均答题用时（秒）
+    created_at: datetime
+
+
+class LeaderboardResponse(BaseModel):
+    """排行榜响应"""
+    game_id: str
+    difficulty: str
+    entries: List[LeaderboardEntry]
+    player_rank: Optional[int] = None
+    player_entry: Optional[LeaderboardEntry] = None
+
+
+class SubmitScoreResponse(BaseModel):
+    """提交分数响应"""
+    score_id: str
+    rank: int
+    accuracy: float
+    leaderboard: List[LeaderboardEntry]  # 前10名排行榜

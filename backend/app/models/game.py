@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Enum as SQLEnum
+from sqlalchemy import Column, String, Text, DateTime, Boolean, Integer, Float, Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
 import enum
@@ -77,9 +77,12 @@ class GameScore(Base):
 
     id = Column(String(36), primary_key=True, index=True)
     game_id = Column(String(36), nullable=False, index=True)
+    player_name = Column(String(100), nullable=True)  # 玩家名字，允许 NULL 保持向后兼容
+    difficulty = Column(String(20), nullable=True)  # 难度：easy/hard
     user_ip = Column(String(45), nullable=True)
     user_id = Column(String(36), nullable=True, index=True)
     score = Column(Integer, default=0)
     total_questions = Column(Integer, default=0)
     correct_answers = Column(Integer, default=0)
+    avg_response_time = Column(Float, nullable=True)  # 新增：平均答题用时（秒），错误和超时算10秒
     created_at = Column(DateTime, default=datetime.utcnow)

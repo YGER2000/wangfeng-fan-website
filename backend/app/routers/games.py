@@ -11,7 +11,8 @@ from ..schemas.game import (
     GameResponse, GameCreate,
     PollResponse, PollCreate, PollUpdate,
     GameScoreRequest, GameScoreResponse,
-    PollVoteRequest
+    PollVoteRequest,
+    LeaderboardEntry, LeaderboardResponse, SubmitScoreResponse
 )
 from ..services.game_service import lyrics_guesser, fill_lyrics, song_matcher, intro_guesser
 
@@ -271,3 +272,128 @@ def _calculate_percentages(options: List[PollOption]) -> List[Dict[str, Any]]:
         }
         for opt in sorted(options, key=lambda x: x.sort_order)
     ]
+
+
+# ==================== 排行榜相关 API ====================
+
+@router.post("/games/{game_id}/submit-score")
+def submit_game_score(
+    game_id: str,
+    score_request: GameScoreRequest,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """
+    提交游戏成绩（包含玩家名字和难度）
+    返回排名和前10名排行榜
+    """
+    from datetime import datetime, timezone
+
+    user_ip = request.client.host if request.client else None
+
+    # 创建成绩记录
+    game_score = GameScore(
+        id=str(uuid.uuid4()),
+        game_id=game_id,
+        player_name=score_request.player_name,
+        difficulty=score_request.difficulty,
+        user_ip=user_ip,
+        score=score_request.score,
+        total_questions=score_request.total_questions,
+        correct_answers=score_request.correct_answers,
+        avg_response_time=score_request.avg_response_time
+    )
+    db.add(game_score)
+    db.commit()
+    db.refresh(game_score)
+
+    # 查询该难度下比当前分数高的记录数（用于计算排名）
+    rank = db.query(GameScore).filter(
+        GameScore.game_id == game_id,
+        GameScore.difficulty == score_request.difficulty,
+        GameScore.score > score_request.score
+    ).count() + 1
+
+    # 查询该难度下前10名排行榜
+    top_10 = db.query(GameScore).filter(
+        GameScore.game_id == game_id,
+        GameScore.difficulty == score_request.difficulty
+    ).order_by(GameScore.score.desc(), GameScore.created_at.asc()).limit(10).all()
+
+    # 将 UTC 时间转换为北京时间
+    def format_time(dt):
+        """将 UTC 时间转换为北京时间"""
+        bj_tz = timezone(datetime.utcnow().astimezone().utcoffset())
+        # 简单方法：直接加8小时
+        from datetime import timedelta
+        bj_time = dt + timedelta(hours=8)
+        return bj_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    # 构建排行榜
+    leaderboard = [
+        {
+            "rank": idx + 1,
+            "player_name": entry.player_name or "匿名玩家",
+            "score": entry.score,
+            "accuracy": round(entry.correct_answers / entry.total_questions * 100, 1) if entry.total_questions > 0 else 0,
+            "avg_response_time": round(entry.avg_response_time, 1) if entry.avg_response_time else None,
+            "created_at": format_time(entry.created_at)
+        }
+        for idx, entry in enumerate(top_10)
+    ]
+
+    accuracy = round(score_request.correct_answers / score_request.total_questions * 100, 1) if score_request.total_questions > 0 else 0
+
+    return {
+        "score_id": game_score.id,
+        "rank": rank,
+        "accuracy": accuracy,
+        "leaderboard": leaderboard
+    }
+
+
+@router.get("/games/{game_id}/leaderboard")
+def get_leaderboard(
+    game_id: str,
+    difficulty: str = "easy",
+    limit: int = 100,
+    db: Session = Depends(get_db)
+):
+    """
+    获取游戏排行榜（按分数倒序，相同分数按提交时间排序）
+    支持按难度筛选
+    """
+    from datetime import datetime, timedelta
+
+    # 查询该难度下的排行榜
+    scores = db.query(GameScore).filter(
+        GameScore.game_id == game_id,
+        GameScore.difficulty == difficulty
+    ).order_by(
+        GameScore.score.desc(),
+        GameScore.created_at.asc()
+    ).limit(limit).all()
+
+    # 将 UTC 时间转换为北京时间
+    def format_time(dt):
+        """将 UTC 时间转换为北京时间"""
+        bj_time = dt + timedelta(hours=8)
+        return bj_time.strftime('%Y-%m-%d %H:%M:%S')
+
+    entries = [
+        {
+            "rank": idx + 1,
+            "player_name": entry.player_name or "匿名玩家",
+            "score": entry.score,
+            "accuracy": round(entry.correct_answers / entry.total_questions * 100, 1) if entry.total_questions > 0 else 0,
+            "avg_response_time": round(entry.avg_response_time, 1) if entry.avg_response_time else None,
+            "created_at": format_time(entry.created_at)
+        }
+        for idx, entry in enumerate(scores)
+    ]
+
+    return {
+        "game_id": game_id,
+        "difficulty": difficulty,
+        "entries": entries
+    }
