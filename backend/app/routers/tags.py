@@ -253,7 +253,6 @@ def batch_create_tags(
 @router.get("/by-name/{tag_name}/contents", summary="根据标签名获取所有相关内容")
 def get_contents_by_tag_name(
     tag_name: str,
-    skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
@@ -272,6 +271,7 @@ def get_contents_by_tag_name(
     from ..models.article import Article
     from ..models.video import Video
     from ..models.gallery_db import PhotoGroup
+    from ..models.schedule_db import Schedule
 
     # 查找标签(按显示名称匹配)
     tag = db.query(Tag).filter(Tag.name == tag_name).first()
@@ -280,7 +280,8 @@ def get_contents_by_tag_name(
             "tag_name": tag_name,
             "articles": [],
             "videos": [],
-            "galleries": []
+            "galleries": [],
+            "schedules": []
         }
 
     # 获取所有关联的内容ID
@@ -290,6 +291,7 @@ def get_contents_by_tag_name(
     article_ids = []
     video_ids = []
     gallery_ids = []
+    schedule_ids = []
 
     for ct in content_tags:
         if ct.content_type == "article":
@@ -298,6 +300,8 @@ def get_contents_by_tag_name(
             video_ids.append(ct.content_id)
         elif ct.content_type == "gallery":
             gallery_ids.append(ct.content_id)
+        elif ct.content_type == "schedule":
+            schedule_ids.append(ct.content_id)
 
     # 查询文章
     articles = []
@@ -306,7 +310,7 @@ def get_contents_by_tag_name(
             Article.id.in_(article_ids),
             Article.is_deleted == False,
             Article.is_published == True
-        ).offset(skip).limit(limit).all()
+        ).limit(limit).all()
 
         articles = [{
             "id": str(a.id),
@@ -326,20 +330,19 @@ def get_contents_by_tag_name(
     if video_ids:
         videos_query = db.query(Video).filter(
             Video.id.in_(video_ids),
-            Video.is_deleted == False,
-            Video.is_published == True
-        ).offset(skip).limit(limit).all()
+            Video.is_published == 1
+        ).limit(limit).all()
 
         videos = [{
             "id": str(v.id),
             "title": v.title,
             "description": v.description,
             "cover_url": v.cover_url,
-            "video_url": v.video_url,
+            "video_url": v.bvid,
             "author": v.author,
             "category": v.category,
             "created_at": v.created_at.isoformat() if v.created_at else None,
-            "view_count": v.view_count or 0
+            "view_count": 0
         } for v in videos_query]
 
     # 查询相册
@@ -349,7 +352,7 @@ def get_contents_by_tag_name(
             PhotoGroup.id.in_(gallery_ids),
             PhotoGroup.is_deleted == False,
             PhotoGroup.is_published == True
-        ).offset(skip).limit(limit).all()
+        ).limit(limit).all()
 
         from ..models.gallery_db import Photo
         galleries = []
@@ -361,7 +364,8 @@ def get_contents_by_tag_name(
 
             galleries.append({
                 "id": str(g.id),
-                "name": g.name,
+                "title": g.title,
+                "name": g.title,
                 "description": g.description,
                 "cover_image_url": g.cover_image_url,
                 "cover_image_thumb_url": g.cover_image_thumb_url,
@@ -370,9 +374,42 @@ def get_contents_by_tag_name(
                 "photo_count": photo_count
             })
 
+    # 查询行程
+    schedules = []
+    if schedule_ids:
+        normalized_ids = []
+        for sid in schedule_ids:
+            try:
+                normalized_ids.append(int(sid))
+            except (TypeError, ValueError):
+                pass
+
+        if normalized_ids:
+            schedules_query = db.query(Schedule).filter(
+                Schedule.id.in_(normalized_ids),
+                Schedule.is_published == 1,
+                Schedule.review_status == 'approved'
+            ).order_by(
+                Schedule.date.desc()
+            ).limit(limit).all()
+
+            schedules = [{
+                "id": schedule.id,
+                "theme": schedule.theme,
+                "date": schedule.date,
+                "city": schedule.city,
+                "venue": schedule.venue,
+                "category": schedule.category,
+                "image": schedule.image,
+                "image_thumb": schedule.image_thumb,
+                "description": schedule.description,
+                "created_at": schedule.created_at.isoformat() if schedule.created_at else None
+            } for schedule in schedules_query]
+
     return {
         "tag_name": tag_name,
         "articles": articles,
         "videos": videos,
-        "galleries": galleries
+        "galleries": galleries,
+        "schedules": schedules
     }
