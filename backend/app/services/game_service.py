@@ -265,3 +265,115 @@ class SongMatcher:
 lyrics_guesser = LyricsGuesser()
 fill_lyrics = FillLyrics()
 song_matcher = SongMatcher()
+
+
+class IntroGuesser:
+    """听前奏猜歌名游戏"""
+
+    def __init__(self, albums_file_path: str = "frontend/public/data/albums.json"):
+        self.albums_file_path = albums_file_path
+        self.all_songs_data = self._load_songs(album_type=None)  # 所有歌曲
+        self.album_songs_data = self._load_songs(album_type='album')  # 只有 album 类型
+
+    def _load_songs(self, album_type: str | None = None) -> List[Dict[str, Any]]:
+        """从 albums.json 加载歌曲数据
+
+        Args:
+            album_type: 'album' 只加载 album 类型，None 加载所有类型
+        """
+        try:
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            file_path = os.path.join(project_root, self.albums_file_path)
+
+            if not os.path.exists(file_path):
+                print(f"文件不存在: {file_path}")
+                return []
+
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # 将所有歌曲扁平化，只保留有 filePath 的歌曲
+            songs = []
+            for album in data.get('albums', []):
+                # 根据 album_type 过滤
+                if album_type and album.get('type') != album_type:
+                    continue
+
+                for song in album.get('songs', []):
+                    # 确保歌曲有完整的信息
+                    if 'filePath' in song and song['filePath']:
+                        songs.append({
+                            'id': song.get('id'),
+                            'title': song.get('title'),
+                            'album': album.get('name'),
+                            'filePath': song.get('filePath'),
+                            'duration': song.get('duration', 0)
+                        })
+
+            mode_label = f"({album_type} 类型)" if album_type else "(所有类型)"
+            print(f"成功加载 {len(songs)} 首歌曲用于前奏游戏 {mode_label}")
+            return songs
+        except Exception as e:
+            print(f"加载专辑文件失败: {e}")
+            return []
+
+    def generate_question(self, difficulty: str = 'easy') -> Optional[Dict[str, Any]]:
+        """生成一个前奏猜歌名问题
+
+        Args:
+            difficulty: 'easy' 简单模式（仅 album），'hard' 困难模式（所有歌曲）
+        """
+        # 根据难度选择歌曲库
+        if difficulty == 'easy':
+            songs_data = self.album_songs_data
+            display_mode = 'easy'
+        else:
+            songs_data = self.all_songs_data
+            display_mode = 'hard'
+
+        if not songs_data or len(songs_data) < 4:
+            return None
+
+        # 随机选择一首歌作为正确答案
+        correct_song = random.choice(songs_data)
+
+        # 获取4个选项（包括正确答案）
+        options = self._get_options(correct_song['title'], 4, songs_data)
+
+        return {
+            'type': 'intro_guesser',
+            'song_title': correct_song['title'],
+            'audio_url': correct_song['filePath'],
+            'duration': 10,  # 前奏播放 10 秒
+            'options': options,
+            'correct_answer': correct_song['title'],
+            'song_id': correct_song['id'],
+            'album': correct_song['album'],
+            'difficulty': display_mode
+        }
+
+    def _get_options(self, correct_answer: str, count: int, songs_data: List[Dict[str, Any]]) -> List[str]:
+        """获取选项（包括正确答案）"""
+        if not songs_data:
+            return [correct_answer]
+
+        options = {correct_answer}
+        all_titles = {song['title'] for song in songs_data}
+        all_titles.discard(correct_answer)
+
+        # 添加随机的错误选项
+        if len(all_titles) >= count - 1:
+            wrong_options = random.sample(list(all_titles), count - 1)
+        else:
+            wrong_options = list(all_titles)
+
+        options.update(wrong_options)
+
+        # 随机打乱顺序
+        options_list = list(options)
+        random.shuffle(options_list)
+        return options_list
+
+
+# 创建前奏游戏实例
+intro_guesser = IntroGuesser()

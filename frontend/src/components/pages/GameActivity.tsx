@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import GameCard from '@/components/ui/GameCard';
 import PollCard from '@/components/ui/PollCard';
 import GameScreen from '@/components/ui/GameScreen';
+import IntroGuessScreen from '@/components/ui/IntroGuessScreen';
+import { buildApiUrl } from '@/config/api';
 
 interface PollData {
   id: string;
@@ -27,6 +29,7 @@ const GameActivity = () => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
   const [activeGameId, setActiveGameId] = useState<string | null>(null);
+  const [activeGameDifficulty, setActiveGameDifficulty] = useState<'easy' | 'hard'>('easy');
   const [polls, setPolls] = useState<PollData[]>([]);
   const [pollsLoading, setPolsLoading] = useState(true);
   const [userVotes, setUserVotes] = useState<Set<string>>(new Set());
@@ -54,6 +57,24 @@ const GameActivity = () => {
       icon: '🎸',
       difficulty: 'medium' as const,
     },
+    {
+      id: 'intro_guesser_easy',
+      title: '听前奏猜歌名 简单',
+      description: '听10秒官方专辑歌曲前奏，快速识别歌曲。越快答题分数越高！',
+      icon: '🎧',
+      difficulty: 'easy' as const,
+      gameId: 'intro_guesser',
+      gameDifficulty: 'easy',
+    },
+    {
+      id: 'intro_guesser_hard',
+      title: '听前奏猜歌名 困难',
+      description: '听10秒所有歌曲前奏（含Live/新编等），考验你的音乐记忆！',
+      icon: '🎧',
+      difficulty: 'hard' as const,
+      gameId: 'intro_guesser',
+      gameDifficulty: 'hard',
+    },
   ];
 
   // 加载投票列表
@@ -64,7 +85,7 @@ const GameActivity = () => {
   const loadPolls = async () => {
     try {
       setPolsLoading(true);
-      const response = await fetch('http://localhost:1994/api/polls');
+      const response = await fetch(buildApiUrl('/polls'));
       if (response.ok) {
         const data = await response.json();
         setPolls(data || []);
@@ -76,17 +97,21 @@ const GameActivity = () => {
     }
   };
 
-  const handleGamePlay = (gameId: string) => {
+  const handleGamePlay = (gameId: string, gameDifficulty?: 'easy' | 'hard') => {
     setActiveGameId(gameId);
+    if (gameDifficulty) {
+      setActiveGameDifficulty(gameDifficulty);
+    }
   };
 
   const handleBackFromGame = () => {
     setActiveGameId(null);
+    setActiveGameDifficulty('easy');
   };
 
   const handleVote = async (pollId: string, optionId: string) => {
     try {
-      const response = await fetch(`http://localhost:1994/api/polls/${pollId}/vote`, {
+      const response = await fetch(buildApiUrl(`/polls/${pollId}/vote`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +138,24 @@ const GameActivity = () => {
 
   // 如果正在玩游戏，显示游戏屏幕
   if (activeGameId) {
-    const game = games.find(g => g.id === activeGameId);
+    const game = games.find(g => g.id === activeGameId || (g as any).gameId === activeGameId);
+
+    // 不同游戏使用不同的屏幕组件
+    if (activeGameId === 'intro_guesser') {
+      return (
+        <div className="min-h-screen bg-transparent text-white py-20">
+          <div className="container mx-auto px-4">
+            <IntroGuessScreen
+              gameId={activeGameId}
+              gameTitle={game?.title || '游戏'}
+              difficulty={activeGameDifficulty}
+              onBack={handleBackFromGame}
+            />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-transparent text-white py-20">
         <div className="container mx-auto px-4">
@@ -181,7 +223,7 @@ const GameActivity = () => {
             </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {games.map((game, index) => (
               <motion.div
                 key={game.id}
@@ -196,6 +238,8 @@ const GameActivity = () => {
                   icon={game.icon}
                   difficulty={game.difficulty}
                   onPlay={handleGamePlay}
+                  gameId={(game as any).gameId}
+                  gameDifficulty={(game as any).gameDifficulty}
                 />
               </motion.div>
             ))}

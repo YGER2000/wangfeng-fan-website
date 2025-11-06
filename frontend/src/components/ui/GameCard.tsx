@@ -10,7 +10,9 @@ interface GameCardProps {
   icon: string;
   difficulty: 'easy' | 'medium' | 'hard';
   playCount?: number;
-  onPlay: (gameId: string) => void;
+  onPlay: (gameId: string, gameDifficulty?: 'easy' | 'hard') => void;
+  gameId?: string;
+  gameDifficulty?: 'easy' | 'hard';
 }
 
 const GameCard = ({
@@ -21,6 +23,8 @@ const GameCard = ({
   difficulty,
   playCount = 0,
   onPlay,
+  gameId,
+  gameDifficulty,
 }: GameCardProps) => {
   const { theme } = useTheme();
   const isLight = theme === 'white';
@@ -37,6 +41,14 @@ const GameCard = ({
     hard: 'bg-red-500/20 text-red-400',
   };
 
+  const handleClick = () => {
+    if (gameId) {
+      onPlay(gameId, gameDifficulty);
+    } else {
+      onPlay(id);
+    }
+  };
+
   return (
     <motion.div
       whileHover={{ scale: 1.05, y: -5 }}
@@ -47,7 +59,7 @@ const GameCard = ({
           ? 'bg-white border-gray-200 hover:border-wangfeng-purple hover:shadow-lg'
           : 'bg-black/40 border-wangfeng-purple/30 hover:bg-wangfeng-purple/10 hover:border-wangfeng-purple/50'
       )}
-      onClick={() => onPlay(id)}
+      onClick={handleClick}
     >
       {/* 背景渐变 */}
       <div className="absolute inset-0 bg-gradient-to-br from-wangfeng-purple/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

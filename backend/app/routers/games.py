@@ -13,7 +13,7 @@ from ..schemas.game import (
     GameScoreRequest, GameScoreResponse,
     PollVoteRequest
 )
-from ..services.game_service import lyrics_guesser, fill_lyrics, song_matcher
+from ..services.game_service import lyrics_guesser, fill_lyrics, song_matcher, intro_guesser
 
 router = APIRouter(prefix="/api", tags=["games"])
 
@@ -37,13 +37,14 @@ def get_game(game_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/games/{game_id}/question")
-def get_game_question(game_id: str, db: Session = Depends(get_db)):
+def get_game_question(game_id: str, difficulty: str = 'easy', db: Session = Depends(get_db)):
     """获取游戏问题
 
     game_id 支持:
     - "lyrics_guesser": 歌词猜歌名
     - "fill_lyrics": 填词游戏
     - "song_matcher": 歌曲配对
+    - "intro_guesser": 听前奏猜歌名 (支持 difficulty 参数: 'easy' 简单模式, 'hard' 困难模式)
     """
     if game_id == "lyrics_guesser":
         question = lyrics_guesser.generate_question()
@@ -51,6 +52,8 @@ def get_game_question(game_id: str, db: Session = Depends(get_db)):
         question = fill_lyrics.generate_question()
     elif game_id == "song_matcher":
         question = song_matcher.generate_question()
+    elif game_id == "intro_guesser":
+        question = intro_guesser.generate_question(difficulty=difficulty)
     else:
         raise HTTPException(status_code=404, detail="游戏不存在")
 
