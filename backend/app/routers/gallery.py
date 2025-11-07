@@ -314,7 +314,16 @@ async def admin_upload_image(
     - 如果不提供这些参数，将使用默认的 UUID 命名
     """
     # 验证文件类型
-    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    allowed_types = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+        "image/heic",
+        "image/heif",
+    ]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,

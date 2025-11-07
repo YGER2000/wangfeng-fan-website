@@ -20,7 +20,15 @@ async def upload_image(file: UploadFile = File(...)):
     - 返回图片访问 URL
     """
     # 检查文件类型
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "image/webp"]
+allowed_types = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "image/bmp",
+]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,

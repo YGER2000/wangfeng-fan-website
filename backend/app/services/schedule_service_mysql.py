@@ -1,4 +1,5 @@
 """Schedule Service with MySQL Storage (OSS-based)"""
+import io
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -6,8 +7,16 @@ import tempfile
 import json
 
 from fastapi import UploadFile
+from PIL import Image
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:
+    register_heif_opener = None
 
 from ..core.config import get_settings
 from ..models.schedule_db import Schedule
@@ -133,8 +142,21 @@ class ScheduleServiceMySQL:
             return self.default_poster_url or "", self.default_poster_url
 
         extension = Path(upload.filename or '').suffix.lower() or '.jpg'
-        if extension not in ('.jpg', '.jpeg', '.png', '.webp'):
+        heif_extensions = {'.heic', '.heif'}
+        allowed_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+        allowed_extensions |= heif_extensions
+        if extension not in allowed_extensions:
             extension = '.jpg'
+
+        if extension in heif_extensions and register_heif_opener is not None:
+            try:
+                image = Image.open(io.BytesIO(file_bytes))
+                buffer = io.BytesIO()
+                image.convert('RGB').save(buffer, format='JPEG', quality=95)
+                file_bytes = buffer.getvalue()
+                extension = '.jpg'
+            except Exception as exc:
+                print(f"⚠️ HEIC 转换失败: {exc}，将按原格式上传")
 
         mime_type = upload.content_type or 'image/jpeg'
         if extension in ('.jpg', '.jpeg'):
@@ -143,6 +165,12 @@ class ScheduleServiceMySQL:
             mime_type = 'image/png'
         elif extension == '.webp':
             mime_type = 'image/webp'
+        elif extension == '.gif':
+            mime_type = 'image/gif'
+        elif extension == '.bmp':
+            mime_type = 'image/bmp'
+        elif extension in heif_extensions:
+            mime_type = 'image/heic'
 
         object_prefix = self._build_object_prefix(category, date, theme, schedule_id)
         # 对于多张海报，在文件名中加上索引号 (poster-0, poster-1, poster-2, ...)

@@ -65,7 +65,7 @@ def _resolve_avatar_urls(avatar_value: Optional[str]) -> tuple[str, str]:
     # 兼容旧的相对路径（images/avatars/xxx.jpg）
     relative_path = avatar_value.lstrip('/')
     thumb_path = relative_path
-    for ext in ('.jpg', '.jpeg', '.png', '.webp'):
+    for ext in ('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'):
         if relative_path.lower().endswith(ext):
             thumb_path = f"{relative_path[:-len(ext)]}-thumb.jpg"
             break
@@ -80,7 +80,7 @@ def save_avatar(user_id: int, upload: UploadFile) -> tuple[str, str, str, str]:
 
     try:
         extension = Path(upload.filename or '').suffix.lower()
-        if extension not in {'.jpg', '.jpeg', '.png', '.webp'}:
+        if extension not in {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}:
             extension = '.jpg'
 
         original_temp_path = temp_dir / f"original{extension}"

@@ -234,7 +234,16 @@ async def upload_video_cover(
     - 返回 3 个尺寸的 URL
     """
     # 验证文件类型
-    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+    allowed_types = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+        "image/bmp",
+        "image/heic",
+        "image/heif",
+    ]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
