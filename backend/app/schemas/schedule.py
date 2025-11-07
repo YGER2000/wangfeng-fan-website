@@ -7,9 +7,12 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ScheduleCategory(str, Enum):
     concert = '演唱会'
+    livehouse = 'livehouse'
     festival = '音乐节'
-    commercial = '商演'
-    variety = '综艺活动'
+    commercial = '商演拼盘'
+    variety = '综艺晚会'
+    livestream = '直播'
+    business = '商业活动'
     other = '其他'
 
 

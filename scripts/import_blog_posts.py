@@ -26,9 +26,10 @@ POSTS_DIR = ROOT_DIR / "博客文章_增强版"
 
 DB_CONFIG = {
     "host": os.environ.get("IMPORT_DB_HOST", "47.111.177.153"),
-    "user": "appuser",
-    "password": "1q3.102w",
-    "database": "wangfeng_fan_website",
+    "port": int(os.environ.get("IMPORT_DB_PORT", "3306")),
+    "user": os.environ.get("IMPORT_DB_USER", "root"),
+    "password": os.environ.get("IMPORT_DB_PASSWORD", "1q3.102w"),
+    "database": os.environ.get("IMPORT_DB_NAME", "wangfeng_fan_website"),
     "charset": "utf8mb4",
 }
 
