@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 import json
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -36,7 +36,7 @@ async def create_schedule(
     description: Optional[str] = Form(None),
     tags: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    images: Optional[List[UploadFile]] = File(None),
+    images: Union[List[UploadFile], UploadFile, None] = File(None),
     cover_index: Optional[int] = Form(None),
     schedule_service: ScheduleServiceMySQL = Depends(get_schedule_service)
 ):
@@ -57,6 +57,14 @@ async def create_schedule(
         raise HTTPException(status_code=400, detail=str(exc))
 
     # 用户提交时不保存文件，仅暂存数据
+    images_list: List[UploadFile] = []
+    if images is None:
+        images_list = []
+    elif isinstance(images, list):
+        images_list = images
+    else:
+        images_list = [images]
+
     created = schedule_service.create_entry(
         category=payload.category.value,
         date=payload.date,
@@ -66,7 +74,7 @@ async def create_schedule(
         description=payload.description,
         tags=','.join(payload.tags) if payload.tags else None,
         image_file=image,
-        images_files=images or [],
+        images_files=images_list,
         cover_index=cover_index,
         save_file=False,  # 不立即保存文件
     )
