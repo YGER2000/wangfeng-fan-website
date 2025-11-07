@@ -236,7 +236,7 @@ const ScheduleList = () => {
                 "text-sm",
                 isLight ? "text-gray-500" : "text-gray-400"
               )}>
-                {searchQuery || selectedCategory !== 'all' || selectedStatus !== null ? '未找到匹配的行程' : '暂无行程'}
+                {searchQuery || selectedCategory !== 'all' ? '未找到匹配的行程' : '暂无行程'}
               </p>
             </div>
           ) : (
