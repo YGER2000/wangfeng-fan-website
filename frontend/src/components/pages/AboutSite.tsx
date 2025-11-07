@@ -1,7 +1,202 @@
+import { useEffect, useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, Code, Users, Globe, Star, Coffee, Sparkles, Rocket, Zap, Shield, Music2, Database, Layers } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
+
+interface GuestbookMessage {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: string;
+}
+
+const GUESTBOOK_STORAGE_KEY = 'wangfeng_about_guestbook';
+
+const MessageBoard = ({ isLight }: { isLight: boolean }) => {
+  const [messages, setMessages] = useState<GuestbookMessage[]>([]);
+  const [author, setAuthor] = useState('');
+  const [content, setContent] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(GUESTBOOK_STORAGE_KEY);
+      if (stored) {
+        setMessages(JSON.parse(stored));
+      }
+    } catch (err) {
+      console.warn('加载留言失败', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(GUESTBOOK_STORAGE_KEY, JSON.stringify(messages));
+    } catch (err) {
+      console.warn('保存留言失败', err);
+    }
+  }, [messages]);
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!content.trim()) {
+      setError('留言内容不能为空');
+      return;
+    }
+
+    const newMessage: GuestbookMessage = {
+      id: (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`),
+      author: author.trim() || '匿名峰迷',
+      content: content.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    setMessages(prev => [newMessage, ...prev]);
+    setAuthor('');
+    setContent('');
+    setError(null);
+  };
+
+  const handleDelete = (messageId: string) => {
+    setMessages(prev => prev.filter(message => message.id !== messageId));
+  };
+
+  return (
+    <div className={cn(
+      'rounded-3xl border p-6 md:p-8 mb-16',
+      isLight ? 'bg-white border-gray-200 shadow-xl' : 'bg-black/40 border-wangfeng-purple/30 backdrop-blur'
+    )}>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h2 className={cn(
+            'text-3xl font-bold',
+            isLight ? 'text-gray-900' : 'text-white'
+          )}>
+            留言板
+          </h2>
+          <p className={cn(
+            'text-sm mt-1',
+            isLight ? 'text-gray-500' : 'text-gray-400'
+          )}>
+            暂存于本地，仅供测试体验，所有人都可以留言与删除。
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <label className={cn(
+              'block text-sm font-medium mb-2',
+              isLight ? 'text-gray-700' : 'text-gray-300'
+            )}>
+              昵称（可选）
+            </label>
+            <input
+              value={author}
+              onChange={(event) => setAuthor(event.target.value)}
+              placeholder="匿名峰迷"
+              className={cn(
+                'w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 transition-colors',
+                isLight
+                  ? 'bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
+                  : 'bg-black/50 border-wangfeng-purple/30 text-white focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
+              )}
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className={cn(
+              'block text-sm font-medium mb-2',
+              isLight ? 'text-gray-700' : 'text-gray-300'
+            )}>
+              想对本站说的话
+            </label>
+            <textarea
+              value={content}
+              onChange={(event) => setContent(event.target.value)}
+              placeholder="输入留言内容"
+              rows={3}
+              className={cn(
+                'w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 transition-colors resize-none',
+                isLight
+                  ? 'bg-white border-gray-300 text-gray-900 focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
+                  : 'bg-black/50 border-wangfeng-purple/30 text-white focus:border-wangfeng-purple focus:ring-wangfeng-purple/20'
+              )}
+            />
+          </div>
+        </div>
+        {error && (
+          <p className="text-sm text-red-500">{error}</p>
+        )}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            className="px-6 py-2 rounded-xl bg-wangfeng-purple text-white font-medium hover:bg-wangfeng-purple/90 transition-colors"
+          >
+            发布留言
+          </button>
+        </div>
+      </form>
+
+      <div className="space-y-4">
+        {messages.length === 0 ? (
+          <p className={cn(
+            'text-center text-sm py-6 rounded-2xl border border-dashed',
+            isLight ? 'text-gray-400 border-gray-200' : 'text-gray-500 border-wangfeng-purple/30'
+          )}>
+            还没有留言，快来留下第一条吧！
+          </p>
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                'rounded-2xl border p-4 md:p-5 flex flex-col gap-2',
+                isLight ? 'bg-gray-50 border-gray-200' : 'bg-black/30 border-wangfeng-purple/20'
+              )}
+            >
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className={cn(
+                    'font-semibold',
+                    isLight ? 'text-gray-900' : 'text-white'
+                  )}>
+                    {message.author}
+                  </p>
+                  <p className={cn(
+                    'text-xs',
+                    isLight ? 'text-gray-500' : 'text-gray-400'
+                  )}>
+                    {new Date(message.createdAt).toLocaleString('zh-CN')}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(message.id)}
+                  className={cn(
+                    'text-xs px-3 py-1 rounded-full border transition-colors',
+                    isLight
+                      ? 'text-red-500 border-red-200 hover:bg-red-50'
+                      : 'text-red-300 border-red-500/40 hover:bg-red-500/10'
+                  )}
+                >
+                  删除
+                </button>
+              </div>
+              <p className={cn(
+                'text-sm leading-relaxed',
+                isLight ? 'text-gray-700' : 'text-gray-300'
+              )}>
+                {message.content}
+              </p>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
 
 const AboutSite = () => {
   const { theme } = useTheme();
@@ -13,6 +208,8 @@ const AboutSite = () => {
       isLight ? "bg-white text-gray-900" : "bg-transparent text-white"
     )}>
       <div className="container mx-auto px-4 max-w-7xl">
+        <MessageBoard isLight={isLight} />
+
         {/* Hero Section - Bold Header */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}

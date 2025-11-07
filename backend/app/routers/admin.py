@@ -43,13 +43,15 @@ def create_admin_log(
     ip_address: Optional[str] = None
 ):
     """创建管理员操作日志"""
+    operator_role = getattr(current_user.role, "value", None) or str(current_user.role)
+
     log_data = AdminLogCreate(
         action=action,
         resource_type=resource_type,
         resource_id=resource_id,
         operator_id=str(current_user.id),
         operator_username=current_user.username,
-        operator_role=current_user.role.value,
+        operator_role=operator_role,
         description=description,
         details=json.dumps(details, ensure_ascii=False) if details else None,
         ip_address=ip_address,
@@ -405,7 +407,7 @@ def unban_user_endpoint(
 
 
 # ============= 行程管理 =============
-@router.get("/schedules")
+@router.get("/schedules", response_model=List[ScheduleAdminResponse])
 def get_schedules_for_admin(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),

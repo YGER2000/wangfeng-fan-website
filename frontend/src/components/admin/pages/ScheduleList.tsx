@@ -8,8 +8,6 @@ import {
   ChevronUp,
   ChevronDown,
   CheckCircle,
-  Clock,
-  XCircle
 } from 'lucide-react';
 import { adminScheduleAPI, ScheduleItemResponse, ScheduleCategory } from '@/utils/api';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -30,12 +28,6 @@ const categoryOptions: ScheduleCategory[] = [
   '其他'
 ];
 
-const scheduleStatusOptions = [
-  { label: '待审核', value: 'pending' },
-  { label: '已审核', value: 'approved' },
-  { label: '已发布', value: 'published' }
-];
-
 const categoryFilterOptions = categoryOptions.map((option) => ({
     label: option === 'livehouse' ? 'Livehouse' : option,
     value: option,
@@ -46,11 +38,11 @@ const ScheduleList = () => {
   const isLight = theme === 'white';
   const [schedules, setSchedules] = useState<ScheduleItemResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 筛选和排序状态
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<'all' | ScheduleCategory>('all');
-  const [selectedStatus, setSelectedStatus] = useState<'pending' | 'approved' | 'published' | null>(null);
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -60,40 +52,25 @@ const ScheduleList = () => {
 
   const loadSchedules = async () => {
     try {
+      setError(null);
       const data = await adminScheduleAPI.getList({ limit: 100 });
       setSchedules(data);
     } catch (error) {
       console.error('加载行程失败:', error);
+      const errorMessage = error instanceof Error ? error.message : '加载行程失败，请检查网络连接或您的权限';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   // 获取发布状态
-  const getPublishStatus = (schedule: ScheduleItemResponse) => {
-    if (schedule.is_published === 1) {
-      return {
-        text: '已发布',
-        icon: CheckCircle,
-        color: 'text-green-500',
-        bgColor: isLight ? 'bg-green-50' : 'bg-green-500/10'
-      };
-    } else if (schedule.review_status === 'approved') {
-      return {
-        text: '已审核',
-        icon: Clock,
-        color: 'text-blue-500',
-        bgColor: isLight ? 'bg-blue-50' : 'bg-blue-500/10'
-      };
-    } else {
-      return {
-        text: '待审核',
-        icon: XCircle,
-        color: 'text-yellow-500',
-        bgColor: isLight ? 'bg-yellow-50' : 'bg-yellow-500/10'
-      };
-    }
-  };
+  const getPublishStatus = () => ({
+    text: '已发布',
+    icon: CheckCircle,
+    color: 'text-green-500',
+    bgColor: isLight ? 'bg-green-50' : 'bg-green-500/10'
+  });
 
   // 筛选和排序逻辑
   const filteredAndSortedSchedules = useMemo(() => {
@@ -116,21 +93,6 @@ const ScheduleList = () => {
     }
 
     // 状态过滤
-    if (selectedStatus !== null) {
-      result = result.filter(schedule => {
-        if (selectedStatus === 'published') {
-          return schedule.is_published === 1;
-        }
-        if (selectedStatus === 'approved') {
-          return schedule.review_status === 'approved' && schedule.is_published !== 1;
-        }
-        if (selectedStatus === 'pending') {
-          return schedule.review_status === 'pending';
-        }
-        return true;
-      });
-    }
-
     // 排序
     result.sort((a, b) => {
       let compareResult = 0;
@@ -151,7 +113,7 @@ const ScheduleList = () => {
     });
 
     return result;
-  }, [schedules, searchQuery, selectedCategory, selectedStatus, sortField, sortOrder]);
+  }, [schedules, searchQuery, selectedCategory, sortField, sortOrder]);
 
   // 切换排序
   const toggleSort = (field: SortField) => {
@@ -223,14 +185,23 @@ const ScheduleList = () => {
           categories={categoryFilterOptions}
           selectedCategory={selectedCategory}
           onCategoryChange={(value) => setSelectedCategory(value as 'all' | ScheduleCategory)}
-          showStatusFilter
-          selectedStatus={selectedStatus}
-          onStatusChange={(value) =>
-            setSelectedStatus(value as 'pending' | 'approved' | 'published' | null)
-          }
-          statusOptions={scheduleStatusOptions}
         />
       </div>
+
+      {/* 错误提示 */}
+      {error && (
+        <div className="mx-6 mb-6 p-4 rounded-lg bg-red-50 border border-red-200">
+          <p className="text-sm text-red-700">
+            <strong>加载失败:</strong> {error}
+          </p>
+          <button
+            onClick={loadSchedules}
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium"
+          >
+            重试
+          </button>
+        </div>
+      )}
 
       {/* 主要内容区域 - 表格 */}
       <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -241,6 +212,19 @@ const ScheduleList = () => {
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-wangfeng-purple"></div>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center h-64">
+              <CalendarIcon className={cn(
+                "h-12 w-12 mb-4",
+                isLight ? "text-gray-300" : "text-gray-600"
+              )} />
+              <p className={cn(
+                "text-sm",
+                isLight ? "text-gray-500" : "text-gray-400"
+              )}>
+                无法加载行程列表
+              </p>
             </div>
           ) : filteredAndSortedSchedules.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64">
@@ -326,7 +310,7 @@ const ScheduleList = () => {
                   isLight ? "divide-gray-200" : "divide-wangfeng-purple/10"
                 )}>
                   {filteredAndSortedSchedules.map((schedule) => {
-                    const status = getPublishStatus(schedule);
+                    const status = getPublishStatus();
                     const StatusIcon = status.icon;
 
                     return (

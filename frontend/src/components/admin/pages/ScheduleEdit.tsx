@@ -1,13 +1,11 @@
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { scheduleAPI, ScheduleItemResponse } from '@/utils/api';
-import { useAuth } from '@/contexts/AuthContext';
+import { adminScheduleAPI, ScheduleItemResponse } from '@/utils/api';
 import ScheduleEditor from './ScheduleEditor';
-import SimpleToast, { ToastType } from '@/components/ui/SimpleToast';
+import SimpleToast from '@/components/ui/SimpleToast';
 
 const ScheduleEdit = () => {
   const { id } = useParams<{ id: string }>();
-  const { token } = useAuth();
   const [schedule, setSchedule] = useState<Partial<ScheduleItemResponse> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +20,11 @@ const ScheduleEdit = () => {
     const loadSchedule = async () => {
       try {
         setLoading(true);
-        const data = await scheduleAPI.getById(id, token);
+        const scheduleId = Number(id);
+        if (Number.isNaN(scheduleId)) {
+          throw new Error('无效的行程ID');
+        }
+        const data = await adminScheduleAPI.getById(scheduleId);
         setSchedule(data);
       } catch (err: any) {
         console.error('加载行程失败:', err);
@@ -33,7 +35,7 @@ const ScheduleEdit = () => {
     };
 
     loadSchedule();
-  }, [id, token]);
+  }, [id]);
 
   if (loading) {
     return (

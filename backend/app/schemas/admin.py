@@ -108,15 +108,28 @@ class UserAdminResponse(BaseModel):
 # ============= Schedule Management Schemas =============
 class ScheduleAdminResponse(BaseModel):
     """管理员查看行程响应"""
-    id: str
-    title: str
-    venue: str
+    id: int
+    category: str
+    date: str
     city: str
-    event_date: datetime
-    ticket_url: Optional[str]
-    is_published: bool
-    created_at: datetime
-    updated_at: datetime
+    venue: Optional[str] = None
+    theme: str
+    description: Optional[str] = None
+    image: Optional[str] = None
+    image_thumb: Optional[str] = None
+    images: Optional[List[str]] = None
+    images_thumb: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    source: str
+    author_id: Optional[str] = None
+    review_status: str
+    reviewer_id: Optional[str] = None
+    review_notes: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    is_published: int
+    article_id: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

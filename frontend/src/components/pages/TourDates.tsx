@@ -411,54 +411,46 @@ const TourDates = () => {
                 {/* 主体：左右布局 */}
                 <div className="flex h-full overflow-y-auto">
                   {/* 左侧：海报和导航 - 宽度约 55% */}
-                  <div className="w-3/5 flex flex-col items-center justify-center bg-gradient-to-b from-wangfeng-purple/5 to-transparent p-8 relative">
+                  <div className="w-3/5 flex items-center justify-center bg-gradient-to-b from-wangfeng-purple/5 to-transparent p-8 relative gap-6">
+                    {/* 左导航按钮 */}
+                    {totalPosters > 1 && (
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={handlePrevPoster}
+                        disabled={posterIndex === 0}
+                        className="p-3 rounded-full bg-wangfeng-purple/80 hover:bg-wangfeng-purple text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                        aria-label="上一张海报"
+                      >
+                        <ChevronLeft className="h-6 w-6" />
+                      </motion.button>
+                    )}
+
                     {/* 海报容器 */}
-                    <div className="relative w-full max-w-sm aspect-[3/4] rounded-xl overflow-hidden shadow-strong-glow border border-wangfeng-purple/40 bg-gray-900 group">
-                      <AnimatePresence mode="wait">
-                        <motion.img
-                          key={posterIndex}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          src={withBasePath(currentPoster ?? 'images/concerts/xiangxinweilai_poster.jpg')}
-                          alt={`${selectedSchedule.theme} 海报`}
-                          className="w-full h-full object-cover"
-                        />
-                      </AnimatePresence>
+                    <div className="relative w-full max-w-sm aspect-[3/4] rounded-xl overflow-hidden border border-wangfeng-purple/20 bg-gray-900 group flex-shrink-0">
+                      <img
+                        src={withBasePath(currentPoster ?? 'images/concerts/xiangxinweilai_poster.jpg')}
+                        alt={`${selectedSchedule.theme} 海报`}
+                        className="w-full h-full object-cover"
+                      />
 
                       {/* 海报计数器 */}
                       <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 text-white text-xs rounded-full backdrop-blur">
                         {posterIndex + 1}/{totalPosters}
                       </div>
-
-                      {/* 导航按钮 - 仅当有多张海报时显示 */}
-                      {totalPosters > 1 && (
-                        <>
-                          {/* 上一张按钮 */}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            onClick={handlePrevPoster}
-                            disabled={posterIndex === 0}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            aria-label="上一张海报"
-                          >
-                            <ChevronLeft className="h-5 w-5" />
-                          </motion.button>
-
-                          {/* 下一张按钮 */}
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            onClick={handleNextPoster}
-                            disabled={posterIndex === totalPosters - 1}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            aria-label="下一张海报"
-                          >
-                            <ChevronRight className="h-5 w-5" />
-                          </motion.button>
-                        </>
-                      )}
                     </div>
+
+                    {/* 右导航按钮 */}
+                    {totalPosters > 1 && (
+                      <motion.button
+                        whileHover={{ scale: 1.15 }}
+                        onClick={handleNextPoster}
+                        disabled={posterIndex === totalPosters - 1}
+                        className="p-3 rounded-full bg-wangfeng-purple/80 hover:bg-wangfeng-purple text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                        aria-label="下一张海报"
+                      >
+                        <ChevronRight className="h-6 w-6" />
+                      </motion.button>
+                    )}
                   </div>
 
                   {/* 右侧：详细信息 - 宽度约 45% */}

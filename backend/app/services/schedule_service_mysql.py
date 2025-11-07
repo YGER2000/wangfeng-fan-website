@@ -6,6 +6,7 @@ import tempfile
 import json
 
 from fastapi import UploadFile
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..core.config import get_settings
@@ -23,6 +24,31 @@ class ScheduleServiceMySQL:
         self.storage = get_storage()
         settings = get_settings()
         self.default_poster_url = getattr(settings, "schedule_default_poster_url", None)
+        self._auto_publish_existing_entries()
+
+    def _auto_publish_existing_entries(self) -> None:
+        """确保所有现有行程都标记为已审核且已发布"""
+        outdated = self.db.query(Schedule).filter(
+            or_(Schedule.review_status != 'approved', Schedule.is_published != 1)
+        ).all()
+
+        if not outdated:
+            return
+
+        now = get_beijing_now()
+        updated = False
+
+        for schedule in outdated:
+            if schedule.review_status != 'approved':
+                schedule.review_status = 'approved'
+                schedule.reviewed_at = schedule.reviewed_at or now
+                updated = True
+            if schedule.is_published != 1:
+                schedule.is_published = 1
+                updated = True
+
+        if updated:
+            self.db.commit()
 
     @staticmethod
     def _normalize_date_string(date_str: Optional[str]) -> Optional[str]:

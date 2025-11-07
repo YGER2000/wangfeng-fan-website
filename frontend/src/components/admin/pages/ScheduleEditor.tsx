@@ -769,10 +769,10 @@ const ScheduleEditor = ({ initialSchedule, onSave, onDelete }: ScheduleEditorPro
                       'text-sm font-medium mb-2',
                       isLight ? 'text-gray-700' : 'text-gray-200'
                     )}>
-                      发布提示
+                      填写提示
                     </p>
                     <p className="text-xs text-gray-500 leading-5">
-                      行程提交后将进入待审核状态。请确保信息真实准确，审核通过后才会发布至前台。
+                      请确认时间、地点与海报信息准确无误，并尽量补充完整的标签与描述，方便粉丝检索。
                     </p>
                   </div>
                 </div>
