@@ -60,8 +60,8 @@ COPY --from=frontend-builder /workspace/frontend/dist ./frontend/dist
 RUN mkdir -p frontend/public/data frontend/public/images
 
 # 拷贝前端其他公共资源（不包括音乐）
-COPY frontend/public/data ./frontend/public/data 2>/dev/null || true
-COPY frontend/public/images ./frontend/public/images 2>/dev/null || true
+COPY frontend/public/data ./frontend/public/data
+COPY frontend/public/images ./frontend/public/images
 
 # 暴露后端端口
 EXPOSE 1994

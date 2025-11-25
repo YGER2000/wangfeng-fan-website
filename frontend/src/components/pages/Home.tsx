@@ -173,10 +173,6 @@ const LatestAlbum = () => {
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-wangfeng-purple/20 blur-3xl"></div>
       <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-wangfeng-purple/10 blur-3xl"></div>
       
-      {/* Fan excitement graphics */}
-      <div className="absolute top-40 right-20 transform rotate-12 z-10 hidden md:block">
-        <span className="fan-comment">太燃了！ 💜</span>
-      </div>
       
       <div className="container mx-auto px-4 relative z-10">
         {/* Section title with fan styling */}
@@ -271,7 +267,7 @@ const LatestAlbum = () => {
             
             {/* Fan-styled CTA button */}
             <a 
-              href="https://music.163.com/artist?id=wangfeng" 
+              href="https://y.qq.com/n/ryqq/albumDetail/002psqDy3i5dAy" 
               target="_blank" 
               rel="noopener noreferrer"
               className="px-8 py-4 bg-wangfeng-purple theme-text-primary font-bold text-lg uppercase tracking-wider rounded-full inline-flex items-center gap-3 hover:bg-purple-700 transition-all shadow-glow animate-pulse-glow"
@@ -332,15 +328,7 @@ const TourDatesPreview = () => {
       {/* Background glow effects */}
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-wangfeng-purple/20 blur-3xl"></div>
       <div className="absolute bottom-10 left-10 w-80 h-80 rounded-full bg-wangfeng-purple/10 blur-3xl"></div>
-      
-      {/* Fan excitement graphics */}
-      <div className="absolute top-40 left-20 transform rotate-12 z-10 hidden md:block">
-        <span className="fan-comment">相信未来！ 💜</span>
-      </div>
-      <div className="absolute bottom-40 right-20 transform -rotate-6 z-10 hidden md:block">
-        <span className="fan-comment">震撼！ 🎸</span>
-      </div>
-      
+
       <div className="container mx-auto px-4 relative z-10">
         {/* Section title with fan styling */}
         <div className="text-center mb-16">
@@ -442,7 +430,7 @@ const TourDatesPreview = () => {
               
               {/* Fan reaction badges */}
               <div className="absolute -top-5 -right-5  border-2 border-wangfeng-purple text-wangfeng-purple px-3 py-1 rounded-full transform rotate-12 font-bebas tracking-wider animate-pulse-glow text-lg">
-                官方海报！
+                全新制作！
               </div>
             </div>
           </motion.div>
@@ -490,26 +478,6 @@ const TourDatesPreview = () => {
               <div className="absolute bottom-0 left-0 w-full h-1 bg-wangfeng-purple/50"></div>
             </motion.div>
           ))}
-        </div>
-        
-        <div className="text-center mt-12">
-          <div className="mb-6">
-            <span className="text-wangfeng-purple font-bebas text-2xl animate-pulse">
-              不要错过摇滚传奇！ 💜🖤
-            </span>
-          </div>
-          
-          <Link 
-            to="/tour-dates"
-            className="px-8 py-4 bg-wangfeng-purple theme-text-primary font-bold text-lg uppercase tracking-wider rounded-full inline-flex items-center gap-3 hover:bg-purple-700 transition-all shadow-glow animate-pulse-glow"
-          >
-            <FaTicketAlt size={20} />
-            查看所有演出日期！
-          </Link>
-          
-          <div className="mt-6 text-sm theme-text-muted italic">
-            准备好你的摇滚魂，它们将被点燃！ <span className="text-wangfeng-purple font-bold">♥</span>
-          </div>
         </div>
       </div>
     </section>

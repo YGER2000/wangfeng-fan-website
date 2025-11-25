@@ -1,7 +1,7 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { cn, withBasePath } from '@/lib/utils';
 import {
   scheduleAPI,
@@ -71,35 +71,12 @@ const getCategoryColor = (category: string): string => {
 };
 
 const TourDates = () => {
+  const navigate = useNavigate();
   const [schedule, setSchedule] = useState<Array<ScheduleItemResponse & { isFuture?: boolean }>>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<'全部' | ScheduleCategory>('全部');
-  const [selectedSchedule, setSelectedSchedule] = useState<(ScheduleItemResponse & { isFuture?: boolean }) | null>(null);
-  const [posterIndex, setPosterIndex] = useState(0);
   const monthRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const timelineRef = useRef<HTMLDivElement>(null);
-
-  // 获取海报列表（优先使用 images，否则用单个 image）
-  const getPosterList = (): string[] => {
-    if (!selectedSchedule) return [];
-    if (selectedSchedule.images && selectedSchedule.images.length > 0) {
-      return selectedSchedule.images;
-    }
-    return selectedSchedule.image ? [selectedSchedule.image] : [];
-  };
-
-  const posterList = getPosterList();
-  const totalPosters = posterList.length || 1;
-  const currentPoster = posterList[posterIndex] || selectedSchedule?.image;
-
-  // 海报导航函数
-  const handlePrevPoster = () => {
-    setPosterIndex(Math.max(0, posterIndex - 1));
-  };
-
-  const handleNextPoster = () => {
-    setPosterIndex(Math.min(totalPosters - 1, posterIndex + 1));
-  };
 
   const handleMonthClick = (monthKey: string) => {
     // 滚动到该月份的卡片
@@ -308,8 +285,7 @@ const TourDates = () => {
                               key={item.id}
                               whileHover={{ scale: 1.02 }}
                               onClick={() => {
-                                setSelectedSchedule(item);
-                                setPosterIndex(0);
+                                navigate(`/schedule/${item.id}`);
                               }}
                               className={cn(
                                 'rounded-lg overflow-hidden border shadow-lg transition-all duration-300 cursor-pointer group flex schedule-card'
@@ -381,169 +357,6 @@ const TourDates = () => {
               暂无该分类下的行程信息
             </p>
           </motion.div>
-        )}
-
-        {/* 详情弹窗 */}
-        {selectedSchedule && typeof document !== 'undefined' && createPortal(
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-              onClick={() => setSelectedSchedule(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-5xl max-h-[90vh] overflow-hidden rounded-2xl border border-wangfeng-purple/40 shadow-strong-glow theme-bg-card"
-              >
-                {/* 关闭按钮 */}
-                <button
-                  onClick={() => setSelectedSchedule(null)}
-                  className="absolute right-6 top-6 p-2 z-10 rounded-lg transition-colors hover:bg-white/10"
-                >
-                  <X className="h-6 w-6 theme-text-primary" />
-                </button>
-
-                {/* 主体：左右布局 */}
-                <div className="flex h-full overflow-y-auto">
-                  {/* 左侧：海报和导航 - 宽度约 55% */}
-                  <div className="w-3/5 flex items-center justify-center bg-gradient-to-b from-wangfeng-purple/5 to-transparent p-8 relative gap-6">
-                    {/* 左导航按钮 */}
-                    {totalPosters > 1 && (
-                      <motion.button
-                        whileHover={{ scale: 1.15 }}
-                        onClick={handlePrevPoster}
-                        disabled={posterIndex === 0}
-                        className="p-3 rounded-full bg-wangfeng-purple/80 hover:bg-wangfeng-purple text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all flex-shrink-0"
-                        aria-label="上一张海报"
-                      >
-                        <ChevronLeft className="h-6 w-6" />
-                      </motion.button>
-                    )}
-
-                    {/* 海报容器 */}
-                    <div className="relative w-full max-w-sm aspect-[3/4] rounded-xl overflow-hidden border border-wangfeng-purple/20 bg-gray-900 group flex-shrink-0">
-                      <img
-                        src={withBasePath(currentPoster ?? 'images/concerts/xiangxinweilai_poster.jpg')}
-                        alt={`${selectedSchedule.theme} 海报`}
-                        className="w-full h-full object-cover"
-                      />
-
-                      {/* 海报计数器 */}
-                      <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 text-white text-xs rounded-full backdrop-blur">
-                        {posterIndex + 1}/{totalPosters}
-                      </div>
-                    </div>
-
-                    {/* 右导航按钮 */}
-                    {totalPosters > 1 && (
-                      <motion.button
-                        whileHover={{ scale: 1.15 }}
-                        onClick={handleNextPoster}
-                        disabled={posterIndex === totalPosters - 1}
-                        className="p-3 rounded-full bg-wangfeng-purple/80 hover:bg-wangfeng-purple text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all flex-shrink-0"
-                        aria-label="下一张海报"
-                      >
-                        <ChevronRight className="h-6 w-6" />
-                      </motion.button>
-                    )}
-                  </div>
-
-                  {/* 右侧：详细信息 - 宽度约 45% */}
-                  <div className="w-2/5 flex flex-col p-8 overflow-y-auto">
-                    {/* 顶部：分类标签 */}
-                    <div className="mb-6">
-                      <span className={cn(
-                        'inline-block px-4 py-2 text-xs font-bold text-white rounded-full',
-                        getCategoryColor(selectedSchedule.category)
-                      )}>
-                        {selectedSchedule.category}
-                      </span>
-                    </div>
-
-                    {/* 城市和日期 */}
-                    <div className="mb-8 pb-6 border-b border-wangfeng-purple/20">
-                      <h2 className="text-5xl font-bebas tracking-wider text-wangfeng-purple mb-3">
-                        {selectedSchedule.city}
-                      </h2>
-                      <p className="text-sm theme-text-muted">
-                        {new Date(selectedSchedule.date).toLocaleDateString('zh-CN', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-
-                    {/* 中部：详细信息 */}
-                    <div className="flex-grow space-y-6">
-                      {/* 行程主题 */}
-                      <div>
-                        <h3 className="text-xs font-bold text-wangfeng-purple uppercase tracking-widest mb-3">
-                          行程主题
-                        </h3>
-                        <p className="theme-text-primary text-base leading-relaxed">
-                          {selectedSchedule.theme}
-                        </p>
-                      </div>
-
-                      {/* 场馆地点 */}
-                      {selectedSchedule.venue && (
-                        <div>
-                          <h3 className="text-xs font-bold text-wangfeng-purple uppercase tracking-widest mb-3">
-                            场馆地点
-                          </h3>
-                          <div className="flex items-start gap-3">
-                            <span className="text-wangfeng-purple text-lg mt-0.5">📍</span>
-                            <p className="theme-text-primary text-base leading-relaxed">
-                              {selectedSchedule.venue}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* 补充说明 */}
-                      {selectedSchedule.description && (
-                        <div>
-                          <h3 className="text-xs font-bold text-wangfeng-purple uppercase tracking-widest mb-3">
-                            补充说明
-                          </h3>
-                          <p className="theme-text-secondary text-sm leading-relaxed whitespace-pre-wrap">
-                            {selectedSchedule.description}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 底部：按钮 */}
-                    <div className="mt-8 pt-6 border-t border-wangfeng-purple/20">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                          const dateStr = selectedSchedule.date.replace(/-/g, '');
-                          const cleanedTheme = selectedSchedule.theme.replace(/[^\u4e00-\u9fa5a-zA-Z0-9\s-]/g, '').trim();
-                          const theme = cleanedTheme.substring(0, 20).replace(/\s+/g, '-').toLowerCase();
-                          const slug = `${dateStr}-${theme}`;
-
-                          window.scrollTo(0, 0);
-                          window.location.href = `/#/article/${slug}`;
-                        }}
-                        className="w-full px-6 py-3 bg-gradient-to-r from-wangfeng-purple to-wangfeng-light text-white rounded-lg font-semibold hover:shadow-glow transition-all"
-                      >
-                        查看详情
-                      </motion.button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </AnimatePresence>,
-          document.body
         )}
       </div>
     </div>

@@ -18,6 +18,7 @@ import Home from './components/pages/Home';
 import About from './components/pages/About';
 import Discography from './components/pages/Discography';
 import TourDates from './components/pages/TourDates';
+import ScheduleDetail from './components/pages/ScheduleDetail';
 import Gallery from './components/pages/Gallery';
 import FengYanFengYu from './components/pages/FengYanFengYuNew';
 import FengMiLiaoFeng from './components/pages/FengMiLiaoFengNew';
@@ -105,6 +106,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/tour-dates" element={<TourDates />} />
+          <Route path="/schedule/:id" element={<ScheduleDetail />} />
           <Route path="/discography" element={<Discography />} />
           <Route path="/video-archive" element={<VideoArchive />} />
           <Route path="/gallery" element={<Gallery />} />
